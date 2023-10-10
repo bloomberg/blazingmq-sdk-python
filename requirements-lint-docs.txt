@@ -1,0 +1,10 @@
+black
+flake8<5
+isort
+mypy
+recommonmark
+Sphinx
+sphinx_rtd_theme
+towncrier
+typed_ast
+types-enum34

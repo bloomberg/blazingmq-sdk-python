@@ -1,0 +1,8 @@
+[run]
+plugins = Cython.Coverage
+branch = True
+source = src
+parallel = true
+omit =
+    tests/*
+    *__init__.py

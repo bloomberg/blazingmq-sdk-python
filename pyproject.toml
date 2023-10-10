@@ -1,0 +1,50 @@
+[build-system]
+
+requires = ["setuptools>=39.2.0",
+            "cython>=0.28.4",
+            "wheel>=0.31.0",
+            "pkgconfig>1.5.0"]
+
+build-backend = "setuptools.build_meta"
+
+[tool.towncrier]
+package     = "blazingmq"
+package_dir = "src"
+filename    = "CHANGELOG.md"
+directory   = "news"
+
+[tool.cibuildwheel]
+build = ["cp38-*", "cp39-*", "cp310-*", "cp311-*"]
+skip = "*musllinux*{i686,aarch64}*"
+manylinux-x86_64-image = "manylinux2014"
+manylinux-i686-image = "manylinux2014"
+
+[tool.cibuildwheel.linux.environment]
+PKG_CONFIG_PATH="/usr/local/lib64/pkgconfig:/usr/lib64/pkgconfig"
+
+[tool.cibuildwheel.macos.environment]
+PKG_CONFIG_PATH="install/lib/pkgconfig"
+
+[tool.cibuildwheel.linux]
+before-all = [
+  "yum install -y gdb curl pkgconfig ninja-build flex flex-devel zlib-devel",
+  "DIR_INSTALL=/usr/local bash bin/build-manylinux.sh"
+]
+
+[tool.cibuildwheel.macos]
+before-all = [
+  "brew install cmake ninja flex bison zlib google-benchmark",
+  "bash bin/build-macos-universal.sh"
+]
+before-test = [
+  "codesign --remove-signature /Library/Frameworks/Python.framework/Versions/*/bin/python3 || true",
+  "codesign --remove-signature /Library/Frameworks/Python.framework/Versions/*/Resources/Python.app/Contents/MacOS/Python || true",
+]
+
+# Override the default linux before-all for musl linux
+[[tool.cibuildwheel.overrides]]
+select = "*-musllinux*"
+before-all = [
+  "apk add --update gdb curl pkgconfig ninja flex flex-dev zlib-dev",
+  "DIR_INSTALL=/usr/local bash bin/build-manylinux.sh"
+]

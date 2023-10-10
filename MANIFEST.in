@@ -1,0 +1,8 @@
+include pyproject.toml
+include Makefile
+include src/cpp/*
+recursive-exclude src/blazingmq *.cpp
+recursive-include src/blazingmq *.py
+recursive-include src/blazingmq *.pyx *.pxd
+recursive-include src/blazingmq *.vers
+recursive-include src/declarations *.pxd

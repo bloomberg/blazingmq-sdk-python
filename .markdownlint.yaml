@@ -1,0 +1,10 @@
+MD013:
+  code_blocks: false
+  line_length: 99
+  tables: false
+
+MD024:
+  siblings_only: true
+
+MD033:
+  allowed_elements: ["img"]

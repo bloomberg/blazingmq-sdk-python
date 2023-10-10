@@ -1,0 +1,184 @@
+name: Wheels
+
+on:
+  push:
+  pull_request:
+    paths-ignore:
+      - "docs/**"
+      - "CONTRIBUTING.md"
+  release:
+    types:
+      - published
+  schedule:
+    # At 12:00 on every day-of-month
+    - cron: "0 12 */1 * *"
+
+concurrency:
+  group: ${{ github.workflow }}-${{ github.head_ref || github.run_id }}
+  cancel-in-progress: true
+
+jobs:
+  build_sdist:
+    name: Build source distribution
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v3
+
+      - name: Build sdist
+        run: pipx run build --sdist
+
+      - uses: actions/upload-artifact@v3
+        with:
+          name: dist
+          path: dist
+
+      - uses: actions/upload-artifact@v3
+        with:
+          name: tests
+          path: tests
+
+  choose_architectures:
+    name: Decide which architectures to build wheels for
+    runs-on: ubuntu-latest
+    steps:
+      - id: x86_64
+        run: echo "cibw_arch=x86_64" >> $GITHUB_OUTPUT
+      - id: i686
+        run: echo "cibw_arch=i686" >> $GITHUB_OUTPUT
+      - id: aarch64
+        if: github.event_name == 'release' && github.event.action == 'published'
+        run: echo "cibw_arch=aarch64" >> $GITHUB_OUTPUT
+    outputs:
+      cibw_arches: ${{ toJSON(steps.*.outputs.cibw_arch) }}
+
+  build_wheels:
+    needs: [build_sdist, choose_architectures]
+    name: Wheel for Linux-${{ matrix.cibw_python }}-${{ matrix.cibw_arch }}
+    runs-on: ${{ matrix.os }}
+    strategy:
+      fail-fast: false
+      matrix:
+        os: [ubuntu-latest]
+        cibw_python:
+          ["cp38-*", "cp39-*", "cp310-*", "cp311-*", "cp312-*"]
+        cibw_arch: ${{ fromJSON(needs.choose_architectures.outputs.cibw_arches) }}
+
+    steps:
+      - uses: actions/download-artifact@v3
+        with:
+          name: dist
+          path: dist
+      - uses: actions/download-artifact@v3
+        with:
+          name: tests
+          path: tests
+      - uses: docker/setup-qemu-action@v2
+        if: runner.os == 'Linux'
+        name: Set up QEMU
+      - name: Extract sdist
+        run: |
+          tar zxvf dist/*.tar.gz --strip-components=1
+      - name: Disable ptrace security restrictions
+        run: |
+          echo 0 | sudo tee /proc/sys/kernel/yama/ptrace_scope
+      - name: Build wheels
+        uses: pypa/cibuildwheel@v2.15.0
+        env:
+          CIBW_BUILD: ${{ matrix.cibw_python }}
+          CIBW_ARCHS_LINUX: ${{ matrix.cibw_arch }}
+          CIBW_PRERELEASE_PYTHONS: True
+          CIBW_TEST_EXTRAS: test
+          CIBW_TEST_COMMAND: python -m pytest {package}/tests
+          CIBW_TEST_SKIP: "*aarch64*"
+      - uses: actions/upload-artifact@v3
+        with:
+          name: dist
+          path: ./wheelhouse/*.whl
+
+  build_wheels_macos:
+    needs: [build_sdist]
+    name: Wheel for MacOS-${{ matrix.cibw_python }}-${{ matrix.cibw_arch }}
+    runs-on: ${{ matrix.os }}
+    strategy:
+      fail-fast: false
+      matrix:
+        os: [macos-11]
+        cibw_python: ["cp38-*", "cp39-*", "cp310-*", "cp311-*", "cp312-*"]
+        cibw_arch: ["x86_64", "arm64"]
+
+    steps:
+      - uses: actions/download-artifact@v3
+        with:
+          name: dist
+          path: dist
+      - uses: actions/download-artifact@v3
+        with:
+          name: tests
+          path: tests
+      - name: Extract sdist
+        run: |
+          tar zxvf dist/*.tar.gz --strip-components=1
+      - name: Sets env vars for compilation
+        if: matrix.cibw_arch == 'arm64'
+        run: |
+          echo "CFLAGS=-target arm64-apple-macos11" >> $GITHUB_ENV
+      - name: Build wheels
+        uses: pypa/cibuildwheel@v2.15.0
+        env:
+          CIBW_BUILD: ${{ matrix.cibw_python }}
+          CIBW_ARCHS_MACOS: ${{ matrix.cibw_arch }}
+          CIBW_PRERELEASE_PYTHONS: True
+          CIBW_TEST_EXTRAS: test
+          CIBW_TEST_COMMAND: pytest {package}/tests
+          CIBW_BUILD_VERBOSITY: 1
+          MACOSX_DEPLOYMENT_TARGET: "11.0"
+
+      - uses: actions/upload-artifact@v3
+        with:
+          name: dist
+          path: ./wheelhouse/*.whl
+
+  upload_pypi:
+    needs: [build_wheels, build_wheels_macos, build_sdist]
+    runs-on: ubuntu-latest
+    if: github.event_name == 'release' && github.event.action == 'published'
+    steps:
+      - uses: actions/download-artifact@v3
+        with:
+          name: dist
+          path: dist
+      - uses: pypa/gh-action-pypi-publish@release/v1
+        with:
+          skip_existing: true
+          password: ${{ secrets.PYPI_PASSWORD }}
+
+  publish_docs:
+    name: Publish docs
+    runs-on: ubuntu-latest
+    if: github.event_name == 'release' && github.event.action == 'published'
+    permissions:
+      contents: write
+    steps:
+      - uses: actions/checkout@v3
+      - name: Set up Python
+        uses: actions/setup-python@v4
+        with:
+          python-version: "3.10"
+      - name: Set up dependencies
+        run: |
+          sudo apt-get update
+          sudo apt-get install -qy clang-format pkg-config
+      - name: Install Python dependencies
+        run: |
+          python3 -m pip install -r requirements-lint-docs.txt
+      - name: Install Package
+        run: |
+          python3 -m pip install -e .
+      - name: Build docs
+        run: |
+          make docs
+      - name: Publish docs to GitHub Pages
+        uses: JamesIves/github-pages-deploy-action@v4
+        with:
+          folder: docs/_build/html
+          single-commit: true

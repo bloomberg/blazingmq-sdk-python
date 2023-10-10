@@ -1,0 +1,4 @@
+-r requirements-lint-docs.txt
+-r requirements-test.txt
+-r requirements-test-coverage.txt
+tox==3.7.0

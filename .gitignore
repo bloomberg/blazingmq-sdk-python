@@ -1,0 +1,35 @@
+# Python core
+*.pyc
+__pycache__/
+
+# setup.py
+*.egg-info
+MANIFEST
+build/
+dist/
+
+# build & tooling
+.coverage
+.mypy_cache/
+.pytest_cache/
+.tox/
+coverage.xml
+docs/_build
+junit.xml
+pip-wheel-metadata/
+venv*
+.venv*
+
+# pyenv
+.python-version
+
+# editors
+*.swp
+*~
+.idea/
+
+*.tsk
+src/blazingmq/*.cpp
+src/blazingmq/*.h
+src/blazingmq/*.so
+install/

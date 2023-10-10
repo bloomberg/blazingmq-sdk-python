@@ -1,0 +1,229 @@
+name: Tests
+
+on:
+  push:
+  pull_request:
+    branches:
+      - main
+
+concurrency:
+  group: ${{ github.workflow }}-${{ github.head_ref || github.run_id }}
+  cancel-in-progress: true
+
+jobs:
+  blazingmq-dependency:
+    name: Build BlazingMQ as a dependency
+    runs-on: ubuntu-latest
+    outputs:
+      blazingmq_sha: ${{ steps.get-sha.outputs.blazingmq_sha }}
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Checkout BlazingMQ
+        run:  git clone --depth 1 https://github.com/bloomberg/blazingmq
+
+      - name: Get latest BlazingMQ commit SHA
+        id: get-sha
+        working-directory: blazingmq
+        run: echo "blazingmq_sha=$(git rev-parse --short HEAD)" >> $GITHUB_OUTPUT
+
+      - name: Try to get cached BlazingMQ build artifacts
+        id: cache-restore
+        uses: actions/cache/restore@v3
+        with:
+          path: blazingmq_artifacts.tar.gz
+          key: ${{ steps.get-sha.outputs.blazingmq_sha }}
+
+      - name: Set up dependencies
+        if: steps.cache-restore.outputs.cache-hit != 'true'
+        run: |
+            sudo apt-get update
+            sudo apt-get install -qy build-essential \
+              gdb \
+              curl \
+              python3.10 \
+              cmake \
+              ninja-build \
+              pkg-config \
+              bison \
+              libfl-dev \
+              libbenchmark-dev \
+              libz-dev
+
+      - name: Create install directory for BlazingMQ and its dependencies
+        if: steps.cache-restore.outputs.cache-hit != 'true'
+        run: mkdir -p blazingmq_artifacts
+
+      - name: Skip building bison and google-benchmark
+        if: steps.cache-restore.outputs.cache-hit != 'true'
+        run: |
+          mkdir -p thirdparty/{bison,google-benchmark}
+          mkdir -p build/{bison,google-benchmark}
+          touch thirdparty/bison/.complete
+          touch build/google-benchmark/.complete
+
+      - name: Build and install BlazingMQ and its dependencies
+        if: steps.cache-restore.outputs.cache-hit != 'true'
+        env:
+          DIR_INSTALL: 'blazingmq_artifacts'
+        run: /bin/bash bin/build-manylinux.sh
+
+      - name: Save built BlazingMQ build artifacts
+        if: steps.cache-restore.outputs.cache-hit != 'true'
+        run: tar czf blazingmq_artifacts.tar.gz blazingmq_artifacts
+
+      - name: Cache built BlazingMQ build artifacts
+        id: cache-save
+        if: steps.cache-restore.outputs.cache-hit != 'true'
+        uses: actions/cache/save@v3
+        with:
+          path: blazingmq_artifacts.tar.gz
+          key: ${{ steps.get-sha.outputs.blazingmq_sha }}
+
+  linux-check:
+    name: Test on Linux
+    needs: blazingmq-dependency
+    runs-on: ubuntu-latest
+    strategy:
+      matrix:
+        python-version:
+          - "3.8"
+          - "3.9"
+          - "3.10"
+          - "3.11"
+          - "3.12"
+    steps:
+      - uses: actions/checkout@v4
+      - name: Try to get cached BlazingMQ build artifacts
+        id: cache-restore
+        uses: actions/cache/restore@v3
+        with:
+          path: blazingmq_artifacts.tar.gz
+          key: ${{ needs.blazingmq-dependency.outputs.blazingmq_sha }}
+      - name: Restore cached BlazingMQ build artifacts
+        run: tar xzf blazingmq_artifacts.tar.gz
+      - name: Set up Python ${{ matrix.python-version }}
+        uses: actions/setup-python@v4
+        with:
+          python-version: ${{ matrix.python-version }}
+      - name: Create virtual environment
+        run: |
+          python3 -m venv venv
+      - name: Install Python dependencies
+        run: |
+          ./venv/bin/python -m pip install --upgrade pip
+          ./venv/bin/python -m pip install -r requirements-dev.txt
+      - name: Install package manager dependencies
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y build-essential \
+            gdb \
+            curl \
+            cmake \
+            cmake \
+            ninja-build \
+            pkg-config \
+            bison \
+            libfl-dev \
+            libbenchmark-dev \
+            libz-dev
+      - name: Run tests
+        env:
+          BMQ_BROKER_URI: tcp://localhost:30114
+          PREFIX: blazingmq_artifacts
+          PYTHON: ./venv/bin/python
+          PKG_CONFIG_PATH: /usr/lib/x86_64-linux-gnu/pkgconfig:/opt/bb/lib64/pkgconfig:./blazingmq_artifacts/lib64/pkgconfig
+        run: |
+          mkdir -p bmq/logs
+          mkdir -p bmq/storage/archive
+          ./blazingmq_artifacts/bin/bmqbrkr.tsk ./tests/broker-config &
+          (sleep 5; make test-build && make test-install && make check)
+
+  lint-docs:
+    name: Lint and Docs
+    needs: blazingmq-dependency
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Try to get cached BlazingMQ build artifacts
+        id: cache-restore
+        uses: actions/cache/restore@v3
+        with:
+          path: blazingmq_artifacts.tar.gz
+          key: ${{ needs.blazingmq-dependency.outputs.blazingmq_sha }}
+      - name: Restore cached BlazingMQ build artifacts
+        run: tar xzf blazingmq_artifacts.tar.gz
+      - name: Set up Python 3.9
+        uses: actions/setup-python@v4
+        with:
+          python-version: "3.9"
+      - name: Create virtual environment
+        run: |
+          python3 -m venv venv
+      - name: Install Python dependencies
+        run: |
+          ./venv/bin/python -m pip install --upgrade pip
+          ./venv/bin/python -m pip install -r requirements-dev.txt
+      - name: Set up dependencies
+        run:
+          sudo apt-get install clang-format
+      - name: Install Package
+        run: |
+          ./venv/bin/python -m pip install -e .
+        env:
+          PREFIX: blazingmq_artifacts
+          PYTHON: ./venv/bin/python
+          PKG_CONFIG_PATH: /usr/lib/x86_64-linux-gnu/pkgconfig:/opt/bb/lib64/pkgconfig:./blazingmq_artifacts/lib64/pkgconfig
+      - name: Lint sources
+        env:
+          PYTHON: ./venv/bin/python
+        run: |
+          make lint
+      - name: Build docs
+        run: |
+          ./venv/bin/python -m towncrier build --version 99.99 --name blazingmq --keep
+          make docs
+        env:
+          PYTHON: ./venv/bin/python
+          SPHINXBUILD: ../venv/bin/sphinx-build
+
+  coverage:
+    name: Coverage
+    needs: blazingmq-dependency
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Try to get cached BlazingMQ build artifacts
+        id: cache-restore
+        uses: actions/cache/restore@v3
+        with:
+          path: blazingmq_artifacts.tar.gz
+          key: ${{ needs.blazingmq-dependency.outputs.blazingmq_sha }}
+      - name: Restore cached BlazingMQ build artifacts
+        run: tar xzf blazingmq_artifacts.tar.gz
+      - name: Set up Python
+        uses: actions/setup-python@v4
+        with:
+          python-version: "3.9"
+      - name: Create virtual environment
+        run: |
+          python3 -m venv venv
+      - name: Install Python dependencies
+        run: |
+          ./venv/bin/python3 -m pip install --upgrade pip
+          ./venv/bin/python3 -m pip install -r requirements-dev.txt
+      - name: Run tests with coverage
+        env:
+          BMQ_BROKER_URI: tcp://localhost:30114
+          PREFIX: blazingmq_artifacts
+          PYTHON: ./venv/bin/python
+          PKG_CONFIG_PATH: /usr/lib/x86_64-linux-gnu/pkgconfig:/opt/bb/lib64/pkgconfig:./blazingmq_artifacts/lib64/pkgconfig
+        run: |
+          mkdir -p bmq/logs
+          mkdir -p bmq/storage/archive
+          ./blazingmq_artifacts/bin/bmqbrkr.tsk ./tests/broker-config &
+          (sleep 5; make coverage-install && make coverage)
+      - name: Output code coverage summary
+        uses: irongut/CodeCoverageSummary@v1.3.0
+        with:
+          filename: coverage*.xml

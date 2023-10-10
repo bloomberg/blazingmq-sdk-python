@@ -129,17 +129,17 @@ if [ ! -e "${DIR_BUILD}/blazingmq/.complete" ]; then
         -DBDE_BUILD_TARGET_64=1 \
         -DBDE_BUILD_TARGET_CPP17=ON \
         -DCMAKE_BUILD_TYPE=RelWithDebInfo \
+        -DINSTALL_TARGETS="bmqbrkr;bmq;mwc" \
         -DCMAKE_INSTALL_LIBDIR="lib64" \
         -DCMAKE_INSTALL_PREFIX="${DIR_INSTALL}" \
         -DCMAKE_MODULE_PATH="${DIR_ROOT}" \
         -DCMAKE_PREFIX_PATH="${DIR_THIRDPARTY}/bde-tools" \
         -DCMAKE_TOOLCHAIN_FILE="${DIR_THIRDPARTY}/bde-tools/BdeBuildSystem/toolchains/linux/gcc-default.cmake" \
         -G "Ninja")
-    PKG_CONFIG_PATH="/usr/lib64/pkgconfig:${DIR_INSTALL}/lib64/pkgconfig" \
+    PKG_CONFIG_PATH="$(pkg-config --variable pc_path pkg-config):${DIR_INSTALL}/lib64/pkgconfig" \
     cmake -B "${DIR_BUILD}/blazingmq" -S "." "${CMAKE_OPTIONS[@]}"
-    cmake --build "${DIR_BUILD}/blazingmq" -j 16 --target bmq
-    cmake --install "${DIR_BUILD}/blazingmq" --component mwc-all
-    cmake --install "${DIR_BUILD}/blazingmq" --component bmq-all
+    cmake --build "${DIR_BUILD}/blazingmq" -j 16 --target all
+    cmake --install "${DIR_BUILD}/blazingmq"
     popd
     touch "${DIR_BUILD}/blazingmq/.complete"
 fi

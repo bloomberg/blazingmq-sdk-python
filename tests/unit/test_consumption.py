@@ -15,11 +15,12 @@
 
 import queue
 
+import pytest
+
 from blazingmq._enums import PropertyType
 from blazingmq._ext import Session
 from blazingmq._messages import AckStatus
 from blazingmq._messages import pretty_hex
-import pytest
 
 from .support import BINARY
 from .support import BOOL

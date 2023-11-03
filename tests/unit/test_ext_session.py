@@ -18,11 +18,12 @@ import queue
 import sys
 import weakref
 
+import pytest
+
 from blazingmq import exceptions
 from blazingmq._ext import Session
 from blazingmq._ext import ensure_stop_session
 from blazingmq.session_events import InterfaceError
-import pytest
 
 from .support import QUEUE_NAME
 from .support import dummy_callback

@@ -16,11 +16,12 @@
 import queue
 import threading
 
+import pytest
+
 from blazingmq import Error
 from blazingmq import QueueOptions
 from blazingmq import Session
 from blazingmq.session_events import log_session_event
-import pytest
 
 
 def test_confirmed_message_not_redelivered(unique_queue):

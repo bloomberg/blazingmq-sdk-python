@@ -15,11 +15,12 @@
 
 import uuid
 
+import pytest
+
 from blazingmq import BasicHealthMonitor
 from blazingmq import QueueOptions
 from blazingmq import Session
 from blazingmq.session_events import log_session_event
-import pytest
 
 
 @pytest.fixture

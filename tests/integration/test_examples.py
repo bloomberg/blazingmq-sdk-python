@@ -20,11 +20,12 @@ import sys
 import textwrap
 import time
 
+import pytest
+
 from blazingmq import AckStatus
 from blazingmq import QueueOptions
 from blazingmq import Session
 from blazingmq.session_events import log_session_event
-import pytest
 
 
 def script_wrapper(queue, script):

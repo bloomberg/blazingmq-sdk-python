@@ -20,10 +20,11 @@ import sys
 import textwrap
 import weakref
 
-from blazingmq import Session
-from blazingmq import session_events
 import mock
 import pytest
+
+from blazingmq import Session
+from blazingmq import session_events
 
 
 def test_on_session_events_processed():

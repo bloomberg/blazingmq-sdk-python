@@ -47,7 +47,7 @@ class DefaultTimeoutType(float):
         return "..."
 
 
-def DefaultMonitor():
+def DefaultMonitor() -> Union[BasicHealthMonitor, None]:
     return None
 
 

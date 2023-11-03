@@ -15,10 +15,11 @@
 
 import threading
 
+import pytest
+
 from blazingmq import exceptions
 from blazingmq._ext import Session
 from blazingmq._messages import create_message
-import pytest
 
 from .support import QUEUE_NAME
 from .support import dummy_callback

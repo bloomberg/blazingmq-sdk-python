@@ -15,14 +15,15 @@
 
 import threading
 
+import mock
+import pytest
+
 from blazingmq import BasicHealthMonitor
 from blazingmq import Error
 from blazingmq import QueueOptions
 from blazingmq import Session
 from blazingmq import session_events
 from blazingmq.testing import HostHealth
-import mock
-import pytest
 
 
 def test_receiving_host_health_events():

@@ -13,10 +13,11 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
+import mock
+
 from blazingmq import PropertyType
 from blazingmq import Session
 from blazingmq._ext import PROPERTY_TYPES_FROM_PY_MAPPING
-import mock
 
 QUEUE_NAME = b"bmq://bmq.dummy_domain.some_namespace/dummy_queue"
 

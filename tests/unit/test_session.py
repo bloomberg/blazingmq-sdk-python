@@ -15,6 +15,8 @@
 
 import re
 
+import pytest
+
 from blazingmq import BasicHealthMonitor
 from blazingmq import CompressionAlgorithmType
 from blazingmq import Error
@@ -23,7 +25,6 @@ from blazingmq import Session
 from blazingmq._messages import create_message
 from blazingmq._session import DEFAULT_TIMEOUT
 from blazingmq.testing import HostHealth
-import pytest
 
 from .support import dummy_callback
 from .support import make_session

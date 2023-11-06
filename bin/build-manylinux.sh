@@ -66,10 +66,12 @@ if [ ! -e "${DIR_THIRDPARTY}/cmake/.complete" ]; then
     mkdir -p "${DIR_THIRDPARTY}/cmake"
     pushd "${DIR_THIRDPARTY}/cmake"
     curl -s -L -O https://github.com/Kitware/CMake/releases/download/v3.27.1/cmake-3.27.1-linux-x86_64.sh
-    /bin/bash cmake-3.27.1-linux-x86_64.sh -- --skip-license --prefix="${DIR_INSTALL}"
+    /bin/bash cmake-3.27.1-linux-x86_64.sh -- --skip-license --exclude-subdir --prefix="${DIR_THIRDPARTY}/cmake"
     popd
     touch "${DIR_THIRDPARTY}/cmake/.complete"
 fi
+
+PATH="${DIR_THIRDPARTY}/cmake/bin:$PATH"
 
 if [ ! -e "${DIR_THIRDPARTY}/bison/.complete" ]; then
     # Build and install bison

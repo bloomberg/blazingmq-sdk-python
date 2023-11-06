@@ -105,6 +105,7 @@ if [ ! -e "${DIR_BUILD}/blazingmq/.complete" ]; then
         -DBDE_BUILD_TARGET_64=1 \
         -DBDE_BUILD_TARGET_CPP17=ON \
         -DCMAKE_BUILD_TYPE=RelWithDebInfo \
+        -DINSTALL_TARGETS="bmqbrkr;bmq;mwc" \
         -DCMAKE_INSTALL_LIBDIR="lib" \
         -DCMAKE_INSTALL_PREFIX="${DIR_INSTALL}" \
         -DCMAKE_MODULE_PATH="${DIR_ROOT}" \

@@ -15,12 +15,13 @@
 
 import weakref
 
+import pytest
+
 import blazingmq
 from blazingmq import _callbacks
 from blazingmq._messages import create_ack
 from blazingmq._messages import create_message
 from blazingmq._messages import create_message_handle
-import pytest
 
 from .support import QUEUE_NAME
 from .support import mock

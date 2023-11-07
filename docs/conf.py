@@ -176,7 +176,8 @@ texinfo_documents = [
 
 intersphinx_mapping = {
     "python": (
-        "https://docs.python.org/3"
+        "https://docs.python.org/3",
+        None
     )
 }
 

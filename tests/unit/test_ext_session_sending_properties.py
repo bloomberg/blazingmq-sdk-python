@@ -13,10 +13,11 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
+import pytest
+
 from blazingmq import CompressionAlgorithmType
 from blazingmq._ext import COMPRESSION_ALGO_FROM_PY_MAPPING as compression_map
 from blazingmq._ext import Session
-import pytest
 
 from .support import BINARY
 from .support import BOOL

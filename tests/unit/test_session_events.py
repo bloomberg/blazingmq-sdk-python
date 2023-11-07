@@ -15,10 +15,11 @@
 
 import logging
 
+import pytest
+
 from blazingmq import _callbacks
 from blazingmq import _ext
 from blazingmq import session_events
-import pytest
 
 from .support import mock
 

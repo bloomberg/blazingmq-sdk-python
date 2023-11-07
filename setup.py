@@ -28,6 +28,20 @@ from Cython.Compiler import Options  # isort:skip
 IS_MAC = platform.system() == "Darwin"
 IS_LINUX = platform.system() == "Linux"
 
+# Making an sdist in principle does not require BDE+NTF+BlazingMQ. However,
+# every time setup.py is run, it calls create_extension, which searches for bmq
+# with pkgconfig. This is generally good; if we're building the SDK of course
+# we need BlazingMQ built and installed on the system. For building an sdist,
+# though, this is not needed.
+#
+# On GitHub CI, the sdist is generated in a separate container, before we run
+# build_manylinux.sh to build the wheels in another container. We could run
+# build_manylinux.sh prior to making the sdist, but that's a 30-minute
+# waste. Instead, with this environment variable, we can selectively tell
+# setup.py to not look for pkgconfig dependencies. This is only safe when
+# making sdists, but that is exactly where we want it to happen.
+SHOULD_SKIP_PKGCONFIG = "BLAZINGMQ_PYTHON_NO_PKGCONFIG" in os.environ
+
 TEST_BUILD = False
 if "--test-build" in sys.argv:
     TEST_BUILD = True
@@ -109,7 +123,11 @@ def create_extension(name, libraries, **kwargs):
     ext.extra_compile_args = extra_compile_args + list(ext.extra_compile_args)
     ext.extra_link_args = extra_link_args + list(ext.extra_link_args)
 
-    pkg_config = pkgconfig.parse(" ".join(libraries), static=True)
+    if SHOULD_SKIP_PKGCONFIG:
+        pkg_config_libraries = ""
+    else:
+        pkg_config_libraries = " ".join(libraries)
+    pkg_config = pkgconfig.parse(pkg_config_libraries, static=True)
     ext.define_macros = list(ext.define_macros) + pkg_config["define_macros"]
     ext.include_dirs = list(ext.include_dirs) + pkg_config["include_dirs"]
     ext.library_dirs = list(ext.library_dirs) + pkg_config["library_dirs"]

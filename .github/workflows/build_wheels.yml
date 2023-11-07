@@ -2,10 +2,6 @@ name: Wheels
 
 on:
   push:
-  pull_request:
-    paths-ignore:
-      - "docs/**"
-      - "CONTRIBUTING.md"
   release:
     types:
       - published
@@ -25,6 +21,8 @@ jobs:
       - uses: actions/checkout@v3
 
       - name: Build sdist
+        env:
+          BLAZINGMQ_PYTHON_NO_PKGCONFIG: ’1’
         run: pipx run build --sdist
 
       - uses: actions/upload-artifact@v3
@@ -37,14 +35,17 @@ jobs:
           name: tests
           path: tests
 
+      - uses: actions/upload-artifact@v3
+        with:
+          name: bin
+          path: bin
+
   choose_architectures:
     name: Decide which architectures to build wheels for
     runs-on: ubuntu-latest
     steps:
       - id: x86_64
         run: echo "cibw_arch=x86_64" >> $GITHUB_OUTPUT
-      - id: i686
-        run: echo "cibw_arch=i686" >> $GITHUB_OUTPUT
       - id: aarch64
         if: github.event_name == 'release' && github.event.action == 'published'
         run: echo "cibw_arch=aarch64" >> $GITHUB_OUTPUT
@@ -72,6 +73,10 @@ jobs:
         with:
           name: tests
           path: tests
+      - uses: actions/download-artifact@v3
+        with:
+          name: bin
+          path: bin
       - uses: docker/setup-qemu-action@v2
         if: runner.os == 'Linux'
         name: Set up QEMU
@@ -84,12 +89,11 @@ jobs:
       - name: Build wheels
         uses: pypa/cibuildwheel@v2.15.0
         env:
-          CIBW_BUILD: ${{ matrix.cibw_python }}
           CIBW_ARCHS_LINUX: ${{ matrix.cibw_arch }}
+          CIBW_BUILD: ${{ matrix.cibw_python }}
           CIBW_PRERELEASE_PYTHONS: True
-          CIBW_TEST_EXTRAS: test
-          CIBW_TEST_COMMAND: python -m pytest {package}/tests
-          CIBW_TEST_SKIP: "*aarch64*"
+          CIBW_TEST_COMMAND: python3 -m pytest {project}/tests/unit
+          CIBW_TEST_REQUIRES: pytest mock pkgconfig
       - uses: actions/upload-artifact@v3
         with:
           name: dist
@@ -102,8 +106,8 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
-        os: [macos-11]
-        cibw_python: ["cp38-*", "cp39-*", "cp310-*", "cp311-*", "cp312-*"]
+        os: [macos-12]
+        cibw_python: ["cp311-*"]
         cibw_arch: ["x86_64", "arm64"]
 
     steps:
@@ -115,22 +119,26 @@ jobs:
         with:
           name: tests
           path: tests
+      - uses: actions/download-artifact@v3
+        with:
+          name: bin
+          path: bin
       - name: Extract sdist
         run: |
           tar zxvf dist/*.tar.gz --strip-components=1
       - name: Sets env vars for compilation
         if: matrix.cibw_arch == 'arm64'
         run: |
-          echo "CFLAGS=-target arm64-apple-macos11" >> $GITHUB_ENV
+          echo "CFLAGS=-target arm64-apple-macos12" >> $GITHUB_ENV
       - name: Build wheels
         uses: pypa/cibuildwheel@v2.15.0
         env:
-          CIBW_BUILD: ${{ matrix.cibw_python }}
           CIBW_ARCHS_MACOS: ${{ matrix.cibw_arch }}
-          CIBW_PRERELEASE_PYTHONS: True
-          CIBW_TEST_EXTRAS: test
-          CIBW_TEST_COMMAND: pytest {package}/tests
+          CIBW_BUILD: ${{ matrix.cibw_python }}
           CIBW_BUILD_VERBOSITY: 1
+          CIBW_PRERELEASE_PYTHONS: True
+          CIBW_TEST_COMMAND: python3 -m pytest {project}/tests/unit
+          CIBW_TEST_REQUIRES: pytest mock pkgconfig
           MACOSX_DEPLOYMENT_TARGET: "11.0"
 
       - uses: actions/upload-artifact@v3

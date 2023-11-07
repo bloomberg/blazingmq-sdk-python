@@ -17,13 +17,14 @@ import queue
 import threading
 import weakref
 
+import pytest
+
 from blazingmq import AckStatus
 from blazingmq import CompressionAlgorithmType
 from blazingmq import QueueOptions
 from blazingmq import Session
 from blazingmq import exceptions
 from blazingmq.session_events import log_session_event
-import pytest
 
 
 def test_post_success(default_session, unique_queue, zeroed_queue_options):

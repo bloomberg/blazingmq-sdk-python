@@ -15,11 +15,12 @@
 
 import weakref
 
+import pytest
+
 from blazingmq import CompressionAlgorithmType
 from blazingmq import exceptions
 from blazingmq._ext import COMPRESSION_ALGO_FROM_PY_MAPPING as compression_map
 from blazingmq._ext import Session
-import pytest
 
 from .support import QUEUE_NAME
 from .support import dummy_callback

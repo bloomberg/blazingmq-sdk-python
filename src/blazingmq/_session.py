@@ -220,7 +220,9 @@ class Session:
             received by the session.
         on_message: an optional callback to process `Message` objects received
             by the session.
-        broker: TCP address of the broker (default: 'tcp://localhost:30114')
+        broker: TCP address of the broker (default: 'tcp://localhost:30114').
+            If the environment variable ``BMQ_BROKER_URI`` is set, its value
+            will override whatever broker address is passed via this argument.
         message_compression_algorithm: the type of compression to apply to messages
             being posted via this session object.
         timeout: maximum number of seconds to wait for requests on this

@@ -14,6 +14,7 @@
 # limitations under the License.
 
 from bsl cimport optional
+from bsl cimport pair
 from bsl cimport shared_ptr
 from bsl.bsls cimport TimeInterval
 from libcpp cimport bool as cppbool
@@ -41,7 +42,16 @@ cdef extern from "pybmq_session.h" namespace "BloombergLP::pybmq" nogil:
                 const char* broker_uri,
                 const char* script_name,
                 CompressionAlgorithmType message_compression_algorithm,
-                TimeInterval timeout,
+                optional[int] num_processing_threads,
+                optional[int] blob_buffer_size,
+                optional[int] channel_high_watermark,
+                optional[pair[int, int]] event_queue_watermarks,
+                TimeInterval stats_dump_interval,
+                TimeInterval connect_timeout,
+                TimeInterval disconnect_timeout,
+                TimeInterval open_queue_timeout,
+                TimeInterval configure_queue_timeout,
+                TimeInterval close_queue_timeout,
                 bint monitor_host_health,
                 shared_ptr[ManualHostHealthMonitor] fake_host_health_monitor_sp,
                 object error,

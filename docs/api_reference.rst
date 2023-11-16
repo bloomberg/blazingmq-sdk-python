@@ -15,6 +15,10 @@ Session
     :members:
     :member-order: bysource
 
+.. autoclass:: SessionOptions
+    :members:
+    :member-order: bysource
+
 .. autoclass:: QueueOptions
     :members:
     :member-order: bysource

@@ -22,6 +22,8 @@ from blazingmq import CompressionAlgorithmType
 from blazingmq import Error
 from blazingmq import QueueOptions
 from blazingmq import Session
+from blazingmq import SessionOptions
+from blazingmq import Timeouts
 from blazingmq._messages import create_message
 from blazingmq._session import DEFAULT_TIMEOUT
 from blazingmq.testing import HostHealth
@@ -72,6 +74,203 @@ def test_session_constructed(ext_cls):
         open_queue_timeout=60.0,
         configure_queue_timeout=60.0,
         close_queue_timeout=60.0,
+        monitor_host_health=False,
+        fake_host_health_monitor=None,
+    )
+
+
+@mock.patch("blazingmq._session.ExtSession")
+def test_session_constructed_with_timeouts(ext_cls):
+    # GIVEN
+    ext_cls.mock_add_spec([])
+
+    def dummy1():
+        pass
+
+    def dummy2():
+        pass
+
+    timeouts = Timeouts(
+        connect_timeout=60.0,
+        disconnect_timeout=70.0,
+        open_queue_timeout=80.0,
+        configure_queue_timeout=90.0,
+        close_queue_timeout=100.0,
+    )
+
+    # WHEN
+    Session(
+        dummy1,
+        on_message=dummy2,
+        broker="some_uri",
+        timeout=timeouts,
+        num_processing_threads=1,
+        blob_buffer_size=5000,
+        channel_high_watermark=8000000,
+        event_queue_watermarks=(6000000, 7000000),
+        stats_dump_interval=30.0,
+        host_health_monitor=None,
+    )
+
+    # THEN
+    ext_cls.assert_called_once_with(
+        dummy1,
+        on_message=dummy2,
+        broker=b"some_uri",
+        message_compression_algorithm=CompressionAlgorithmType.NONE,
+        num_processing_threads=1,
+        blob_buffer_size=5000,
+        channel_high_watermark=8000000,
+        event_queue_watermarks=(6000000, 7000000),
+        stats_dump_interval=30.0,
+        connect_timeout=60.0,
+        disconnect_timeout=70.0,
+        open_queue_timeout=80.0,
+        configure_queue_timeout=90.0,
+        close_queue_timeout=100.0,
+        monitor_host_health=False,
+        fake_host_health_monitor=None,
+    )
+
+
+@mock.patch("blazingmq._session.ExtSession")
+def test_session_constructed_with_default_timeouts(ext_cls):
+    # GIVEN
+    ext_cls.mock_add_spec([])
+
+    def dummy1():
+        pass
+
+    def dummy2():
+        pass
+
+    timeouts = Timeouts()
+
+    # WHEN
+    Session(
+        dummy1,
+        on_message=dummy2,
+        broker="some_uri",
+        timeout=timeouts,
+        num_processing_threads=1,
+        blob_buffer_size=5000,
+        channel_high_watermark=8000000,
+        event_queue_watermarks=(6000000, 7000000),
+        stats_dump_interval=30.0,
+        host_health_monitor=None,
+    )
+
+    # THEN
+    ext_cls.assert_called_once_with(
+        dummy1,
+        on_message=dummy2,
+        broker=b"some_uri",
+        message_compression_algorithm=CompressionAlgorithmType.NONE,
+        num_processing_threads=1,
+        blob_buffer_size=5000,
+        channel_high_watermark=8000000,
+        event_queue_watermarks=(6000000, 7000000),
+        stats_dump_interval=30.0,
+        connect_timeout=None,
+        disconnect_timeout=None,
+        open_queue_timeout=None,
+        configure_queue_timeout=None,
+        close_queue_timeout=None,
+        monitor_host_health=False,
+        fake_host_health_monitor=None,
+    )
+
+
+@mock.patch("blazingmq._session.ExtSession")
+def test_session_default_with_options(ext_cls):
+    # GIVEN
+    ext_cls.mock_add_spec([])
+
+    def dummy1():
+        pass
+
+    def dummy2():
+        pass
+
+    session_options = SessionOptions()
+
+    # WHEN
+    Session.with_options(
+        dummy1, on_message=dummy2, broker="some_uri", session_options=session_options
+    )
+
+    # THEN
+    ext_cls.assert_called_once_with(
+        dummy1,
+        on_message=dummy2,
+        broker=b"some_uri",
+        message_compression_algorithm=CompressionAlgorithmType.NONE,
+        num_processing_threads=None,
+        blob_buffer_size=None,
+        channel_high_watermark=None,
+        event_queue_watermarks=None,
+        stats_dump_interval=None,
+        connect_timeout=None,
+        disconnect_timeout=None,
+        open_queue_timeout=None,
+        configure_queue_timeout=None,
+        close_queue_timeout=None,
+        monitor_host_health=False,
+        fake_host_health_monitor=None,
+    )
+
+
+@mock.patch("blazingmq._session.ExtSession")
+def test_session_with_options(ext_cls):
+    # GIVEN
+    ext_cls.mock_add_spec([])
+
+    def dummy1():
+        pass
+
+    def dummy2():
+        pass
+
+    timeouts = Timeouts(
+        connect_timeout=60.0,
+        disconnect_timeout=70.0,
+        open_queue_timeout=80.0,
+        configure_queue_timeout=90.0,
+        close_queue_timeout=100.0,
+    )
+
+    session_options = SessionOptions(
+        message_compression_algorithm=CompressionAlgorithmType.NONE,
+        timeouts=timeouts,
+        host_health_monitor=None,
+        num_processing_threads=1,
+        blob_buffer_size=5000,
+        channel_high_watermark=8000000,
+        event_queue_watermarks=(6000000, 7000000),
+        stats_dump_interval=30.0,
+    )
+
+    # WHEN
+    Session.with_options(
+        dummy1, on_message=dummy2, broker="some_uri", session_options=session_options
+    )
+
+    # THEN
+    ext_cls.assert_called_once_with(
+        dummy1,
+        on_message=dummy2,
+        broker=b"some_uri",
+        message_compression_algorithm=CompressionAlgorithmType.NONE,
+        num_processing_threads=1,
+        blob_buffer_size=5000,
+        channel_high_watermark=8000000,
+        event_queue_watermarks=(6000000, 7000000),
+        stats_dump_interval=30.0,
+        connect_timeout=60.0,
+        disconnect_timeout=70.0,
+        open_queue_timeout=80.0,
+        configure_queue_timeout=90.0,
+        close_queue_timeout=100.0,
         monitor_host_health=False,
         fake_host_health_monitor=None,
     )

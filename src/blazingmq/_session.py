@@ -55,17 +55,31 @@ DEFAULT_TIMEOUT = DefaultTimeoutType()
 KNOWN_MONITORS = ("blazingmq.BasicHealthMonitor",)
 
 
-def _convert_timeout(timeout: float) -> Optional[float]:
+def _convert_timeout(timeout: Optional[float]) -> Optional[float]:
     """Convert the timeout for use by the Cython layer.
 
-    If it is the DEFAULT_TIMEOUT sentinel, return None.  Otherwise, validate
-    that it is within the range accepted by bsls::TimeInterval and return it.
+    If it is the DEFAULT_TIMEOUT sentinel or None, return None.  Otherwise,
+    validate that it is within the range accepted by bsls::TimeInterval and
+    return it.
     """
-    if timeout is DEFAULT_TIMEOUT:
+    if timeout is DEFAULT_TIMEOUT or timeout is None:
         return None
-    elif timeout is not None and (0.0 < float(timeout) < 2**63):
-        return float(timeout)
+    elif 0.0 < timeout < 2**63:
+        return timeout
     raise ValueError(f"timeout must be greater than 0.0, was {timeout}")
+
+
+def _convert_stats_dump_interval(interval: Optional[float]) -> Optional[float]:
+    """Convert the stats dump interval for use by the Cython layer.
+
+    If is None, return None.  Otherwise, validate that it is within the range
+    accepted by bsls::TimeInterval and return it.
+    """
+    if interval is None:
+        return interval
+    if 0.0 <= interval < 2**63:
+        return interval
+    raise ValueError(f"stats_dump_interval must be nonnegative, was {interval}")
 
 
 def _collect_properties_and_types(
@@ -301,7 +315,10 @@ class Session:
         message_compression_algorithm: the type of compression to apply to messages
             being posted via this session object.
         timeout: maximum number of seconds to wait for requests on this
-            session.  If not provided, reasonable defaults are used.
+            session.  If not provided, reasonable defaults are used.  This
+            argument may either be a simple ``float``, which sets the same
+            timeout for each operation, or an instance of the `Timeouts` class,
+            which allows setting the timeout for each operation independently.
         host_health_monitor: A `.BasicHealthMonitor` is used by default, so
             your tests can control whether the session sees the machine as
             healthy or not by calling `.set_healthy` and `.set_unhealthy` on
@@ -310,12 +327,33 @@ class Session:
             `.HostHealthRestored` events will never be emitted, and the
             *suspends_on_bad_host_health* option of `QueueOptions` cannot be
             used.
+        num_processing_threads: The number of threads for the SDK to use for
+            processing events.  This defaults to 1.
+        blob_buffer_size: The size (in bytes) of the blob buffers to use.  This
+            defaults to 4k.
+        channel_high_watermark: The size (in bytes) to use for the write cache
+            high watermark on the channel.  The default value is 128MB.  Note
+            that BlazingMQ reserves 4MB of this value for control messages, so
+            the actual watermark for data published is
+            ``channel_high_watermark - 4MB``.
+        event_queue_watermarks: A tuple containing the low and high
+            notification watermark thresholds for the buffer containing all
+            incoming messages from the broker, respectively.  A warning
+            `.SlowConsumerHighWaterMark` is emitted when the buffer reaches the
+            high watermark value, and a notification `.SlowConsumerNormal` is
+            emitted when the buffer is back to the low watermark.
+        stats_dump_interval: The interval (in seconds) at which to dump stats
+            into the logs.  If 0, disable the recurring dump of stats (final
+            stats are always dumped at the end of the session).  The default is
+            5min; the value must be a multiple of 30s, in the range
+            ``[0s - 60min]``.
 
     Raises:
         `~blazingmq.Error`: If the session start request was not successful.
         `~blazingmq.exceptions.BrokerTimeoutError`: If the broker didn't respond
             to the request within a reasonable amount of time.
-        `ValueError`: If *timeout* is provided and not > 0.0.
+        `ValueError`: If any of the timeouts are provided and not > 0.0, or if
+            the ``stats_dump_interval`` is provided and is < 0.0.
     """
 
     def __init__(
@@ -326,8 +364,13 @@ class Session:
         message_compression_algorithm: CompressionAlgorithmType = (
             CompressionAlgorithmType.NONE
         ),
-        timeout: float = DEFAULT_TIMEOUT,
+        timeout: Union[Timeouts, float] = DEFAULT_TIMEOUT,
         host_health_monitor: Union[BasicHealthMonitor, None] = (DefaultMonitor()),
+        num_processing_threads: Optional[int] = None,
+        blob_buffer_size: Optional[int] = None,
+        channel_high_watermark: Optional[int] = None,
+        event_queue_watermarks: Optional[tuple[int, int]] = None,
+        stats_dump_interval: Optional[float] = None,
     ) -> None:
         if host_health_monitor is not None:
             if not isinstance(host_health_monitor, BasicHealthMonitor):
@@ -340,15 +383,46 @@ class Session:
         fake_host_health_monitor = getattr(host_health_monitor, "_monitor", None)
 
         self._has_no_on_message = on_message is None
-        self._ext = ExtSession(
-            on_session_event,
-            on_message=on_message,
-            broker=six.ensure_binary(broker),
-            message_compression_algorithm=message_compression_algorithm,
-            timeout=_convert_timeout(timeout),
-            monitor_host_health=monitor_host_health,
-            fake_host_health_monitor=fake_host_health_monitor,
-        )
+        if isinstance(timeout, Timeouts):
+            self._ext = ExtSession(
+                on_session_event,
+                on_message=on_message,
+                broker=six.ensure_binary(broker),
+                message_compression_algorithm=message_compression_algorithm,
+                num_processing_threads=num_processing_threads,
+                blob_buffer_size=blob_buffer_size,
+                channel_high_watermark=channel_high_watermark,
+                event_queue_watermarks=event_queue_watermarks,
+                stats_dump_interval=_convert_stats_dump_interval(stats_dump_interval),
+                connect_timeout=_convert_timeout(timeout.connect_timeout),
+                disconnect_timeout=_convert_timeout(timeout.disconnect_timeout),
+                open_queue_timeout=_convert_timeout(timeout.open_queue_timeout),
+                configure_queue_timeout=_convert_timeout(
+                    timeout.configure_queue_timeout
+                ),
+                close_queue_timeout=_convert_timeout(timeout.close_queue_timeout),
+                monitor_host_health=monitor_host_health,
+                fake_host_health_monitor=fake_host_health_monitor,
+            )
+        else:
+            self._ext = ExtSession(
+                on_session_event,
+                on_message=on_message,
+                broker=six.ensure_binary(broker),
+                message_compression_algorithm=message_compression_algorithm,
+                num_processing_threads=num_processing_threads,
+                blob_buffer_size=blob_buffer_size,
+                channel_high_watermark=channel_high_watermark,
+                event_queue_watermarks=event_queue_watermarks,
+                stats_dump_interval=_convert_stats_dump_interval(stats_dump_interval),
+                connect_timeout=_convert_timeout(timeout),
+                disconnect_timeout=_convert_timeout(timeout),
+                open_queue_timeout=_convert_timeout(timeout),
+                configure_queue_timeout=_convert_timeout(timeout),
+                close_queue_timeout=_convert_timeout(timeout),
+                monitor_host_health=monitor_host_health,
+                fake_host_health_monitor=fake_host_health_monitor,
+            )
 
     def open_queue(
         self,

@@ -116,13 +116,13 @@ def test_stopped_session_not_stopped_on_dealloc():
     mock.stop.assert_called_once_with()
 
 
-def test_start_timeout():
+def test_start_connect_timeout():
     # GIVEN
     mock = sdk_mock(start=0, stop=None)
     timeout = 1.12345
 
     # WHEN
-    session = Session(dummy_callback, timeout=timeout, _mock=mock)
+    session = Session(dummy_callback, connect_timeout=timeout, _mock=mock)
 
     # THEN
     mock.start.assert_called_once_with(timeout=timeout)
@@ -204,15 +204,23 @@ def test_process_name_override_non_unicode(monkeypatch):
 def test_session_timeout_passed_to_queue_defaults():
     # GIVEN
     mock = sdk_mock(start=0, stop=None)
-    timeout = 321
+    open_queue_timeout = 321
+    configure_queue_timeout = 432
+    close_queue_timeout = 543
 
     # WHEN
-    Session(dummy_callback, timeout=timeout, _mock=mock)
+    Session(
+        dummy_callback,
+        open_queue_timeout=open_queue_timeout,
+        configure_queue_timeout=configure_queue_timeout,
+        close_queue_timeout=close_queue_timeout,
+        _mock=mock,
+    )
 
     # THEN
-    assert mock.options["open_queue_timeout"] == timeout
-    assert mock.options["configure_queue_timeout"] == timeout
-    assert mock.options["close_queue_timeout"] == timeout
+    assert mock.options["open_queue_timeout"] == open_queue_timeout
+    assert mock.options["configure_queue_timeout"] == configure_queue_timeout
+    assert mock.options["close_queue_timeout"] == close_queue_timeout
 
 
 def test_ensure_stop_session_callback_calls_sdk_stop():

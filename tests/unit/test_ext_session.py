@@ -223,6 +223,36 @@ def test_session_timeout_passed_to_queue_defaults():
     assert mock.options["close_queue_timeout"] == close_queue_timeout
 
 
+def test_session_session_options_propagated():
+    # GIVEN
+    mock = sdk_mock(start=0, stop=None)
+    num_processing_threads = 10
+    blob_buffer_size = 5000
+    channel_high_watermark = 20000000
+    event_queue_low_watermark = 1000000
+    event_queue_high_watermark = 10000000
+    stats_dump_interval = 90.0
+
+    # WHEN
+    Session(
+        dummy_callback,
+        num_processing_threads=num_processing_threads,
+        blob_buffer_size=blob_buffer_size,
+        channel_high_watermark=channel_high_watermark,
+        event_queue_watermarks=(event_queue_low_watermark, event_queue_high_watermark),
+        stats_dump_interval=stats_dump_interval,
+        _mock=mock,
+    )
+
+    # THEN
+    assert mock.options["num_processing_threads"] == num_processing_threads
+    assert mock.options["blob_buffer_size"] == blob_buffer_size
+    assert mock.options["channel_high_watermark"] == channel_high_watermark
+    assert mock.options["event_queue_low_watermark"] == event_queue_low_watermark
+    assert mock.options["event_queue_high_watermark"] == event_queue_high_watermark
+    assert mock.options["stats_dump_interval"] == stats_dump_interval
+
+
 def test_ensure_stop_session_callback_calls_sdk_stop():
     """Ensure that every started session is stopped by `ensure_stop_session`.
 

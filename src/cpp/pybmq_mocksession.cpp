@@ -276,10 +276,22 @@ MockSession::MockSession(
     static const char* const option_names[] = {
             "broker_uri",
             "process_name_override",
+            "connect_timeout",
+            "disconnect_timeout",
             "open_queue_timeout",
             "configure_queue_timeout",
-            "close_queue_timeout"};
+            "close_queue_timeout",
+            "num_processing_threads",
+            "blob_buffer_size",
+            "channel_high_watermark",
+            "event_queue_low_watermark",
+            "event_queue_high_watermark",
+            "stats_dump_interval"};
 
+    double timeout_connect_secs = options.connectTimeout().seconds()
+                                  + options.connectTimeout().nanoseconds() * 1e-9;
+    double timeout_disconnect_secs = options.disconnectTimeout().seconds()
+                                     + options.disconnectTimeout().nanoseconds() * 1e-9;
     double timeout_open_secs = options.openQueueTimeout().seconds()
                                + options.openQueueTimeout().nanoseconds() * 1e-9;
     double timeout_configure_secs =
@@ -287,18 +299,29 @@ MockSession::MockSession(
             + options.configureQueueTimeout().nanoseconds() * 1e-9;
     double timeout_close_secs = options.closeQueueTimeout().seconds()
                                 + options.closeQueueTimeout().nanoseconds() * 1e-9;
+    double stats_dump_interval_secs =
+            options.statsDumpInterval().seconds()
+            + options.statsDumpInterval().nanoseconds() * 1e-9;
 
     bslma::ManagedPtr<PyObject> py_options = RefUtils::toManagedPtr(_Py_DictBuilder(
             option_names,
-            "(s# N f f f)",
+            "(s# N f f f f f i i i i i f)",
             options.brokerUri().c_str(),
             options.brokerUri().length(),
             PyBytes_FromStringAndSize(
                     options.processNameOverride().c_str(),
                     options.processNameOverride().length()),
+            timeout_connect_secs,
+            timeout_disconnect_secs,
             timeout_open_secs,
             timeout_configure_secs,
-            timeout_close_secs));
+            timeout_close_secs,
+            options.numProcessingThreads(),
+            options.blobBufferSize(),
+            options.channelHighWatermark(),
+            options.eventQueueLowWatermark(),
+            options.eventQueueHighWatermark(),
+            stats_dump_interval_secs));
     if (!py_options) throw bsl::runtime_error("propagating Python error");
     PyObject_SetAttrString(d_mock, "options", py_options.get());
 }

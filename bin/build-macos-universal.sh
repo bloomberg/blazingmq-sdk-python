@@ -44,18 +44,7 @@ fi
 
 # :: Clone dependencies :::::::::::::::::::::::::::::::::::::::::::::::::::::::
 
-if [ ! -d "${DIR_THIRDPARTY}/bde-tools" ]; then
-    git clone https://github.com/bloomberg/bde-tools "${DIR_THIRDPARTY}/bde-tools"
-fi
-if [ ! -d "${DIR_THIRDPARTY}/bde" ]; then
-    git clone --depth 1 https://github.com/bloomberg/bde.git "${DIR_THIRDPARTY}/bde"
-fi
-if [ ! -d "${DIR_THIRDPARTY}/ntf-core" ]; then
-    git clone --depth 1 https://github.com/bloomberg/ntf-core.git "${DIR_THIRDPARTY}/ntf-core"
-fi
-if [ ! -d "${DIR_THIRDPARTY}/blazingmq" ]; then
-    git clone --depth 1 https://github.com/bloomberg/blazingmq.git "${DIR_THIRDPARTY}/blazingmq"
-fi
+source ./bin/clone-dependencies.sh
 
 # Build and install BDE
 # Refer to https://bloomberg.github.io/bde/library_information/build.html

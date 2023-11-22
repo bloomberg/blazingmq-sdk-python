@@ -42,24 +42,15 @@ fi
 
 # :: Clone dependencies :::::::::::::::::::::::::::::::::::::::::::::::::::::::
 
-if [ ! -d "${DIR_THIRDPARTY}/bde-tools" ]; then
-    git clone https://github.com/bloomberg/bde-tools "${DIR_THIRDPARTY}/bde-tools"
-fi
-if [ ! -d "${DIR_THIRDPARTY}/bde" ]; then
-    git clone --depth 1 https://github.com/bloomberg/bde.git "${DIR_THIRDPARTY}/bde"
-fi
-if [ ! -d "${DIR_THIRDPARTY}/ntf-core" ]; then
-    git clone --depth 1 https://github.com/bloomberg/ntf-core.git "${DIR_THIRDPARTY}/ntf-core"
-fi
+source ./bin/clone-dependencies.sh
+
+# Download additional dependencies that are not packaged on manylinux:
 if [ ! -d "${DIR_THIRDPARTY}/google-benchmark" ]; then
     git clone --depth 1 https://github.com/google/benchmark.git "${DIR_THIRDPARTY}/google-benchmark"
 fi
 if [ ! -d "${DIR_THIRDPARTY}/bison" ]; then
     mkdir -p "${DIR_THIRDPARTY}/bison"
     curl https://ftp.gnu.org/gnu/bison/bison-3.8.2.tar.xz | tar -Jx -C "${DIR_THIRDPARTY}/bison" --strip-components 1
-fi
-if [ ! -d "${DIR_THIRDPARTY}/blazingmq" ]; then
-    git clone --depth 1 https://github.com/bloomberg/blazingmq.git "${DIR_THIRDPARTY}/blazingmq"
 fi
 
 if [ ! -e "${DIR_THIRDPARTY}/cmake/.complete" ]; then

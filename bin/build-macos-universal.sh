@@ -103,9 +103,8 @@ if [ ! -e "${DIR_BUILD}/blazingmq/.complete" ]; then
         -DFLEX_ROOT="${FLEX_ROOT}"
         -G "Ninja")
     cmake -B "${DIR_BUILD}/blazingmq" -S "." "${CMAKE_OPTIONS[@]}"
-    cmake --build "${DIR_BUILD}/blazingmq" -j 16 --target bmq
-    cmake --install "${DIR_BUILD}/blazingmq" --component mwc-all
-    cmake --install "${DIR_BUILD}/blazingmq" --component bmq-all
+    cmake --build "${DIR_BUILD}/blazingmq" -j 16 --target all
+    cmake --install "${DIR_BUILD}/blazingmq"
     popd
     touch "${DIR_BUILD}/blazingmq/.complete"
 fi

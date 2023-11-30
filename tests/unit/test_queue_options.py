@@ -47,10 +47,10 @@ def test_queue_options_default_to_none():
     # WHEN
     options = blazingmq.QueueOptions()
     # THEN
-    options.consumer_priority is None
-    options.max_unconfirmed_bytes is None
-    options.max_unconfirmed_messages is None
-    options.suspends_on_bad_host_health is None
+    assert options.consumer_priority is None
+    assert options.max_unconfirmed_bytes is None
+    assert options.max_unconfirmed_messages is None
+    assert options.suspends_on_bad_host_health is None
 
 
 def test_queue_options_equality():

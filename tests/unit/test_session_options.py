@@ -55,14 +55,14 @@ def test_session_options_default_to_none():
     # WHEN
     options = blazingmq.SessionOptions()
     # THEN
-    options.message_compression_algorithm is None
-    options.timeouts is None
-    options.host_health_monitor is None
-    options.num_processing_threads is None
-    options.blob_buffer_size is None
-    options.channel_high_watermark is None
-    options.event_queue_watermarks is None
-    options.stats_dump_interval is None
+    assert options.message_compression_algorithm is None
+    assert options.timeouts is None
+    assert options.host_health_monitor is None
+    assert options.num_processing_threads is None
+    assert options.blob_buffer_size is None
+    assert options.channel_high_watermark is None
+    assert options.event_queue_watermarks is None
+    assert options.stats_dump_interval is None
 
 
 def test_session_options_equality():

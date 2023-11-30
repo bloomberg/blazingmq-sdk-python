@@ -49,11 +49,11 @@ def test_timeouts_default_to_none():
     # WHEN
     timeouts = blazingmq.Timeouts()
     # THEN
-    timeouts.connect_timeout is None
-    timeouts.disconnect_timeout is None
-    timeouts.open_queue_timeout is None
-    timeouts.configure_queue_timeout is None
-    timeouts.close_queue_timeout is None
+    assert timeouts.connect_timeout is None
+    assert timeouts.disconnect_timeout is None
+    assert timeouts.open_queue_timeout is None
+    assert timeouts.configure_queue_timeout is None
+    assert timeouts.close_queue_timeout is None
 
 
 def test_timeouts_equality():

@@ -218,7 +218,7 @@ class QueueOptions:
             if value is not None:
                 params.append(f"{attr}={value!r}")
 
-        return "QueueOptions(%s)" % ", ".join(params)
+        return f"QueueOptions({', '.join(params)})"
 
 
 class Timeouts:
@@ -293,7 +293,7 @@ class Timeouts:
             if value is not None:
                 params.append(f"{attr}={value!r}")
 
-        return "Timeouts(%s)" % ", ".join(params)
+        return f"Timeouts({', '.join(params)})"
 
 
 class SessionOptions:
@@ -402,7 +402,7 @@ class SessionOptions:
             if value is not None:
                 params.append(f"{attr}={value!r}")
 
-        return "SessionOptions(%s)" % ", ".join(params)
+        return f"SessionOptions({', '.join(params)})"
 
 
 class Session:

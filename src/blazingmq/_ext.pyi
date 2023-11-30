@@ -24,6 +24,7 @@ from blazingmq import CompressionAlgorithmType
 from blazingmq import Message
 from blazingmq import MessageHandle
 from blazingmq import PropertyType
+from blazingmq import Timeouts
 from blazingmq.session_events import SessionEvent
 
 DEFAULT_MAX_UNCONFIRMED_MESSAGES: int = ...
@@ -49,11 +50,7 @@ class Session:
         channel_high_watermark: Optional[int] = None,
         event_queue_watermarks: Optional[tuple[int, int]] = None,
         stats_dump_interval: Optional[int | float] = None,
-        connect_timeout: Optional[int | float] = None,
-        disconnect_timeout: Optional[int | float] = None,
-        open_queue_timeout: Optional[int | float] = None,
-        configure_queue_timeout: Optional[int | float] = None,
-        close_queue_timeout: Optional[int | float] = None,
+        timeouts: Timeouts = (Timeouts()),
         monitor_host_health: bool = False,
         fake_host_health_monitor: Optional[FakeHostHealthMonitor] = None,
     ) -> None: ...

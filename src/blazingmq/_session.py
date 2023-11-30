@@ -35,6 +35,7 @@ from ._messages import Ack
 from ._messages import Message
 from ._messages import MessageHandle
 from ._monitors import BasicHealthMonitor
+from ._timeouts import Timeouts
 from ._typing import PropertyTypeDict
 from ._typing import PropertyValueDict
 from ._typing import PropertyValueType
@@ -53,6 +54,22 @@ def DefaultMonitor() -> Union[BasicHealthMonitor, None]:
 
 DEFAULT_TIMEOUT = DefaultTimeoutType()
 KNOWN_MONITORS = ("blazingmq.BasicHealthMonitor",)
+
+
+def _validate_timeouts(timeouts: Timeouts) -> Timeouts:
+    """Validate a `.Timeouts` instance for use by the Cython layer.
+
+    If any of the timeouts contained within the `.Timeouts` instance are the
+    `DEFAULT_TIMEOUT` sentinel or `None`, return `None`.  Otherwise, validate
+    that it is within the range accepted by `bsls::TimeInterval` and return it.
+    """
+    return Timeouts(
+        connect_timeout=_convert_timeout(timeouts.connect_timeout),
+        disconnect_timeout=_convert_timeout(timeouts.disconnect_timeout),
+        open_queue_timeout=_convert_timeout(timeouts.open_queue_timeout),
+        configure_queue_timeout=_convert_timeout(timeouts.configure_queue_timeout),
+        close_queue_timeout=_convert_timeout(timeouts.close_queue_timeout),
+    )
 
 
 def _convert_timeout(timeout: Optional[float]) -> Optional[float]:
@@ -219,81 +236,6 @@ class QueueOptions:
                 params.append(f"{attr}={value!r}")
 
         return f"QueueOptions({', '.join(params)})"
-
-
-class Timeouts:
-    """A value semantic type representing session timeouts.
-
-    Each option can be set either by passing it as a keyword argument when
-    constructing a *Timeouts* instance, or by setting it as an attribute on
-    a constructed instance.
-
-    The default for every option is `None`. When constructing a `Session`,
-    either directly or using `SessionOptions`, options set to `None` are given
-    reasonable default values.
-
-    Args:
-        connect_timeout:
-            The maximum number of seconds to wait for connection requests on
-            this session.
-        disconnect_timeout:
-            The maximum number of seconds to wait for disconnection requests
-            on this session.
-        open_queue_timeout:
-            The maximum number of seconds to wait for open queue requests on
-            this session.
-        configure_queue_timeout:
-            The maximum number of seconds to wait for configure queue requests
-            on this session.
-        close_queue_timeout:
-            The maximum number of seconds to wait for close queue requests on
-            this session.
-    """
-
-    def __init__(
-        self,
-        connect_timeout: Optional[float] = None,
-        disconnect_timeout: Optional[float] = None,
-        open_queue_timeout: Optional[float] = None,
-        configure_queue_timeout: Optional[float] = None,
-        close_queue_timeout: Optional[float] = None,
-    ) -> None:
-        self.connect_timeout = connect_timeout
-        self.disconnect_timeout = disconnect_timeout
-        self.open_queue_timeout = open_queue_timeout
-        self.configure_queue_timeout = configure_queue_timeout
-        self.close_queue_timeout = close_queue_timeout
-
-    def __eq__(self, other: object) -> bool:
-        if not isinstance(other, Timeouts):
-            return False
-        return (
-            self.connect_timeout == other.connect_timeout
-            and self.disconnect_timeout == other.disconnect_timeout
-            and self.open_queue_timeout == other.open_queue_timeout
-            and self.configure_queue_timeout == other.configure_queue_timeout
-            and self.close_queue_timeout == other.close_queue_timeout
-        )
-
-    def __ne__(self, other: object) -> bool:
-        return not self == other
-
-    def __repr__(self) -> str:
-        attrs = (
-            "connect_timeout",
-            "disconnect_timeout",
-            "open_queue_timeout",
-            "configure_queue_timeout",
-            "close_queue_timeout",
-        )
-
-        params = []
-        for attr in attrs:
-            value = getattr(self, attr)
-            if value is not None:
-                params.append(f"{attr}={value!r}")
-
-        return f"Timeouts({', '.join(params)})"
 
 
 class SessionOptions:
@@ -513,11 +455,7 @@ class Session:
             channel_high_watermark=channel_high_watermark,
             event_queue_watermarks=event_queue_watermarks,
             stats_dump_interval=_convert_stats_dump_interval(stats_dump_interval),
-            connect_timeout=_convert_timeout(timeout.connect_timeout),
-            disconnect_timeout=_convert_timeout(timeout.disconnect_timeout),
-            open_queue_timeout=_convert_timeout(timeout.open_queue_timeout),
-            configure_queue_timeout=_convert_timeout(timeout.configure_queue_timeout),
-            close_queue_timeout=_convert_timeout(timeout.close_queue_timeout),
+            timeouts=_validate_timeouts(timeout),
             monitor_host_health=monitor_host_health,
             fake_host_health_monitor=fake_host_health_monitor,
         )

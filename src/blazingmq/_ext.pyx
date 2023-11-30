@@ -44,6 +44,7 @@ from . import _callbacks
 from . import _enums
 from . import _messages
 from . import _script_name
+from . import _timeouts
 from . import session_events
 from .exceptions import BrokerTimeoutError
 from .exceptions import Error
@@ -170,11 +171,7 @@ cdef class Session:
         channel_high_watermark: Optional[int] = None,
         event_queue_watermarks: Optional[tuple[int,int]] = None,
         stats_dump_interval: Optional[int|float] = None,
-        connect_timeout: Optional[int|float] = None,
-        disconnect_timeout: Optional[int|float] = None,
-        open_queue_timeout: Optional[int|float] = None,
-        configure_queue_timeout: Optional[int|float] = None,
-        close_queue_timeout: Optional[int|float] = None,
+        timeouts: _timeouts.Timeouts = (_timeouts.Timeouts()),
         monitor_host_health: bool = False,
         fake_host_health_monitor: FakeHostHealthMonitor = None,
         _mock: Optional[object] = None,
@@ -185,11 +182,11 @@ cdef class Session:
         cdef optional[int] c_channel_high_watermark
         cdef optional[pair[int,int]] c_event_queue_watermarks
         cdef TimeInterval c_stats_dump_interval = create_time_interval(stats_dump_interval)
-        cdef TimeInterval c_connect_timeout = create_time_interval(connect_timeout)
-        cdef TimeInterval c_disconnect_timeout = create_time_interval(disconnect_timeout)
-        cdef TimeInterval c_open_queue_timeout = create_time_interval(open_queue_timeout)
-        cdef TimeInterval c_configure_queue_timeout = create_time_interval(configure_queue_timeout)
-        cdef TimeInterval c_close_queue_timeout = create_time_interval(close_queue_timeout)
+        cdef TimeInterval c_connect_timeout = create_time_interval(timeouts.connect_timeout)
+        cdef TimeInterval c_disconnect_timeout = create_time_interval(timeouts.disconnect_timeout)
+        cdef TimeInterval c_open_queue_timeout = create_time_interval(timeouts.open_queue_timeout)
+        cdef TimeInterval c_configure_queue_timeout = create_time_interval(timeouts.configure_queue_timeout)
+        cdef TimeInterval c_close_queue_timeout = create_time_interval(timeouts.close_queue_timeout)
 
         PyEval_InitThreads()
 

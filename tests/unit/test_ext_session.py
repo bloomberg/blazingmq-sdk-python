@@ -20,6 +20,7 @@ import weakref
 
 import pytest
 
+from blazingmq import Timeouts
 from blazingmq import exceptions
 from blazingmq._ext import Session
 from blazingmq._ext import ensure_stop_session
@@ -120,9 +121,10 @@ def test_start_connect_timeout():
     # GIVEN
     mock = sdk_mock(start=0, stop=None)
     timeout = 1.12345
+    timeouts = Timeouts(connect_timeout=timeout)
 
     # WHEN
-    session = Session(dummy_callback, connect_timeout=timeout, _mock=mock)
+    session = Session(dummy_callback, timeouts=timeouts, _mock=mock)
 
     # THEN
     mock.start.assert_called_once_with(timeout=timeout)
@@ -207,13 +209,16 @@ def test_session_timeout_passed_to_queue_defaults():
     open_queue_timeout = 321
     configure_queue_timeout = 432
     close_queue_timeout = 543
+    timeouts = Timeouts(
+        open_queue_timeout=open_queue_timeout,
+        configure_queue_timeout=configure_queue_timeout,
+        close_queue_timeout=close_queue_timeout,
+    )
 
     # WHEN
     Session(
         dummy_callback,
-        open_queue_timeout=open_queue_timeout,
-        configure_queue_timeout=configure_queue_timeout,
-        close_queue_timeout=close_queue_timeout,
+        timeouts=timeouts,
         _mock=mock,
     )
 

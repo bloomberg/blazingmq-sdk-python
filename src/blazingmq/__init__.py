@@ -26,7 +26,7 @@ from ._monitors import BasicHealthMonitor
 from ._session import QueueOptions
 from ._session import Session
 from ._session import SessionOptions
-from ._session import Timeouts
+from ._timeouts import Timeouts
 from ._typing import PropertyTypeDict
 from ._typing import PropertyValueDict
 from .exceptions import Error

@@ -492,46 +492,35 @@ class Session:
         fake_host_health_monitor = getattr(host_health_monitor, "_monitor", None)
 
         self._has_no_on_message = on_message is None
-        if isinstance(timeout, Timeouts):
-            self._ext = ExtSession(
-                on_session_event,
-                on_message=on_message,
-                broker=six.ensure_binary(broker),
-                message_compression_algorithm=message_compression_algorithm,
-                num_processing_threads=num_processing_threads,
-                blob_buffer_size=blob_buffer_size,
-                channel_high_watermark=channel_high_watermark,
-                event_queue_watermarks=event_queue_watermarks,
-                stats_dump_interval=_convert_stats_dump_interval(stats_dump_interval),
-                connect_timeout=_convert_timeout(timeout.connect_timeout),
-                disconnect_timeout=_convert_timeout(timeout.disconnect_timeout),
-                open_queue_timeout=_convert_timeout(timeout.open_queue_timeout),
-                configure_queue_timeout=_convert_timeout(
-                    timeout.configure_queue_timeout
-                ),
-                close_queue_timeout=_convert_timeout(timeout.close_queue_timeout),
-                monitor_host_health=monitor_host_health,
-                fake_host_health_monitor=fake_host_health_monitor,
+
+        # Using our Timeouts class, preserve the old behavior of passing in a
+        # simple float as a timeout.  Avoid setting the `connect_timeout` and
+        # `disconnect_timeout`.
+        if not isinstance(timeout, Timeouts):
+            timeout = Timeouts(
+                open_queue_timeout=timeout,
+                configure_queue_timeout=timeout,
+                close_queue_timeout=timeout,
             )
-        else:
-            self._ext = ExtSession(
-                on_session_event,
-                on_message=on_message,
-                broker=six.ensure_binary(broker),
-                message_compression_algorithm=message_compression_algorithm,
-                num_processing_threads=num_processing_threads,
-                blob_buffer_size=blob_buffer_size,
-                channel_high_watermark=channel_high_watermark,
-                event_queue_watermarks=event_queue_watermarks,
-                stats_dump_interval=_convert_stats_dump_interval(stats_dump_interval),
-                connect_timeout=_convert_timeout(timeout),
-                disconnect_timeout=_convert_timeout(timeout),
-                open_queue_timeout=_convert_timeout(timeout),
-                configure_queue_timeout=_convert_timeout(timeout),
-                close_queue_timeout=_convert_timeout(timeout),
-                monitor_host_health=monitor_host_health,
-                fake_host_health_monitor=fake_host_health_monitor,
-            )
+
+        self._ext = ExtSession(
+            on_session_event,
+            on_message=on_message,
+            broker=six.ensure_binary(broker),
+            message_compression_algorithm=message_compression_algorithm,
+            num_processing_threads=num_processing_threads,
+            blob_buffer_size=blob_buffer_size,
+            channel_high_watermark=channel_high_watermark,
+            event_queue_watermarks=event_queue_watermarks,
+            stats_dump_interval=_convert_stats_dump_interval(stats_dump_interval),
+            connect_timeout=_convert_timeout(timeout.connect_timeout),
+            disconnect_timeout=_convert_timeout(timeout.disconnect_timeout),
+            open_queue_timeout=_convert_timeout(timeout.open_queue_timeout),
+            configure_queue_timeout=_convert_timeout(timeout.configure_queue_timeout),
+            close_queue_timeout=_convert_timeout(timeout.close_queue_timeout),
+            monitor_host_health=monitor_host_health,
+            fake_host_health_monitor=fake_host_health_monitor,
+        )
 
     @classmethod
     def with_options(

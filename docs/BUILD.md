@@ -26,52 +26,23 @@ For a more comprehensive, self-contained setup, use `tox` to build the project
 and run the entire test suite targeting a specific version of the interpreter.
 Run `tox -l` to see all available `tox` environments.
 
-## Local Development with Docker
+## Local Development
 
-The BlazingMQ Python SDK provides a `Dockerfile` for setting up a
-development environment, and a `docker/docker-compose.yaml` for
-composing development and broker Docker containers for end-to-end
-testing and development.
-
-The following commands will bring up one container that runs the
-BlazingMQ broker, and a second container that invokes `tox` to run all of the tests
-across all supported interpreter versions. Once the tests are complete,
-both containers will exit.
-
-```shell
-docker-compose -f docker/docker-compose.yaml up
-```
-
-You can also choose to run a subset of tests. For example, to
-run lint with tests for Python versions 3.7 and 3.9:
-
-```shell
-docker-compose -f docker/docker-compose.yaml run bmq-test python3.9 -m tox -e lint,py39,py37
-```
-
-Check `... python3.9 -m tox -l` for all available tox environments.
-
-### Working Interactively in Docker
-
-The following command will start the `bmq-broker` and `bmq-test`
-containers, and will replace the default `tox` command for the test container
-with `bash`, giving you a command prompt, from where you can perform your development
-using `make` targets and other commands.
-
-```shell
-docker-compose -f docker/docker-compose.yaml run bmq-test bash
-```
+The BlazingMQ Python SDK provides a `./build-manylinux.sh` script and a
+`./build-macosx-universal.sh` script for setting up a development environment.
 
 ## Working with Make Targets
 
-When in an interactive Docker prompt, you can use the following `make`
+When in an interactive command line prompt, you can use the following `make`
 targets to build and test the BlazingMQ Python SDK. Check the
-sections below to set up the appropriate environment variables that may be
-needed prior to running these commands (such as setting `PYEXEC`).
+appropriate GitHub Actions configuration to set up the appropriate environment
+variables that may be needed prior to running these commands (such as setting
+`PYEXEC`).  With a BlazingMQ broker running at `tcp://localhost:30114`, the
+following targets build and test the Python SDK:
 
 ```shell
 make test-install
-make check
+BMQ_BROKER_URI=tcp://localhost:30114 make check
 ```
 
 Additional `make` targets are provided, such as for test coverage.

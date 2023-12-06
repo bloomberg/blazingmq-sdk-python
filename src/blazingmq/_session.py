@@ -35,6 +35,7 @@ from ._messages import Ack
 from ._messages import Message
 from ._messages import MessageHandle
 from ._monitors import BasicHealthMonitor
+from ._timeouts import Timeouts
 from ._typing import PropertyTypeDict
 from ._typing import PropertyValueDict
 from ._typing import PropertyValueType
@@ -55,17 +56,47 @@ DEFAULT_TIMEOUT = DefaultTimeoutType()
 KNOWN_MONITORS = ("blazingmq.BasicHealthMonitor",)
 
 
-def _convert_timeout(timeout: float) -> Optional[float]:
+def _validate_timeouts(timeouts: Timeouts) -> Timeouts:
+    """Validate a `.Timeouts` instance for use by the Cython layer.
+
+    If any of the timeouts contained within the `.Timeouts` instance are the
+    `DEFAULT_TIMEOUT` sentinel or `None`, return `None`.  Otherwise, validate
+    that it is within the range accepted by `bsls::TimeInterval` and return it.
+    """
+    return Timeouts(
+        connect_timeout=_convert_timeout(timeouts.connect_timeout),
+        disconnect_timeout=_convert_timeout(timeouts.disconnect_timeout),
+        open_queue_timeout=_convert_timeout(timeouts.open_queue_timeout),
+        configure_queue_timeout=_convert_timeout(timeouts.configure_queue_timeout),
+        close_queue_timeout=_convert_timeout(timeouts.close_queue_timeout),
+    )
+
+
+def _convert_timeout(timeout: Optional[float]) -> Optional[float]:
     """Convert the timeout for use by the Cython layer.
 
-    If it is the DEFAULT_TIMEOUT sentinel, return None.  Otherwise, validate
-    that it is within the range accepted by bsls::TimeInterval and return it.
+    If it is the DEFAULT_TIMEOUT sentinel or None, return None.  Otherwise,
+    validate that it is within the range accepted by bsls::TimeInterval and
+    return it.
     """
-    if timeout is DEFAULT_TIMEOUT:
+    if timeout is DEFAULT_TIMEOUT or timeout is None:
         return None
-    elif timeout is not None and (0.0 < float(timeout) < 2**63):
-        return float(timeout)
+    elif 0.0 < timeout < 2**63:
+        return timeout
     raise ValueError(f"timeout must be greater than 0.0, was {timeout}")
+
+
+def _convert_stats_dump_interval(interval: Optional[float]) -> Optional[float]:
+    """Convert the stats dump interval for use by the Cython layer.
+
+    If is None, return None.  Otherwise, validate that it is within the range
+    accepted by bsls::TimeInterval and return it.
+    """
+    if interval is None:
+        return interval
+    if 0.0 <= interval < 2**63:
+        return interval
+    raise ValueError(f"stats_dump_interval must be nonnegative, was {interval}")
 
 
 def _collect_properties_and_types(
@@ -204,7 +235,116 @@ class QueueOptions:
             if value is not None:
                 params.append(f"{attr}={value!r}")
 
-        return "QueueOptions(%s)" % ", ".join(params)
+        return f"QueueOptions({', '.join(params)})"
+
+
+class SessionOptions:
+    """A value semantic type representing session options.
+
+    Each option can be set either by passing it as a keyword argument when
+    constructing a *SessionOptions* instance, or by setting it as an attribute
+    on a constructed instance.
+
+    The default for every option is `None`. When constructing a `Session`,
+    options set to `None` are given reasonable default values.
+
+    Args:
+        message_compression_algorithm:
+            The type of compression to apply to messages being posted via the
+            session this object is configuring.
+        timeouts:
+            The maximum number of seconds to wait for requests for each
+            operation on this session.  If not provided, reasonable defaults
+            are used.
+        host_health_monitor:
+            A `.BasicHealthMonitor` is used by default, so your tests can
+            control whether the session sees the machine as healthy or not by
+            calling `.set_healthy` and `.set_unhealthy` on that instance.  If
+            you instead pass `None`, the session will always see the machine as
+            healthy, `.HostUnhealthy` and `.HostHealthRestored` events with
+            never be emitted, and the *suspends_on_bad_host_health* option of
+            `QueueOptions` cannot be used.
+        num_processing_threads:
+            The number of threads for the SDK to use for processing events.
+            This defaults to 1.
+        blob_buffer_size:
+            The size (in bytes) of the blob buffers to use.  This defaults to
+            4k.
+        channel_high_watermark:
+            The size (in bytes) to use for the write cache high watermark on
+            the channel.  The default value is 128MB.  Note that BlazingMQ
+            reserves 4MB of this value for control messages, so the actual
+            watermark for data published is ``channel_high_watermark - 4MB``.
+        event_queue_watermarks:
+            A tuple containing the low and high notification watermark
+            thresholds for the buffer containing all incoming messages from the
+            broker, respectively.  A warning `.SlowConsumerHighWaterMark` is
+            emitted when the buffer reaches the high watermark value, and a
+            notification `.SlowConsumerNormal` is emitted when the buffer is
+            back to the low watermark.
+        stats_dump_interval:
+            The interval (in seconds) at which to dump stats into the logs.  If
+            0, disable the recurring dump of stats (final stats are always
+            dumped at the end of the session).  The default is 5min; the value
+            must be a multiple of 30s, in the range ``[0s - 60min]``.
+    """
+
+    def __init__(
+        self,
+        message_compression_algorithm: Optional[CompressionAlgorithmType] = None,
+        timeouts: Optional[Timeouts] = None,
+        host_health_monitor: Union[BasicHealthMonitor, None] = (DefaultMonitor()),
+        num_processing_threads: Optional[int] = None,
+        blob_buffer_size: Optional[int] = None,
+        channel_high_watermark: Optional[int] = None,
+        event_queue_watermarks: Optional[tuple[int, int]] = None,
+        stats_dump_interval: Optional[float] = None,
+    ) -> None:
+        self.message_compression_algorithm = message_compression_algorithm
+        self.timeouts = timeouts
+        self.host_health_monitor = host_health_monitor
+        self.num_processing_threads = num_processing_threads
+        self.blob_buffer_size = blob_buffer_size
+        self.channel_high_watermark = channel_high_watermark
+        self.event_queue_watermarks = event_queue_watermarks
+        self.stats_dump_interval = stats_dump_interval
+
+    def __eq__(self, other: object) -> bool:
+        if not isinstance(other, SessionOptions):
+            return False
+        return (
+            self.message_compression_algorithm == other.message_compression_algorithm
+            and self.timeouts == other.timeouts
+            and self.host_health_monitor == other.host_health_monitor
+            and self.num_processing_threads == other.num_processing_threads
+            and self.blob_buffer_size == other.blob_buffer_size
+            and self.channel_high_watermark == other.channel_high_watermark
+            and self.event_queue_watermarks == other.event_queue_watermarks
+            and self.stats_dump_interval == other.stats_dump_interval
+        )
+
+    def __ne__(self, other: object) -> bool:
+        return not self == other
+
+    def __repr__(self) -> str:
+        attrs = (
+            "message_compression_algorithm",
+            "timeouts",
+            "host_health_monitor",
+            "num_processing_threads",
+            "blob_buffer_size",
+            "channel_high_watermark",
+            "event_queue_watermarks",
+            "stats_dump_interval",
+        )
+
+        params = []
+        for attr in attrs:
+            value = getattr(self, attr)
+            if value is not None:
+                params.append(f"{attr}={value!r}")
+
+        return f"SessionOptions({', '.join(params)})"
 
 
 class Session:
@@ -226,7 +366,10 @@ class Session:
         message_compression_algorithm: the type of compression to apply to messages
             being posted via this session object.
         timeout: maximum number of seconds to wait for requests on this
-            session.  If not provided, reasonable defaults are used.
+            session.  If not provided, reasonable defaults are used.  This
+            argument may either be a simple ``float``, which sets the same
+            timeout for each operation, or an instance of the `Timeouts` class,
+            which allows setting the timeout for each operation independently.
         host_health_monitor: A `.BasicHealthMonitor` is used by default, so
             your tests can control whether the session sees the machine as
             healthy or not by calling `.set_healthy` and `.set_unhealthy` on
@@ -235,12 +378,33 @@ class Session:
             `.HostHealthRestored` events will never be emitted, and the
             *suspends_on_bad_host_health* option of `QueueOptions` cannot be
             used.
+        num_processing_threads: The number of threads for the SDK to use for
+            processing events.  This defaults to 1.
+        blob_buffer_size: The size (in bytes) of the blob buffers to use.  This
+            defaults to 4k.
+        channel_high_watermark: The size (in bytes) to use for the write cache
+            high watermark on the channel.  The default value is 128MB.  Note
+            that BlazingMQ reserves 4MB of this value for control messages, so
+            the actual watermark for data published is
+            ``channel_high_watermark - 4MB``.
+        event_queue_watermarks: A tuple containing the low and high
+            notification watermark thresholds for the buffer containing all
+            incoming messages from the broker, respectively.  A warning
+            `.SlowConsumerHighWaterMark` is emitted when the buffer reaches the
+            high watermark value, and a notification `.SlowConsumerNormal` is
+            emitted when the buffer is back to the low watermark.
+        stats_dump_interval: The interval (in seconds) at which to dump stats
+            into the logs.  If 0, disable the recurring dump of stats (final
+            stats are always dumped at the end of the session).  The default is
+            5min; the value must be a multiple of 30s, in the range
+            ``[0s - 60min]``.
 
     Raises:
         `~blazingmq.Error`: If the session start request was not successful.
         `~blazingmq.exceptions.BrokerTimeoutError`: If the broker didn't respond
             to the request within a reasonable amount of time.
-        `ValueError`: If *timeout* is provided and not > 0.0.
+        `ValueError`: If any of the timeouts are provided and not > 0.0, or if
+            the ``stats_dump_interval`` is provided and is < 0.0.
     """
 
     def __init__(
@@ -251,8 +415,13 @@ class Session:
         message_compression_algorithm: CompressionAlgorithmType = (
             CompressionAlgorithmType.NONE
         ),
-        timeout: float = DEFAULT_TIMEOUT,
+        timeout: Union[Timeouts, float] = DEFAULT_TIMEOUT,
         host_health_monitor: Union[BasicHealthMonitor, None] = (DefaultMonitor()),
+        num_processing_threads: Optional[int] = None,
+        blob_buffer_size: Optional[int] = None,
+        channel_high_watermark: Optional[int] = None,
+        event_queue_watermarks: Optional[tuple[int, int]] = None,
+        stats_dump_interval: Optional[float] = None,
     ) -> None:
         if host_health_monitor is not None:
             if not isinstance(host_health_monitor, BasicHealthMonitor):
@@ -265,15 +434,96 @@ class Session:
         fake_host_health_monitor = getattr(host_health_monitor, "_monitor", None)
 
         self._has_no_on_message = on_message is None
+
+        # Using our Timeouts class, preserve the old behavior of passing in a
+        # simple float as a timeout.  Avoid setting the `connect_timeout` and
+        # `disconnect_timeout`.
+        if not isinstance(timeout, Timeouts):
+            timeout = Timeouts(
+                open_queue_timeout=timeout,
+                configure_queue_timeout=timeout,
+                close_queue_timeout=timeout,
+            )
+
         self._ext = ExtSession(
             on_session_event,
             on_message=on_message,
             broker=six.ensure_binary(broker),
             message_compression_algorithm=message_compression_algorithm,
-            timeout=_convert_timeout(timeout),
+            num_processing_threads=num_processing_threads,
+            blob_buffer_size=blob_buffer_size,
+            channel_high_watermark=channel_high_watermark,
+            event_queue_watermarks=event_queue_watermarks,
+            stats_dump_interval=_convert_stats_dump_interval(stats_dump_interval),
+            timeouts=_validate_timeouts(timeout),
             monitor_host_health=monitor_host_health,
             fake_host_health_monitor=fake_host_health_monitor,
         )
+
+    @classmethod
+    def with_options(
+        cls,
+        on_session_event: Callable[[SessionEvent], None],
+        on_message: Optional[Callable[[Message, MessageHandle], None]] = None,
+        broker: str = "tcp://localhost:30114",
+        session_options: SessionOptions = (SessionOptions()),
+    ) -> Session:
+        """Construct a *Session* instance using `.SessionOptions`.
+
+        This is the recommended way to construct a new session, as the
+        `.SessionOptions` class provides an easier to use interface for
+        configuring only those options you need.
+
+        Args:
+            on_session_event: a required callback to process `.SessionEvent` events
+                received by the session.
+            on_message: an optional callback to process `Message` objects received
+                by the session.
+            broker: TCP address of the broker (default: 'tcp://localhost:30114').
+                If the environment variable ``BMQ_BROKER_URI`` is set, its value
+                will override whatever broker address is passed via this argument.
+            session_options: an instance of `.SessionOptions` that represents the
+                session's configuration.
+
+        Raises:
+            `~blazingmq.Error`: If the session start request was not successful.
+            `~blazingmq.exceptions.BrokerTimeoutError`: If the broker didn't respond
+                to the request within a reasonable amount of time.
+            `ValueError`: If any of the timeouts are provided and not > 0.0, or if
+                the ``stats_dump_interval`` is provided and is < 0.0.
+        """
+        message_compression_algorithm = session_options.message_compression_algorithm
+        if message_compression_algorithm is None:
+            message_compression_algorithm = CompressionAlgorithmType.NONE
+
+        if session_options.timeouts is None:
+            return cls(
+                on_session_event,
+                on_message,
+                broker,
+                message_compression_algorithm,
+                DEFAULT_TIMEOUT,
+                session_options.host_health_monitor,
+                session_options.num_processing_threads,
+                session_options.blob_buffer_size,
+                session_options.channel_high_watermark,
+                session_options.event_queue_watermarks,
+                session_options.stats_dump_interval,
+            )
+        else:
+            return cls(
+                on_session_event,
+                on_message,
+                broker,
+                message_compression_algorithm,
+                session_options.timeouts,
+                session_options.host_health_monitor,
+                session_options.num_processing_threads,
+                session_options.blob_buffer_size,
+                session_options.channel_high_watermark,
+                session_options.event_queue_watermarks,
+                session_options.stats_dump_interval,
+            )
 
     def open_queue(
         self,

@@ -80,7 +80,16 @@ Session::Session(
         const char* broker_uri,
         const char* script_name,
         bmqt::CompressionAlgorithmType::Enum message_compression_type,
-        const bsls::TimeInterval& timeout,
+        bsl::optional<int> num_processing_threads,
+        bsl::optional<int> blob_buffer_size,
+        bsl::optional<int> channel_high_watermark,
+        bsl::optional<bsl::pair<int, int> > event_queue_watermarks,
+        const bsls::TimeInterval& stats_dump_interval,
+        const bsls::TimeInterval& connect_timeout,
+        const bsls::TimeInterval& disconnect_timeout,
+        const bsls::TimeInterval& open_queue_timeout,
+        const bsls::TimeInterval& configure_queue_timeout,
+        const bsls::TimeInterval& close_queue_timeout,
         bool monitor_host_health,
         bsl::shared_ptr<bmqa::ManualHostHealthMonitor> fake_host_health_monitor_sp,
         PyObject* error,
@@ -117,10 +126,46 @@ Session::Session(
                 .setProcessNameOverride(script_name)
                 .setHostHealthMonitor(host_health_monitor_sp);
 
-        if (timeout != bsls::TimeInterval()) {
-            options.setOpenQueueTimeout(timeout)
-                    .setConfigureQueueTimeout(timeout)
-                    .setCloseQueueTimeout(timeout);
+        if (num_processing_threads.has_value()) {
+            options.setNumProcessingThreads(num_processing_threads.value());
+        }
+
+        if (blob_buffer_size.has_value()) {
+            options.setBlobBufferSize(blob_buffer_size.value());
+        }
+
+        if (channel_high_watermark.has_value()) {
+            options.setChannelHighWatermark(channel_high_watermark.value());
+        }
+
+        if (event_queue_watermarks.has_value()) {
+            options.configureEventQueue(
+                    event_queue_watermarks.value().first,
+                    event_queue_watermarks.value().second);
+        }
+
+        if (stats_dump_interval != bsls::TimeInterval()) {
+            options.setStatsDumpInterval(stats_dump_interval);
+        }
+
+        if (connect_timeout != bsls::TimeInterval()) {
+            options.setConnectTimeout(connect_timeout);
+        }
+
+        if (disconnect_timeout != bsls::TimeInterval()) {
+            options.setDisconnectTimeout(disconnect_timeout);
+        }
+
+        if (open_queue_timeout != bsls::TimeInterval()) {
+            options.setOpenQueueTimeout(open_queue_timeout);
+        }
+
+        if (configure_queue_timeout != bsls::TimeInterval()) {
+            options.setConfigureQueueTimeout(configure_queue_timeout);
+        }
+
+        if (close_queue_timeout != bsls::TimeInterval()) {
+            options.setCloseQueueTimeout(close_queue_timeout);
         }
 
         bslma::ManagedPtr<bmqa::SessionEventHandler> handler(

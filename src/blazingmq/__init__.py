@@ -25,6 +25,8 @@ from ._messages import MessageHandle
 from ._monitors import BasicHealthMonitor
 from ._session import QueueOptions
 from ._session import Session
+from ._session import SessionOptions
+from ._timeouts import Timeouts
 from ._typing import PropertyTypeDict
 from ._typing import PropertyValueDict
 from .exceptions import Error
@@ -42,6 +44,8 @@ __all__ = [
     "Message",
     "MessageHandle",
     "Session",
+    "SessionOptions",
+    "Timeouts",
     "__version__",
     "exceptions",
     "session_events",

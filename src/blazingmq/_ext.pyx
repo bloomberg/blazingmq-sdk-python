@@ -19,6 +19,7 @@ import logging
 import weakref
 
 from bsl cimport optional
+from bsl cimport pair
 from bsl cimport shared_ptr
 from bsl.bsls cimport TimeInterval
 from cpython.ceval cimport PyEval_InitThreads
@@ -43,6 +44,7 @@ from . import _callbacks
 from . import _enums
 from . import _messages
 from . import _script_name
+from . import _timeouts
 from . import session_events
 from .exceptions import BrokerTimeoutError
 from .exceptions import Error
@@ -164,14 +166,39 @@ cdef class Session:
         on_message=None,
         broker not None: bytes = b'tcp://localhost:30114',
         message_compression_algorithm not None=_enums.CompressionAlgorithmType.NONE,
-        timeout: Optional[int|float] = None,
+        num_processing_threads: Optional[int] = None,
+        blob_buffer_size: Optional[int] = None,
+        channel_high_watermark: Optional[int] = None,
+        event_queue_watermarks: Optional[tuple[int,int]] = None,
+        stats_dump_interval: Optional[int|float] = None,
+        timeouts: _timeouts.Timeouts = _timeouts.Timeouts(),
         monitor_host_health: bool = False,
         fake_host_health_monitor: FakeHostHealthMonitor = None,
         _mock: Optional[object] = None,
     ) -> None:
         cdef shared_ptr[ManualHostHealthMonitor] fake_host_health_monitor_sp
+        cdef optional[int] c_num_processing_threads
+        cdef optional[int] c_blob_buffer_size
+        cdef optional[int] c_channel_high_watermark
+        cdef optional[pair[int,int]] c_event_queue_watermarks
+        cdef TimeInterval c_stats_dump_interval = create_time_interval(stats_dump_interval)
+        cdef TimeInterval c_connect_timeout = create_time_interval(timeouts.connect_timeout)
+        cdef TimeInterval c_disconnect_timeout = create_time_interval(timeouts.disconnect_timeout)
+        cdef TimeInterval c_open_queue_timeout = create_time_interval(timeouts.open_queue_timeout)
+        cdef TimeInterval c_configure_queue_timeout = create_time_interval(timeouts.configure_queue_timeout)
+        cdef TimeInterval c_close_queue_timeout = create_time_interval(timeouts.close_queue_timeout)
 
         PyEval_InitThreads()
+
+        if num_processing_threads is not None:
+            c_num_processing_threads = optional[int](num_processing_threads)
+        if blob_buffer_size is not None:
+            c_blob_buffer_size = optional[int](blob_buffer_size)
+        if channel_high_watermark is not None:
+            c_channel_high_watermark = optional[int](channel_high_watermark)
+        if event_queue_watermarks is not None:
+            c_event_queue_watermarks = optional[pair[int,int]](
+                pair[int,int](event_queue_watermarks[0], event_queue_watermarks[1]))
 
         self.monitor_host_health = monitor_host_health
 
@@ -194,7 +221,6 @@ cdef class Session:
         cdef char *c_broker_uri = broker
         script_name = _script_name.get_script_name()
         cdef char *c_script_name = script_name
-        cdef TimeInterval c_timeout = create_time_interval(timeout)
         self._session = new NativeSession(
             session_cb,
             message_cb,
@@ -202,13 +228,22 @@ cdef class Session:
             c_broker_uri,
             c_script_name,
             COMPRESSION_ALGO_FROM_PY_MAPPING[message_compression_algorithm],
-            c_timeout,
+            c_num_processing_threads,
+            c_blob_buffer_size,
+            c_channel_high_watermark,
+            c_event_queue_watermarks,
+            c_stats_dump_interval,
+            c_connect_timeout,
+            c_disconnect_timeout,
+            c_open_queue_timeout,
+            c_configure_queue_timeout,
+            c_close_queue_timeout,
             monitor_host_health,
             fake_host_health_monitor_sp,
             Error,
             BrokerTimeoutError,
             _mock)
-        self._session.start(c_timeout)
+        self._session.start(c_connect_timeout)
         atexit.register(ensure_stop_session_impl, weakref.ref(self))
 
     def stop(self) -> None:

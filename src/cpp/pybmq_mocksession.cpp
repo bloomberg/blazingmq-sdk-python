@@ -261,6 +261,15 @@ maybe_emit_acks(PyObject* mock, bmqa::MockSession* mock_session)
     }
 }
 
+double
+time_interval_to_seconds(const bsls::TimeInterval& time_interval)
+{
+    const double k_S_PER_NS =
+            1.0 / static_cast<double>(bdlt::TimeUnitRatio::k_NS_PER_S);
+
+    return time_interval.seconds() + time_interval.nanoseconds() * k_S_PER_NS;
+}
+
 }  // namespace
 
 // CREATORS
@@ -288,20 +297,15 @@ MockSession::MockSession(
             "event_queue_high_watermark",
             "stats_dump_interval"};
 
-    double timeout_connect_secs = options.connectTimeout().seconds()
-                                  + options.connectTimeout().nanoseconds() * 1e-9;
-    double timeout_disconnect_secs = options.disconnectTimeout().seconds()
-                                     + options.disconnectTimeout().nanoseconds() * 1e-9;
-    double timeout_open_secs = options.openQueueTimeout().seconds()
-                               + options.openQueueTimeout().nanoseconds() * 1e-9;
+    double timeout_connect_secs = time_interval_to_seconds(options.connectTimeout());
+    double timeout_disconnect_secs =
+            time_interval_to_seconds(options.disconnectTimeout());
+    double timeout_open_secs = time_interval_to_seconds(options.openQueueTimeout());
     double timeout_configure_secs =
-            options.configureQueueTimeout().seconds()
-            + options.configureQueueTimeout().nanoseconds() * 1e-9;
-    double timeout_close_secs = options.closeQueueTimeout().seconds()
-                                + options.closeQueueTimeout().nanoseconds() * 1e-9;
+            time_interval_to_seconds(options.configureQueueTimeout());
+    double timeout_close_secs = time_interval_to_seconds(options.closeQueueTimeout());
     double stats_dump_interval_secs =
-            options.statsDumpInterval().seconds()
-            + options.statsDumpInterval().nanoseconds() * 1e-9;
+            time_interval_to_seconds(options.statsDumpInterval());
 
     bslma::ManagedPtr<PyObject> py_options = RefUtils::toManagedPtr(_Py_DictBuilder(
             option_names,

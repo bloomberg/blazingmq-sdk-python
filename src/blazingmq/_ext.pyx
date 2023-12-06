@@ -171,7 +171,7 @@ cdef class Session:
         channel_high_watermark: Optional[int] = None,
         event_queue_watermarks: Optional[tuple[int,int]] = None,
         stats_dump_interval: Optional[int|float] = None,
-        timeouts: _timeouts.Timeouts = (_timeouts.Timeouts()),
+        timeouts: _timeouts.Timeouts = _timeouts.Timeouts(),
         monitor_host_health: bool = False,
         fake_host_health_monitor: FakeHostHealthMonitor = None,
         _mock: Optional[object] = None,

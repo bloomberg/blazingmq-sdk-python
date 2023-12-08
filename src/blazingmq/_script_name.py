@@ -22,5 +22,6 @@ import sys
 def get_script_name() -> bytes:
     if getattr(sys.modules.get("__main__"), "__file__", ""):
         name = sys.modules["__main__"].__file__
+        assert name is not None  # help the typechecker
         return os.fsencode(name)
     return b"py:UNKNOWN"

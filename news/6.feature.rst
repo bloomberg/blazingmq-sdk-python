@@ -1,0 +1,1 @@
+Enabled source code typechecking in the GitHub CI

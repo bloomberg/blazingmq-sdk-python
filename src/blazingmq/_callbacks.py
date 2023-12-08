@@ -100,9 +100,7 @@ def on_session_event(
     user_callback(event)
 
 
-PropertiesAndTypesDictsType = Tuple[
-    Dict[str, Union[int, bytes]], Dict[str, PropertyType]
-]
+PropertiesAndTypesDictsType = Tuple[Dict[str, Union[int, bytes]], Dict[str, int]]
 
 
 def on_message(
@@ -115,10 +113,11 @@ def on_message(
     assert ext_session is not None, "ext.Session has been deleted"
     for data, guid, queue_uri, properties_tuple in messages:
         properties, property_types = properties_tuple
-        for k, v in property_types.items():
-            property_types[k] = property_type_to_py[v]
+        property_types_py = {
+            k: property_type_to_py[v] for k, v in property_types.items()
+        }
         message = create_message(
-            data, guid, queue_uri.decode(), properties, property_types
+            data, guid, queue_uri.decode(), properties, property_types_py
         )
         message_handle = create_message_handle(message, ext_session)
         user_callback(message, message_handle)

@@ -86,7 +86,7 @@ lint:
 	$(PYTHON) -m flake8 --config=$(CURDIR)/tests/.flake8 tests
 	$(PYTHON) -m flake8 --config=$(CURDIR)/tests/.flake8 examples
 	$(PYTHON) -m isort --check-only --settings-path=$(CURDIR)/.isort.cfg src tests examples setup.py
-	MYPYPATH=src $(PYTHON) -m mypy --strict examples
+	MYPYPATH=src $(PYTHON) -m mypy --strict examples src
 	clang-format --Werror --dry-run src/cpp/*
 
 # https://www.npmjs.com/package/markdownlint-cli

@@ -21,6 +21,7 @@ from typing import Any
 from typing import Callable
 from typing import Dict
 from typing import Iterable
+from typing import Mapping
 from typing import Optional
 from typing import TYPE_CHECKING
 from typing import Tuple
@@ -106,7 +107,7 @@ PropertiesAndTypesDictsType = Tuple[
 def on_message(
     user_callback: Callable[[Message], None],
     ext_session_wr: weakref.ref[_ext.Session],
-    property_type_to_py: Dict[int, PropertyType],
+    property_type_to_py: Mapping[int, PropertyType],
     messages: Iterable[Tuple[bytes, bytes, bytes, PropertiesAndTypesDictsType]],
 ) -> None:
     ext_session = ext_session_wr()

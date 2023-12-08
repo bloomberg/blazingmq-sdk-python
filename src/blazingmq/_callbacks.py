@@ -33,6 +33,7 @@ from ._enums import AckStatus
 from ._enums import PropertyType
 from ._messages import Ack
 from ._messages import Message
+from ._messages import MessageHandle
 from ._messages import create_ack
 from ._messages import create_message
 from ._messages import create_message_handle
@@ -105,7 +106,7 @@ PropertiesAndTypesDictsType = Tuple[
 
 
 def on_message(
-    user_callback: Callable[[Message], None],
+    user_callback: Callable[[Message, MessageHandle], None],
     ext_session_wr: weakref.ref[_ext.Session],
     property_type_to_py: Mapping[int, PropertyType],
     messages: Iterable[Tuple[bytes, bytes, bytes, PropertiesAndTypesDictsType]],

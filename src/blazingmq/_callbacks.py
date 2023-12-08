@@ -29,9 +29,9 @@ from typing import Type
 from typing import Union
 import weakref
 
+from ._enums import AckStatus
 from ._enums import PropertyType
 from ._messages import Ack
-from ._messages import AckStatus
 from ._messages import Message
 from ._messages import create_ack
 from ._messages import create_message

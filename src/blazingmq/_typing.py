@@ -13,13 +13,13 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-from typing import Dict
+from typing import Mapping
 from typing import Union
 
 from ._enums import PropertyType
 
 PropertyValueType = Union[int, bytes, str]
 
-PropertyValueDict = Dict[str, PropertyValueType]
+PropertyValueDict = Mapping[str, PropertyValueType]
 
-PropertyTypeDict = Dict[str, PropertyType]
+PropertyTypeDict = Mapping[str, PropertyType]

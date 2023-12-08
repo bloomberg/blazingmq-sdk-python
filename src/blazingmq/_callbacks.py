@@ -92,7 +92,7 @@ def on_session_event(
             event_cls = failure_class_by_success_class[event_cls]
 
         assert queue_uri
-        event = event_cls(queue_uri, msg)
+        event: SessionEvent = event_cls(queue_uri, msg)
     else:
         event = event_cls(msg)
 

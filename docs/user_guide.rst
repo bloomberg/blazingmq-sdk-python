@@ -65,7 +65,7 @@ The `Session.post` optionally also takes an ``on_ack`` callback if the user want
 receive an acknowledgment for the message being posted. This ``on_ack`` callback will
 be invoked with the result of the post. ::
 
-    from blazingmq
+    import blazingmq
 
     def on_ack_callback(ack):
         if ack.status != blazingmq.AckStatus.SUCCESS:

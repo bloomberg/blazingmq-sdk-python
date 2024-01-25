@@ -18,24 +18,24 @@ jobs:
     name: Build source distribution
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v3
+      - uses: actions/checkout@v4
 
       - name: Build sdist
         env:
           BLAZINGMQ_PYTHON_NO_PKGCONFIG: ’1’
         run: pipx run build --sdist
 
-      - uses: actions/upload-artifact@v3
+      - uses: actions/upload-artifact@v4
         with:
           name: dist
           path: dist
 
-      - uses: actions/upload-artifact@v3
+      - uses: actions/upload-artifact@v4
         with:
           name: tests
           path: tests
 
-      - uses: actions/upload-artifact@v3
+      - uses: actions/upload-artifact@v4
         with:
           name: bin
           path: bin
@@ -65,19 +65,19 @@ jobs:
         cibw_arch: ${{ fromJSON(needs.choose_architectures.outputs.cibw_arches) }}
 
     steps:
-      - uses: actions/download-artifact@v3
+      - uses: actions/download-artifact@v4
         with:
           name: dist
           path: dist
-      - uses: actions/download-artifact@v3
+      - uses: actions/download-artifact@v4
         with:
           name: tests
           path: tests
-      - uses: actions/download-artifact@v3
+      - uses: actions/download-artifact@v4
         with:
           name: bin
           path: bin
-      - uses: docker/setup-qemu-action@v2
+      - uses: docker/setup-qemu-action@v3
         if: runner.os == 'Linux'
         name: Set up QEMU
       - name: Extract sdist
@@ -87,14 +87,14 @@ jobs:
         run: |
           echo 0 | sudo tee /proc/sys/kernel/yama/ptrace_scope
       - name: Build wheels
-        uses: pypa/cibuildwheel@v2.15.0
+        uses: pypa/cibuildwheel@v2.16.2
         env:
           CIBW_ARCHS_LINUX: ${{ matrix.cibw_arch }}
           CIBW_BUILD: ${{ matrix.cibw_python }}
           CIBW_PRERELEASE_PYTHONS: True
           CIBW_TEST_COMMAND: python3 -m pytest {project}/tests/unit
           CIBW_TEST_REQUIRES: pytest mock pkgconfig
-      - uses: actions/upload-artifact@v3
+      - uses: actions/upload-artifact@v4
         with:
           name: dist
           path: ./wheelhouse/*.whl
@@ -112,15 +112,15 @@ jobs:
         cibw_arch: ["x86_64"]
 
     steps:
-      - uses: actions/download-artifact@v3
+      - uses: actions/download-artifact@v4
         with:
           name: dist
           path: dist
-      - uses: actions/download-artifact@v3
+      - uses: actions/download-artifact@v4
         with:
           name: tests
           path: tests
-      - uses: actions/download-artifact@v3
+      - uses: actions/download-artifact@v4
         with:
           name: bin
           path: bin
@@ -132,7 +132,7 @@ jobs:
         run: |
           echo "CFLAGS=-target arm64-apple-macos12" >> $GITHUB_ENV
       - name: Build wheels
-        uses: pypa/cibuildwheel@v2.15.0
+        uses: pypa/cibuildwheel@v2.16.2
         env:
           CIBW_ARCHS_MACOS: ${{ matrix.cibw_arch }}
           CIBW_BUILD: ${{ matrix.cibw_python }}
@@ -142,7 +142,7 @@ jobs:
           CIBW_TEST_REQUIRES: pytest mock pkgconfig
           MACOSX_DEPLOYMENT_TARGET: "12.0"
 
-      - uses: actions/upload-artifact@v3
+      - uses: actions/upload-artifact@v4
         with:
           name: dist
           path: ./wheelhouse/*.whl
@@ -152,7 +152,7 @@ jobs:
     runs-on: ubuntu-latest
     if: github.event_name == 'release' && github.event.action == 'published'
     steps:
-      - uses: actions/download-artifact@v3
+      - uses: actions/download-artifact@v4
         with:
           name: dist
           path: dist

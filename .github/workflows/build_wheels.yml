@@ -27,18 +27,18 @@ jobs:
 
       - uses: actions/upload-artifact@v4
         with:
-          name: dist
-          path: dist
+          name: dist-sdist
+          path: dist-sdist
 
       - uses: actions/upload-artifact@v4
         with:
-          name: tests
-          path: tests
+          name: tests-sdist
+          path: tests-sdist
 
       - uses: actions/upload-artifact@v4
         with:
-          name: bin
-          path: bin
+          name: bin-sdist
+          path: bin-sdist
 
   choose_architectures:
     name: Decide which architectures to build wheels for
@@ -67,15 +67,15 @@ jobs:
     steps:
       - uses: actions/download-artifact@v4
         with:
-          name: dist
+          name: dist-sdist
           path: dist
       - uses: actions/download-artifact@v4
         with:
-          name: tests
+          name: tests-sdist
           path: tests
       - uses: actions/download-artifact@v4
         with:
-          name: bin
+          name: bin-sdist
           path: bin
       - uses: docker/setup-qemu-action@v3
         if: runner.os == 'Linux'
@@ -96,7 +96,7 @@ jobs:
           CIBW_TEST_REQUIRES: pytest mock pkgconfig
       - uses: actions/upload-artifact@v4
         with:
-          name: dist
+          name: dist-Linux-${{ matrix.cibw_python }}-${{ matrix.cibw_arch }}
           path: ./wheelhouse/*.whl
 
   build_wheels_macos:
@@ -146,11 +146,20 @@ jobs:
 
       - uses: actions/upload-artifact@v4
         with:
-          name: dist
+          name: dist-MacOS-${{ matrix.cibw_python }}-${{ matrix.cibw_arch }}
           path: ./wheelhouse/*.whl
 
-  upload_pypi:
+  merge:
     needs: [build_wheels, build_wheels_macos, build_sdist]
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/upload-artifact/merge@v4
+        with:
+          name: dist
+          pattern: dist-*
+
+  upload_pypi:
+    needs: merge
     runs-on: ubuntu-latest
     if: github.event_name == 'release' && github.event.action == 'published'
     steps:

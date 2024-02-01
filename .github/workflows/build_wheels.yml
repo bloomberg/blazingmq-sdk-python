@@ -114,15 +114,15 @@ jobs:
     steps:
       - uses: actions/download-artifact@v4
         with:
-          name: dist
+          name: dist-sdist
           path: dist
       - uses: actions/download-artifact@v4
         with:
-          name: tests
+          name: tests-sdist
           path: tests
       - uses: actions/download-artifact@v4
         with:
-          name: bin
+          name: bin-sdist
           path: bin
       - name: Extract sdist
         run: |

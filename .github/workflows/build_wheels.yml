@@ -28,17 +28,17 @@ jobs:
       - uses: actions/upload-artifact@v4
         with:
           name: dist-sdist
-          path: dist-sdist
+          path: dist
 
       - uses: actions/upload-artifact@v4
         with:
           name: tests-sdist
-          path: tests-sdist
+          path: tests
 
       - uses: actions/upload-artifact@v4
         with:
           name: bin-sdist
-          path: bin-sdist
+          path: bin
 
   choose_architectures:
     name: Decide which architectures to build wheels for

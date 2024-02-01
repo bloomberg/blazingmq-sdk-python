@@ -61,7 +61,7 @@ jobs:
       matrix:
         os: [ubuntu-latest]
         cibw_python:
-          ["cp37-*", "cp38-*", "cp39-*", "cp310-*", "cp311-*", "cp312-*"]
+          ["cp37", "cp38", "cp39", "cp310", "cp311", "cp312"]
         cibw_arch: ${{ fromJSON(needs.choose_architectures.outputs.cibw_arches) }}
 
     steps:
@@ -90,7 +90,7 @@ jobs:
         uses: pypa/cibuildwheel@v2.16.2
         env:
           CIBW_ARCHS_LINUX: ${{ matrix.cibw_arch }}
-          CIBW_BUILD: ${{ matrix.cibw_python }}
+          CIBW_BUILD: ${{ matrix.cibw_python }}-*
           CIBW_PRERELEASE_PYTHONS: True
           CIBW_TEST_COMMAND: python3 -m pytest {project}/tests/unit
           CIBW_TEST_REQUIRES: pytest mock pkgconfig
@@ -108,7 +108,7 @@ jobs:
       matrix:
         os: [macos-12]
         cibw_python:
-          ["cp37-*", "cp38-*", "cp39-*", "cp310-*", "cp311-*", "cp312-*"]
+          ["cp37", "cp38", "cp39", "cp310", "cp311", "cp312"]
         cibw_arch: ["x86_64"]
 
     steps:
@@ -135,7 +135,7 @@ jobs:
         uses: pypa/cibuildwheel@v2.16.2
         env:
           CIBW_ARCHS_MACOS: ${{ matrix.cibw_arch }}
-          CIBW_BUILD: ${{ matrix.cibw_python }}
+          CIBW_BUILD: ${{ matrix.cibw_python }}-*
           CIBW_BUILD_VERBOSITY: 1
           CIBW_PRERELEASE_PYTHONS: True
           CIBW_TEST_COMMAND: python3 -m pytest {project}/tests/unit

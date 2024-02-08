@@ -174,3 +174,56 @@ jobs:
         with:
           skip_existing: true
           password: ${{ secrets.PYPI_PASSWORD }}
+
+  publish_docs:
+    name: Publish docs to GitHub Pages
+    needs: merge
+    runs-on: ubuntu-latest
+    # Eventually, we want this to be updated only on releases, in the same way
+    # PyPI uploads are done.  For the moment, though, our uploads are dry runs
+    # only, set below, and we want to test on every build.
+    #
+    #if: |
+    #  github.event_name == 'release' && github.event.action == 'published'
+    #    || github.event_name == 'workflow_dispatch'
+    permissions:
+      contents: write
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.10"
+
+      - name: Set up dependencies
+        run: |
+          sudo apt-get update
+          sudo apt-get install -qy pkg-config bison libfl-dev libz-dev
+
+      - name: Install Python dependencies
+        run: |
+          python3 -m pip install -r requirements-lint-docs.txt
+
+      - name: Download wheel artifact
+        uses: actions/download-artifact@v4
+        with:
+          name: dist-Linux-cp310-x86_64
+          path: blazingmq.whl
+
+      - name: Install Package
+        run: |
+          python3 -m pip install blazingmq.whl
+
+      - name: Build docs
+        run: |
+          make docs
+
+      - name: Publish docs to GitHub Pages
+        uses: JamesIves/github-pages-deploy-action@v4
+        with:
+          folder: docs/_build/html
+          single-commit: true
+          # Make sure this does not actually publish any documentation, so we
+          # can test that everything works correctly.
+          dry-run: true

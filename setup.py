@@ -14,6 +14,7 @@
 # limitations under the License.
 
 import os
+from pathlib import Path
 import platform
 import sys
 
@@ -181,6 +182,10 @@ about = {}
 with open("src/blazingmq/_about.py") as fp:
     exec(fp.read(), about)
 
+# Read the contents of the README file.
+this_directory = Path(__file__).parent
+long_description = (this_directory / "README.md").read_text()
+
 setup(
     name="blazingmq",
     description="Python BlazingMQ API",
@@ -204,6 +209,8 @@ setup(
     package_data={"blazingmq": ["py.typed", "_ext.pyi"]},
     package_dir={"": "src"},
     packages=["blazingmq"],
+    long_description=long_description,
+    long_description_content_type="text/markdown",
     ext_modules=cythonize(
         EXTENSIONS,
         include_path=["src/declarations"],

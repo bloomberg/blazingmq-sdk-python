@@ -109,7 +109,7 @@ def test_example_consumer(unique_queue, script):
     ack = acks.get(timeout=0.5)
     session.stop()
 
-    time.sleep(1.0)
+    time.sleep(5.0)
     process.terminate()
     time.sleep(0.1)
     if process.returncode is None and process.poll() is None:

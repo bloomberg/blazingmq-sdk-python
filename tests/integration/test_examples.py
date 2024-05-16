@@ -111,12 +111,12 @@ def test_example_consumer(unique_queue, script):
 
     time.sleep(5.0)
     process.terminate()
-    time.sleep(0.1)
-    if process.returncode is None and process.poll() is None:
+    try:
+        stdout, stderr = process.communicate(timeout=2.0)
+    except subprocess.TimeoutExpired:
         print("terminate failed, killing process")
         process.kill()
-
-    stdout, stderr = process.communicate()
+        stdout, stderr = process.communicate()
 
     # THEN
     assert ack.status == AckStatus.SUCCESS

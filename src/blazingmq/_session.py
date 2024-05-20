@@ -162,15 +162,16 @@ class QueueOptions:
     Args:
         max_unconfirmed_messages:
             The maximum number of messages that can be delivered to the queue
-            without confirmation. This limit can be reached if the queue
-            receives messages faster than it confirms received messages. Once
-            this limit is reached, at least one message must be confirmed
-            before the queue will receive any more messages.
+            without confirmation. If 0, no limit is imposed.  This limit can be
+            reached if the queue receives messages faster than it confirms
+            received messages. Once this limit is reached, at least one message
+            must be confirmed before the queue will receive any more messages.
         max_unconfirmed_bytes:
             The maximum number of bytes that can be delivered to the queue
-            without confirmation. Like *max_unconfirmed_messages*, this limit
-            can be reached if incoming messages are queued up waiting for
-            already delivered messages to be confirmed.
+            without confirmation. If 0, no limit is imposed.  Like
+            *max_unconfirmed_messages*, this limit can be reached if incoming
+            messages are queued up waiting for already delivered messages to be
+            confirmed.
         consumer_priority:
             The precedence of this consumer compared to other consumers of the
             same queue. The consumer with the highest priority receives the

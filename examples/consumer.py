@@ -41,7 +41,14 @@ def main() -> None:
 
         EXITING.wait()
         print("Waiting to process all outstanding messages")
-        session.configure_queue(QUEUE_URI, blazingmq.QueueOptions(0, 0, 0))
+        session.configure_queue(
+            QUEUE_URI,
+            blazingmq.QueueOptions(
+                max_unconfirmed_messages=0,  # 0 means no limit
+                max_unconfirmed_bytes=0,  # 0 means no limit
+                consumer_priority=0,
+            ),
+        )
     print("Session stopped.")
 
 

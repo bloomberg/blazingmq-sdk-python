@@ -12,10 +12,10 @@ set -u
 
 # These are the release tags for each of the dependencies we manually clone.
 # Update these to update the version of each dependency we build against.
-BDE_TOOLS_TAG=3.124.0.0
-BDE_TAG=3.124.0.0
-NTF_CORE_TAG=latest
-BLAZINGMQ_TAG=BMQBRKR_0.90.20
+BDE_TOOLS_TAG=4.8.0.0
+BDE_TAG=4.8.0.0
+NTF_CORE_TAG=2.4.2
+BLAZINGMQ_TAG=BMQBRKR_0.92.5
 
 
 if [ ! -d "${DIR_THIRDPARTY}/bde-tools" ]; then

@@ -78,7 +78,7 @@ class Session:
         *,
         properties: Optional[Dict[bytes, Tuple[Union[int, bytes], int]]] = None,
         on_ack: Optional[Callable[[Ack], None]] = None,
-    ) -> None: ...
+    ) -> bytes: ...
     def configure_queue_sync(
         self,
         queue_uri: bytes,

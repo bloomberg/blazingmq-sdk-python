@@ -333,8 +333,13 @@ cdef class Session:
              queue_uri not None: bytes,
              payload not None: bytes,
              properties=None,
-             on_ack=None) -> None:
-        self._session.post(queue_uri, payload, len(payload), properties, on_ack)
+             on_ack=None) -> bytes:
+        return self._session.post(
+            queue_uri,
+            payload,
+            len(payload),
+            properties,
+            on_ack)
 
     def confirm(self, message not None) -> None:
         self._session.confirm(message.queue_uri, message.guid, len(message.guid))

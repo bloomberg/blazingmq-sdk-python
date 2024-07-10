@@ -519,6 +519,16 @@ Session::post(
             throw GenericError(oss.str());
         }
 
+        bmqt::MessageGUID c_guid = builder.currentMessage().messageGUID();
+        unsigned char guid[bmqt::MessageGUID::e_SIZE_BINARY];
+        c_guid.toBinary(guid);
+        PyObject* python_guid = PyBytes_FromStringAndSize(
+                // Cython converts between unsigned char and char when
+                // converting between Python `bytes` and C++ `(unsigned) char`,
+                // but we need to do this ourselves here.
+                reinterpret_cast<char*>(guid),
+                bmqt::MessageGUID::e_SIZE_BINARY);
+
         const bmqa::MessageEvent& messageEvent = builder.messageEvent();
         bmqt::PostResult::Enum post_rc =
                 (bmqt::PostResult::Enum)d_session_mp->post(messageEvent);
@@ -530,6 +540,8 @@ Session::post(
         // We have a successful post and the SDK now owns the `on_ack` callback object
         // so release our reference without a DECREF.
         managed_on_ack.release();
+
+        return python_guid;
     } catch (const GenericError& exc) {
         PyErr_SetString(d_error, exc.what());
         return NULL;

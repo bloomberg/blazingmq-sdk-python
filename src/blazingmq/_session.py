@@ -716,7 +716,7 @@ class Session:
         properties: Optional[PropertyValueDict] = None,
         property_type_overrides: Optional[PropertyTypeDict] = None,
         on_ack: Optional[Callable[[Ack], None]] = None,
-    ) -> None:
+    ) -> bytes:
         """Post a message to an opened queue specified by *queue_uri*.
 
         Post the payload and optional properties and overrides to the opened
@@ -734,6 +734,9 @@ class Session:
                 specified callback which is invoked with the acknowledgment
                 status of the message being posted.
 
+        Returns:
+            `bytes`: The posted message's GUID.
+
         Raises:
             `~blazingmq.Error`: If the post request was not successful.
         """
@@ -741,7 +744,7 @@ class Session:
         if properties or property_type_overrides:
             props = _collect_properties_and_types(properties, property_type_overrides)
 
-        self._ext.post(
+        return self._ext.post(
             six.ensure_binary(queue_uri),
             message,
             properties=props,

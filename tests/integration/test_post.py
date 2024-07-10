@@ -157,13 +157,14 @@ def test_post_with_successful_ack(default_session, unique_queue, zeroed_queue_op
         q.put(*args)
 
     # WHEN
-    default_session.post(unique_queue, b"hello", on_ack=go_on)
+    guid = default_session.post(unique_queue, b"hello", on_ack=go_on)
     ack = q.get()
 
     # THEN
     assert ack.status == AckStatus.SUCCESS
     assert isinstance(ack.guid, bytes)
     assert len(ack.guid) == 16
+    assert ack.guid == guid
     assert ack.queue_uri == unique_queue
 
 

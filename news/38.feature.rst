@@ -1,0 +1,1 @@
+Make `Session.post` return the message GUID.

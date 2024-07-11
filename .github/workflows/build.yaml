@@ -29,7 +29,7 @@ jobs:
 
       - name: Try to get cached BlazingMQ build artifacts
         id: cache-restore
-        uses: actions/cache/restore@v3
+        uses: actions/cache/restore@v4
         with:
           path: blazingmq_artifacts.tar.gz
           key: ${{ steps.get-sha.outputs.blazingmq_sha }}
@@ -75,7 +75,7 @@ jobs:
       - name: Cache built BlazingMQ build artifacts
         id: cache-save
         if: steps.cache-restore.outputs.cache-hit != 'true'
-        uses: actions/cache/save@v3
+        uses: actions/cache/save@v4
         with:
           path: blazingmq_artifacts.tar.gz
           key: ${{ steps.get-sha.outputs.blazingmq_sha }}
@@ -97,7 +97,7 @@ jobs:
       - uses: actions/checkout@v4
       - name: Try to get cached BlazingMQ build artifacts
         id: cache-restore
-        uses: actions/cache/restore@v3
+        uses: actions/cache/restore@v4
         with:
           path: blazingmq_artifacts.tar.gz
           key: ${{ needs.blazingmq-dependency.outputs.blazingmq_sha }}
@@ -148,7 +148,7 @@ jobs:
       - uses: actions/checkout@v4
       - name: Try to get cached BlazingMQ build artifacts
         id: cache-restore
-        uses: actions/cache/restore@v3
+        uses: actions/cache/restore@v4
         with:
           path: blazingmq_artifacts.tar.gz
           key: ${{ needs.blazingmq-dependency.outputs.blazingmq_sha }}
@@ -196,7 +196,7 @@ jobs:
       - uses: actions/checkout@v4
       - name: Try to get cached BlazingMQ build artifacts
         id: cache-restore
-        uses: actions/cache/restore@v3
+        uses: actions/cache/restore@v4
         with:
           path: blazingmq_artifacts.tar.gz
           key: ${{ needs.blazingmq-dependency.outputs.blazingmq_sha }}

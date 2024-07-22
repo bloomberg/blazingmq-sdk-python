@@ -87,6 +87,38 @@ def test_example_producer(unique_queue):
     assert msg.properties == {}
 
 
+def test_example_producer_with_correlation(unique_queue):
+    # GIVEN
+    process = run_wrapper(unique_queue, "producer_with_correlation")
+    stdout, stderr = process.communicate()
+
+    # WHEN
+    if sys.version_info[:2] >= (3, 7):
+        assert stderr == b""
+
+    q = queue.Queue()
+
+    session = Session(log_session_event, on_message=lambda msg, _: q.put(msg))
+    session.open_queue(
+        unique_queue,
+        read=True,
+        options=QueueOptions(max_unconfirmed_messages=100),
+    )
+    msgs = []
+    for i in range(0, 10):
+        msgs.append(q.get(timeout=0.5))
+
+    # THEN
+    session.stop()
+    process.wait()
+    assert q.empty()
+    assert len(msgs) == 10
+    for msg in msgs:
+        assert msg.data == b"\xde\xad\x00\x00\xbe\xef"
+        assert msg.queue_uri == unique_queue
+        assert msg.properties == {}
+
+
 @pytest.mark.parametrize(
     "script",
     ["consumer", "consumer2"],

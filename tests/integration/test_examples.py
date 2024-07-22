@@ -82,6 +82,8 @@ def test_example_producer(unique_queue):
 
     # THEN
     session.stop()
+    process.wait()
+    assert q.empty()
     assert msg.data == b"\xde\xad\x00\x00\xbe\xef"
     assert msg.queue_uri == unique_queue
     assert msg.properties == {}

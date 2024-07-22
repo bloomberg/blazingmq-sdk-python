@@ -45,6 +45,12 @@ make test-install
 BMQ_BROKER_URI=tcp://localhost:30114 make check
 ```
 
+Note that on OSX, the
+`tests/integration/test_deadlock_detection.py::test_deadlock_detection_warning`
+test may display a dialog warning you of a crashed Python process,
+depending on your system configuration.  This crash is intentional, and
+is part of the test.
+
 Additional `make` targets are provided, such as for test coverage.
 Dependencies for these can be installed as follows:
 

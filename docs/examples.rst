@@ -17,6 +17,23 @@ in a fully synchronous fashion - the program waits for an acknowledgement before
 
 .. literalinclude:: ../examples/producer.py
 
+Producer with Correlation ID
+=================================
+
+A complete example of a program that posts a series of messages with
+identifiers that can be used to correlate the Ack or Nack from the broker with
+the posted message.
+
+Unlike the BlazingMQ C++ SDK, which has a concept “correlation id”, which can
+be provided with every posted message and will be provided back to the producer
+with an Ack or Nack from the broker, the BlazingMQ Python SDK does not provide
+this as a first-class notion.  Instead, in Python, a different ``on_ack``
+callback can be provided on each posted message, storing arbitrary data in its
+closure.  Using ``functools.partial``, we can construct these lightweight
+callback closures to add a correlation id, or any arbitrary identifying data.
+
+.. literalinclude:: ../examples/producer_with_correlation.py
+
 Consumer with `threading.Event`
 =================================
 

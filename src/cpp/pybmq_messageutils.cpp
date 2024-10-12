@@ -375,8 +375,8 @@ MessageUtils::load_message_properties(
     do {                                                                               \
         if (!PY_TYPE_FUNC(OBJECT)) {                                                   \
             bsl::ostringstream oss;                                                    \
-            oss << "'" << OBJECT_KEY << "' value is of the incorrect type, "           \
-                << "'" << Py_TYPE(OBJECT)->tp_name << "' provided, '" << EXPECTED_TYPE \
+            oss << "'" << OBJECT_KEY << "' value is of the incorrect type, " << "'"    \
+                << Py_TYPE(OBJECT)->tp_name << "' provided, '" << EXPECTED_TYPE        \
                 << "' expected.";                                                      \
             PyErr_SetString(PyExc_TypeError, oss.str().c_str());                       \
             return false;                                                              \

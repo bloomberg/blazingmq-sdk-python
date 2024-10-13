@@ -196,8 +196,6 @@ setup(
         "Intended Audience :: Developers",
         "Operating System :: POSIX :: Linux",
         "Development Status :: 5 - Production/Stable",
-        "Programming Language :: Python :: 3.7",
-        "Programming Language :: Python :: 3.8",
         "Programming Language :: Python :: 3.9",
         "Programming Language :: Python :: 3.10",
         "Programming Language :: Python :: 3.11",
@@ -216,6 +214,6 @@ setup(
         include_path=["src/declarations"],
         compiler_directives=COMPILER_DIRECTIVES,
     ),
-    python_requires=">=3.7",
+    python_requires=">=3.9",
     zip_safe=False,
 )

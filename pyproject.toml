@@ -15,7 +15,7 @@ filename    = "CHANGELOG.md"
 directory   = "news"
 
 [tool.cibuildwheel]
-build = ["cp38-*", "cp39-*", "cp310-*", "cp311-*"]
+build = ["cp39-*", "cp310-*", "cp311-*", "cp312-*"]
 skip = "*-musllinux_*"
 manylinux-x86_64-image = "manylinux2014"
 manylinux-i686-image = "manylinux2014"

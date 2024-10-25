@@ -13,7 +13,7 @@ concurrency:
 jobs:
   blazingmq-dependency:
     name: Build BlazingMQ as a dependency
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-24.04
     outputs:
       blazingmq_sha: ${{ steps.get-sha.outputs.blazingmq_sha }}
     steps:
@@ -83,7 +83,7 @@ jobs:
   linux-check:
     name: Test on Linux
     needs: blazingmq-dependency
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-24.04
     strategy:
       matrix:
         python-version:
@@ -141,7 +141,7 @@ jobs:
   lint-docs:
     name: Lint and Docs
     needs: blazingmq-dependency
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-24.04
     steps:
       - uses: actions/checkout@v4
       - name: Try to get cached BlazingMQ build artifacts
@@ -189,7 +189,7 @@ jobs:
   coverage:
     name: Coverage
     needs: blazingmq-dependency
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-24.04
     steps:
       - uses: actions/checkout@v4
       - name: Try to get cached BlazingMQ build artifacts

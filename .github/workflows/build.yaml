@@ -211,6 +211,11 @@ jobs:
         run: |
           ./venv/bin/python3 -m pip install --upgrade pip
           ./venv/bin/python3 -m pip install -r requirements-dev.txt
+      - name: Setup Core Dumps config
+        run: |
+          sudo mkdir /cores
+          sudo chmod 777 /cores
+          echo "/cores/%e.%p.%s.%t" | sudo tee /proc/sys/kernel/core_pattern
       - name: Run tests with coverage
         env:
           BMQ_BROKER_URI: tcp://localhost:30114
@@ -220,6 +225,8 @@ jobs:
         run: |
           mkdir -p bmq/logs
           mkdir -p bmq/storage/archive
+          # Allow core dumps
+          ulimit -c unlimited
           ./blazingmq_artifacts/bin/bmqbrkr.tsk ./tests/broker-config &
           (sleep 5; make coverage-install && make coverage)
       - name: Output code coverage summary
@@ -234,3 +241,17 @@ jobs:
           path: ./bmq/logs
           retention-days: 5
           compression-level: 9
+      - name: Upload broker core dump as artifacts
+        if: failure()
+        uses: actions/upload-artifact@v4
+        with:
+          name: core_dumps
+          path: /cores
+          retention-days: 5
+      - name: Upload broker executable as artifacts to debug the core
+        if: failure()
+        uses: actions/upload-artifact@v4
+        with:
+          name: bmqbrkr
+          path: ./blazingmq_artifacts/bin/bmqbrkr.tsk
+          retention-days: 5

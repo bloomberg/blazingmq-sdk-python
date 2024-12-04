@@ -13,6 +13,12 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
+# N.B. On OSX, the
+# `tests/integration/test_deadlock_detection.py::test_deadlock_detection_warning`
+# test may display a dialog warning you of a crashed Python process, depending
+# on your system configuration.  This crash is intentional, and is part of the
+# test.
+
 import signal
 import subprocess
 import sys

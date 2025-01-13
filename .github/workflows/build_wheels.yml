@@ -47,9 +47,6 @@ jobs:
     steps:
       - id: x86_64
         run: echo "cibw_arch=x86_64" >> $GITHUB_OUTPUT
-      - id: aarch64
-        if: github.event_name == 'release' && github.event.action == 'published'
-        run: echo "cibw_arch=aarch64" >> $GITHUB_OUTPUT
     outputs:
       cibw_arches: ${{ toJSON(steps.*.outputs.cibw_arch) }}
 

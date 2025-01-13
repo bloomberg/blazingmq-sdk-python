@@ -62,7 +62,7 @@ jobs:
       matrix:
         os: [ubuntu-latest]
         cibw_python:
-          ["cp39", "cp310", "cp311", "cp312"]
+          ["cp39", "cp310", "cp311", "cp312", "cp313"]
         cibw_arch: ${{ fromJSON(needs.choose_architectures.outputs.cibw_arches) }}
 
     steps:

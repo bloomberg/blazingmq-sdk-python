@@ -74,8 +74,8 @@ def test_put_queue_single_message_with_valid_properties():
         payload,
         properties={
             b"a_char": (b"a", CHAR),
-            b"a_string": (b"af\xC3\xA4ae", STRING),
-            b"a_binary": (b"ab\0\xC3\0", BINARY),
+            b"a_string": (b"af\xc3\xa4ae", STRING),
+            b"a_binary": (b"ab\0\xc3\0", BINARY),
             b"an_int16": (12345, SHORT),
             b"an_int32": (31254, INT32),
             b"an_int64": (54321, INT64),
@@ -89,8 +89,8 @@ def test_put_queue_single_message_with_valid_properties():
         properties=(
             {
                 "a_char": b"a",
-                "a_string": "af\xE4ae",
-                "a_binary": b"ab\0\xC3\0",
+                "a_string": "af\xe4ae",
+                "a_binary": b"ab\0\xc3\0",
                 "an_int16": 12345,
                 "an_int32": 31254,
                 "an_int64": 54321,
@@ -181,10 +181,10 @@ def test_invalid_values_for_char_property(value):
 @pytest.mark.parametrize(
     "properties, expected",
     [
-        ({b"test1": (b"\xC3\xA4", STRING)}, ({"test1": "\xE4"}, {"test1": STRING})),
+        ({b"test1": (b"\xc3\xa4", STRING)}, ({"test1": "\xe4"}, {"test1": STRING})),
         (
-            {b"test1": (b"\xC3\xA4", BINARY)},
-            ({"test1": b"\xC3\xA4"}, {"test1": BINARY}),
+            {b"test1": (b"\xc3\xa4", BINARY)},
+            ({"test1": b"\xc3\xa4"}, {"test1": BINARY}),
         ),
         ({b"a_bool": (True, BOOL)}, ({"a_bool": True}, {"a_bool": BOOL})),
         ({b"a_char": (b"\0", CHAR)}, ({"a_char": b"\0"}, {"a_char": CHAR})),

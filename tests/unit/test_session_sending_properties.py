@@ -57,11 +57,11 @@ def test_session_post_property_default_types(ext):
     # GIVEN
     ext.mock_add_spec(["post"])
     session = make_session()
-    properties = {"Bool": True, "Int": 65536, "Str": "\xE4"}
+    properties = {"Bool": True, "Int": 65536, "Str": "\xe4"}
     merged = {
         b"Bool": (True, BOOL),
         b"Int": (65536, INT64),
-        b"Str": (b"\xC3\xA4", STRING),
+        b"Str": (b"\xc3\xa4", STRING),
     }
 
     # WHEN

@@ -360,8 +360,8 @@ def test_receiving_message_properties_success():
                 {
                     b"a_bool": (True, BOOL),
                     b"test1": (b"a", CHAR),
-                    b"test5": (b"af\xC3\xA4ae", STRING),
-                    b"test6": (b"ab\0\xC3\0", BINARY),
+                    b"test5": (b"af\xc3\xa4ae", STRING),
+                    b"test6": (b"ab\0\xc3\0", BINARY),
                     b"an_int16": (12345, SHORT),
                     b"an_int32": (31254, INT32),
                     b"an_int64": (54321, INT64),
@@ -396,8 +396,8 @@ def test_receiving_message_properties_success():
     assert m1.properties == {
         "a_bool": True,
         "test1": b"a",
-        "test5": "af\xE4ae",
-        "test6": b"ab\0\xC3\0",
+        "test5": "af\xe4ae",
+        "test6": b"ab\0\xc3\0",
         "an_int16": 12345,
         "an_int32": 31254,
         "an_int64": 54321,
@@ -465,7 +465,7 @@ def test_interface_error_on_non_utf8_string_property():
                 b"payload1",
                 b"1000000000003039CD8101000000270F",
                 QUEUE_NAME + b"1",
-                {b"prop": (b"\xC3", STRING)},
+                {b"prop": (b"\xc3", STRING)},
             ),
         ],
     ]

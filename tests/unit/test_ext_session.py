@@ -189,7 +189,7 @@ def test_process_name_override_called_correctly(monkeypatch, input, expected):
 
 def test_process_name_override_non_unicode(monkeypatch):
     # GIVEN
-    filename = b"/path/to/some\xFFfile.py"
+    filename = b"/path/to/some\xfffile.py"
     if sys.version_info[0] > 2:
         monkeypatch.setattr("__main__.__file__", os.fsdecode(filename))
     else:

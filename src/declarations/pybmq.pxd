@@ -39,6 +39,7 @@ cdef extern from "pybmq_session.h" namespace "BloombergLP::pybmq" nogil:
         Session(object on_session_event,
                 object on_message_event,
                 object on_ack_event,
+                object fake_authn_credential_cb,
                 const char* broker_uri,
                 const char* script_name,
                 CompressionAlgorithmType message_compression_algorithm,

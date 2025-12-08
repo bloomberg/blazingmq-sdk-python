@@ -35,6 +35,7 @@ from ._messages import Ack
 from ._messages import Message
 from ._messages import MessageHandle
 from ._monitors import BasicHealthMonitor
+from ._authncb import BasicAuthnCredentialCb
 from ._timeouts import Timeouts
 from ._typing import PropertyTypeDict
 from ._typing import PropertyValueDict
@@ -418,6 +419,7 @@ class Session:
         ),
         timeout: Union[Timeouts, float] = DEFAULT_TIMEOUT,
         host_health_monitor: Union[BasicHealthMonitor, None] = (DefaultMonitor()),
+        authn_credential_cb: Optional[BasicAuthnCredentialCb] = None,
         num_processing_threads: Optional[int] = None,
         blob_buffer_size: Optional[int] = None,
         channel_high_watermark: Optional[int] = None,
@@ -433,6 +435,7 @@ class Session:
 
         monitor_host_health = host_health_monitor is not None
         fake_host_health_monitor = getattr(host_health_monitor, "_monitor", None)
+        fake_authn_credential_cb = getattr(authn_credential_cb, "_authncb", None)
 
         self._has_no_on_message = on_message is None
 
@@ -459,6 +462,7 @@ class Session:
             timeouts=_validate_timeouts(timeout),
             monitor_host_health=monitor_host_health,
             fake_host_health_monitor=fake_host_health_monitor,
+            fake_authn_credential_cb=fake_authn_credential_cb,
         )
         self._ext.set_owned_by_session()
 

@@ -15,6 +15,7 @@
 
 #include <pybmq_session.h>
 
+#include <pybmq_gilacquireguard.h>
 #include <pybmq_gilreleaseguard.h>
 #include <pybmq_messageutils.h>
 #include <pybmq_mocksession.h>
@@ -77,13 +78,14 @@ Session::Session(
         PyObject* py_session_event_callback,
         PyObject* py_message_event_callback,
         PyObject* py_ack_event_callback,
+        PyObject* fake_authn_credential_cb,
         const char* broker_uri,
         const char* script_name,
         bmqt::CompressionAlgorithmType::Enum message_compression_type,
         bsl::optional<int> num_processing_threads,
         bsl::optional<int> blob_buffer_size,
         bsl::optional<int> channel_high_watermark,
-        bsl::optional<bsl::pair<int, int> > event_queue_watermarks,
+        bsl::optional<bsl::pair<int, int>> event_queue_watermarks,
         const bsls::TimeInterval& stats_dump_interval,
         const bsls::TimeInterval& connect_timeout,
         const bsls::TimeInterval& disconnect_timeout,
@@ -119,6 +121,74 @@ Session::Session(
     }
 
     d_message_compression_type = message_compression_type;
+
+    AuthnCredentialCb cpp_callback;
+    bool has_auth_callback = false;
+
+    if (fake_authn_credential_cb != nullptr && fake_authn_credential_cb != Py_None) {
+        // Increment reference count since we're storing the Python object
+        Py_INCREF(fake_authn_credential_cb);
+        has_auth_callback = true;
+
+        // Create a C++ lambda that wraps the Python callback
+        cpp_callback =
+                [fake_authn_credential_cb](
+                        bsl::ostream& error) -> bsl::optional<bmqt::AuthnCredential> {
+            pybmq::GilAcquireGuard guard;
+
+            // Call get_credential_data() method on the Python object
+            bslma::ManagedPtr<PyObject> result =
+                    RefUtils::toManagedPtr(PyObject_CallMethod(
+                            fake_authn_credential_cb,
+                            "get_credential_data",
+                            nullptr));
+
+            if (!result) {
+                // Python exception occurred
+                PyErr_Print();
+                error << "Error calling get_credential_data()";
+                return bsl::optional<bmqt::AuthnCredential>();
+            }
+
+            if (result.get() == Py_None) {
+                return bsl::optional<bmqt::AuthnCredential>();
+            }
+
+            // Extract tuple (mechanism, data)
+            if (!PyTuple_Check(result.get()) || PyTuple_Size(result.get()) != 2) {
+                error << "get_credential_data() must return (str, bytes) or None";
+                return bsl::optional<bmqt::AuthnCredential>();
+            }
+
+            PyObject* mechanism_obj = PyTuple_GetItem(result.get(), 0);
+            PyObject* data_obj = PyTuple_GetItem(result.get(), 1);
+
+            if (!PyUnicode_Check(mechanism_obj) || !PyBytes_Check(data_obj)) {
+                error << "get_credential_data() must return (str, bytes) or None";
+                return bsl::optional<bmqt::AuthnCredential>();
+            }
+
+            // Convert Python str to C++ string
+            const char* mechanism_cstr = PyUnicode_AsUTF8(mechanism_obj);
+            bsl::string mechanism(mechanism_cstr);
+
+            // Convert Python bytes to vector<char>
+            char* data_ptr;
+            Py_ssize_t data_len;
+            PyBytes_AsStringAndSize(data_obj, &data_ptr, &data_len);
+            bsl::vector<char> data(data_ptr, data_ptr + data_len);
+
+            // Construct and return AuthnCredential
+            bmqt::AuthnCredential credential;
+            credential.setMechanism(mechanism).setData(data);
+
+            // Move credential into optional (AuthnCredential is move-only)
+            bsl::optional<bmqt::AuthnCredential> opt_credential;
+            opt_credential.emplace(bslmf::MovableRefUtil::move(credential));
+            return opt_credential;
+        };
+    }
+
     {
         pybmq::GilReleaseGuard guard;
         bmqt::SessionOptions options;
@@ -142,6 +212,11 @@ Session::Session(
             options.configureEventQueue(
                     event_queue_watermarks.value().first,
                     event_queue_watermarks.value().second);
+        }
+
+        if (has_auth_callback) {
+            // TODO: This will only compile with setAuthnCredentialCb in SessionOptions
+            options.setAuthnCredentialCb(cpp_callback);
         }
 
         if (stats_dump_interval != bsls::TimeInterval()) {
@@ -529,8 +604,8 @@ Session::post(
             oss << "Failed to post message to " << queue_uri << " queue: " << post_rc;
             throw GenericError(oss.str());
         }
-        // We have a successful post and the SDK now owns the `on_ack` callback object
-        // so release our reference without a DECREF.
+        // We have a successful post and the SDK now owns the `on_ack` callback
+        // object so release our reference without a DECREF.
         managed_on_ack.release();
     } catch (const GenericError& exc) {
         PyErr_SetString(d_error, exc.what());

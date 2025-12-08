@@ -1,4 +1,4 @@
-# Copyright 2019-2023 Bloomberg Finance L.P.
+# Copyright 2019-2026 Bloomberg Finance L.P.
 # SPDX-License-Identifier: Apache-2.0
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
@@ -58,6 +58,7 @@ cdef extern from "pybmq_session.h" namespace "BloombergLP::pybmq" nogil:
         Session(object on_session_event,
                 object on_message_event,
                 object on_ack_event,
+                object authn_credential_cb,
                 const SessionConfig& config,
                 shared_ptr[ManualHostHealthMonitor] fake_host_health_monitor_sp,
                 object error,

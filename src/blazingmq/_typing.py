@@ -1,4 +1,4 @@
-# Copyright 2019-2023 Bloomberg Finance L.P.
+# Copyright 2019-2026 Bloomberg Finance L.P.
 # SPDX-License-Identifier: Apache-2.0
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
@@ -13,7 +13,9 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
+from typing import Callable
 from typing import Mapping
+from typing import Optional
 from typing import Union
 
 from ._enums import PropertyType
@@ -23,3 +25,10 @@ PropertyValueType = Union[int, bytes, str]
 PropertyValueDict = Mapping[str, PropertyValueType]
 
 PropertyTypeDict = Mapping[str, PropertyType]
+
+AuthnCredentialProvider = Callable[[], Optional[tuple[str, bytes]]]
+"""A callable that returns authentication credentials as a ``(mechanism,
+data)`` tuple of ``(str, bytes)``, or ``None`` if an error occurs while
+obtaining them, in which case authentication fails and the connection is
+closed.
+"""

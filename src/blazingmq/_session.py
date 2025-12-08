@@ -37,6 +37,7 @@ from ._messages import Ack
 from ._messages import Message
 from ._messages import MessageHandle
 from ._monitors import BasicHealthMonitor
+from ._ext import FakeAuthnCredentialCb
 from ._timeouts import Timeouts
 from ._typing import PropertyTypeDict
 from ._typing import PropertyValueDict
@@ -302,6 +303,11 @@ class SessionOptions:
             healthy, `.HostUnhealthy` and `.HostHealthRestored` events with
             never be emitted, and the *suspends_on_bad_host_health* option of
             `QueueOptions` cannot be used.
+        authn_credential_provider:
+            An optional callable that returns authentication credentials as a
+            ``(mechanism, data)`` tuple of ``(str, bytes)``, or ``None`` if no
+            credentials are available.  If not provided, no authentication
+            credentials are sent to the broker.
         num_processing_threads:
             The number of threads for the SDK to use for processing events.
             This defaults to 1.
@@ -338,6 +344,7 @@ class SessionOptions:
         message_compression_algorithm: Optional[CompressionAlgorithmType] = None,
         timeouts: Optional[Timeouts] = None,
         host_health_monitor: Union[BasicHealthMonitor, None] = (DefaultMonitor()),
+        authn_credential_provider: Optional[Callable] = (DefaultAuthnCredentialProvider()),
         num_processing_threads: Optional[int] = None,
         blob_buffer_size: Optional[int] = None,
         channel_high_watermark: Optional[int] = None,
@@ -348,6 +355,7 @@ class SessionOptions:
         self.message_compression_algorithm = message_compression_algorithm
         self.timeouts = timeouts
         self.host_health_monitor = host_health_monitor
+        self.authn_credential_provider = authn_credential_provider
         self.num_processing_threads = num_processing_threads
         self.blob_buffer_size = blob_buffer_size
         self.channel_high_watermark = channel_high_watermark
@@ -362,6 +370,7 @@ class SessionOptions:
             self.message_compression_algorithm == other.message_compression_algorithm
             and self.timeouts == other.timeouts
             and self.host_health_monitor == other.host_health_monitor
+            and self.authn_credential_provider == other.authn_credential_provider
             and self.num_processing_threads == other.num_processing_threads
             and self.blob_buffer_size == other.blob_buffer_size
             and self.channel_high_watermark == other.channel_high_watermark
@@ -378,6 +387,7 @@ class SessionOptions:
             "message_compression_algorithm",
             "timeouts",
             "host_health_monitor",
+            "authn_credential_provider",
             "num_processing_threads",
             "blob_buffer_size",
             "channel_high_watermark",
@@ -426,6 +436,10 @@ class Session:
             `.HostHealthRestored` events will never be emitted, and the
             *suspends_on_bad_host_health* option of `QueueOptions` cannot be
             used.
+        authn_credential_provider: an optional callable that returns authentication
+            credentials as a ``(mechanism, data)`` tuple of ``(str, bytes)``,
+            or ``None`` if no credentials are available.  If not provided, no
+            authentication credentials are sent to the broker.
         num_processing_threads: The number of threads for the SDK to use for
             processing events.  This defaults to 1.
         blob_buffer_size: The size (in bytes) of the blob buffers to use.  This
@@ -470,6 +484,7 @@ class Session:
         ),
         timeout: Union[Timeouts, float] = DEFAULT_TIMEOUT,
         host_health_monitor: Union[BasicHealthMonitor, None] = (DefaultMonitor()),
+        authn_credential_provider: Optional[Callable] = None,
         num_processing_threads: Optional[int] = None,
         blob_buffer_size: Optional[int] = None,
         channel_high_watermark: Optional[int] = None,
@@ -486,6 +501,11 @@ class Session:
 
         monitor_host_health = host_health_monitor is not None
         fake_host_health_monitor = getattr(host_health_monitor, "_monitor", None)
+        fake_authn_credential_provider = (
+            FakeAuthnCredentialCb(authn_credential_provider)
+            if authn_credential_provider is not None
+            else None
+        )
 
         self._has_no_on_message = on_message is None
 
@@ -515,6 +535,7 @@ class Session:
             timeouts=_validate_timeouts(timeout),
             monitor_host_health=monitor_host_health,
             fake_host_health_monitor=fake_host_health_monitor,
+            fake_authn_credential_cb=fake_authn_credential_provider,
             user_agent_prefix=_make_user_agent_prefix(user_agent_prefix),
         )
         self._ext.set_owned_by_session()
@@ -571,6 +592,7 @@ class Session:
             message_compression_algorithm=message_compression_algorithm,
             timeout=timeout,
             host_health_monitor=session_options.host_health_monitor,
+            authn_credential_provider=session_options.authn_credential_provider,
             num_processing_threads=session_options.num_processing_threads,
             blob_buffer_size=session_options.blob_buffer_size,
             channel_high_watermark=session_options.channel_high_watermark,

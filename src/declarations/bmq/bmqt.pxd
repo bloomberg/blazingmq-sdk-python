@@ -14,6 +14,8 @@
 # limitations under the License.
 
 from libcpp cimport bool
+from bsl cimport string
+from bsl cimport vector
 
 
 cdef extern from "bmqt_sessioneventtype.h" namespace "BloombergLP::bmqt::SessionEventType" nogil:
@@ -73,3 +75,11 @@ cdef extern from "bmqt_queueoptions.h" namespace "BloombergLP::bmqt::QueueOption
     int k_DEFAULT_MAX_UNCONFIRMED_BYTES
     int k_DEFAULT_CONSUMER_PRIORITY
     bool k_DEFAULT_SUSPENDS_ON_BAD_HOST_HEALTH
+
+cdef extern from "bmqt_authncredential.h" namespace "BloombergLP::bmqt" nogil:
+    cdef cppclass AuthnCredential:
+        AuthnCredential() except +
+        AuthnCredential& setMechanism(const string&) except +
+        AuthnCredential& setData(const vector[char]&) except +
+        const string& mechanism() const
+        const vector[char]& data() const

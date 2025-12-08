@@ -21,12 +21,15 @@ import weakref
 from bsl cimport optional
 from bsl cimport pair
 from bsl cimport shared_ptr
+from bsl cimport vector
+from bsl cimport string
 from bsl.bsls cimport TimeInterval
 from cpython.ceval cimport PyEval_InitThreads
 from libcpp cimport bool as cppbool
 
 from bmq.bmqa cimport ManualHostHealthMonitor
 from bmq.bmqt cimport AckResult
+from bmq.bmqt cimport AuthnCredential
 from bmq.bmqt cimport CompressionAlgorithmType
 from bmq.bmqt cimport HostHealthState
 from bmq.bmqt cimport PropertyType
@@ -154,6 +157,36 @@ cdef class FakeHostHealthMonitor:
             self._monitor.get().setState(HostHealthState.e_UNHEALTHY)
 
 
+cdef class FakeAuthnCredentialCb:
+    cdef object _callback  # Store the Python callable
+
+    def __cinit__(self, callback):
+        self._callback = callback
+
+    # This method will be called by C++ code via PyObject_CallMethod
+    # Returns None for no credential, or (mechanism, data) tuple
+    def get_credential_data(self):
+        try:
+            result = self._callback()
+            if result is None:
+                return None
+
+            if not isinstance(result, tuple) or len(result) != 2:
+                raise ValueError("callback must return (str, bytes) or None")
+
+            mechanism, data = result
+            if not isinstance(mechanism, str) or not isinstance(data, bytes):
+                raise ValueError("callback must return (str, bytes) or None")
+
+            # Return as-is, let C++ side handle conversion
+            return result
+
+        except Exception:
+            # Log error or handle as needed
+            LOGGER.exception("Error in authentication credential callback")
+            return None
+
+
 cdef class Session:
     cdef object __weakref__
     cdef NativeSession* _session
@@ -175,6 +208,7 @@ cdef class Session:
         timeouts: _timeouts.Timeouts = _timeouts.Timeouts(),
         monitor_host_health: bool = False,
         fake_host_health_monitor: FakeHostHealthMonitor = None,
+        fake_authn_credential_cb: FakeAuthnCredentialCb = None,
         _mock: Optional[object] = None,
     ) -> None:
         cdef shared_ptr[ManualHostHealthMonitor] fake_host_health_monitor_sp
@@ -244,6 +278,7 @@ cdef class Session:
             session_cb,
             message_cb,
             ack_cb,
+            fake_authn_credential_cb,
             config,
             fake_host_health_monitor_sp,
             Error,

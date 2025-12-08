@@ -1,0 +1,1 @@
+Added the ``authn_credential_provider`` option to ``Session`` and ``SessionOptions``, a callable that supplies authentication credentials as a ``(mechanism, data)`` tuple each time the session authenticates with the broker.

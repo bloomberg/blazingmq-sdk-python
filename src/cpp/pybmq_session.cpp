@@ -1,4 +1,4 @@
-// Copyright 2019-2023 Bloomberg Finance L.P.
+// Copyright 2019-2026 Bloomberg Finance L.P.
 // SPDX-License-Identifier: Apache-2.0
 //
 // Licensed under the Apache License, Version 2.0 (the "License");
@@ -15,6 +15,7 @@
 
 #include <pybmq_session.h>
 
+#include <pybmq_gilacquireguard.h>
 #include <pybmq_gilreleaseguard.h>
 #include <pybmq_messageutils.h>
 #include <pybmq_mocksession.h>
@@ -25,12 +26,16 @@
 #include <bsl_sstream.h>
 #include <bsl_stdexcept.h>
 #include <bsl_string.h>
+#include <bsl_string_view.h>
+#include <bsl_vector.h>
 #include <bslma_default.h>
 #include <bslma_managedptr.h>
+#include <bslmf_movableref.h>
 #include <bslmt_readerwriterlockassert.h>
 #include <bslmt_readlockguard.h>
 #include <bslmt_writelockguard.h>
 
+#include <bmqt_authncredential.h>
 #include <bmqt_queueflags.h>
 #include <bmqt_queueoptions.h>
 #include <bmqt_resultcode.h>
@@ -71,12 +76,80 @@ class BrokerTimeoutError : public bsl::runtime_error
     }
 };
 
+// Invoke `get_credential_data()` on a Python object and convert the result to
+// a `bmqt::AuthnCredential`.  The object is held, not owned: the `Session`
+// holds the reference and drops it only after destroying the `bmqa::Session`
+// that owns every copy of this functor.
+class AuthnCredentialCbFunctor
+{
+  private:
+    // DATA
+    PyObject* d_callback_p;
+
+  public:
+    // CREATORS
+    explicit AuthnCredentialCbFunctor(PyObject* callback);
+
+    // ACCESSORS
+    bsl::optional<bmqt::AuthnCredential> operator()() const;
+};
+
+AuthnCredentialCbFunctor::AuthnCredentialCbFunctor(PyObject* callback)
+: d_callback_p(callback)
+{
+}
+
+bsl::optional<bmqt::AuthnCredential>
+AuthnCredentialCbFunctor::operator()() const
+{
+    pybmq::GilAcquireGuard guard;
+
+    // The adapter validates the provider's result and reports any problem to
+    // the Python logger, so a failure here is just an empty credential.  It
+    // hands back the mechanism and data already marshalled to `bytes`.
+    bslma::ManagedPtr<PyObject> result = RefUtils::toManagedPtr(
+            PyObject_CallMethod(d_callback_p, "get_credential_data", NULL));
+
+    if (!result) {
+        PyErr_WriteUnraisable(d_callback_p);
+        return bsl::optional<bmqt::AuthnCredential>();
+    }
+
+    if (result.get() == Py_None) {
+        return bsl::optional<bmqt::AuthnCredential>();
+    }
+
+    const char* mechanism_p;
+    Py_ssize_t mechanism_len;
+    const char* data_p;
+    Py_ssize_t data_len;
+    if (!PyArg_ParseTuple(
+                result.get(),
+                "y#y#",
+                &mechanism_p,
+                &mechanism_len,
+                &data_p,
+                &data_len))
+    {
+        // The adapter broke its contract with us.
+        PyErr_WriteUnraisable(d_callback_p);
+        return bsl::optional<bmqt::AuthnCredential>();
+    }
+
+    bmqt::AuthnCredential credential(
+            bsl::string_view(mechanism_p, mechanism_len),
+            bsl::vector<char>(data_p, data_p + data_len));
+    return bsl::optional<bmqt::AuthnCredential>(
+            bslmf::MovableRefUtil::move(credential));
+}
+
 }  // namespace
 
 Session::Session(
         PyObject* py_session_event_callback,
         PyObject* py_message_event_callback,
         PyObject* py_ack_event_callback,
+        PyObject* authn_credential_cb,
         const SessionConfig& config,
         bsl::shared_ptr<bmqa::ManualHostHealthMonitor> fake_host_health_monitor_sp,
         PyObject* error,
@@ -88,6 +161,7 @@ Session::Session(
 , d_message_compression_type(bmqt::CompressionAlgorithmType::e_NONE)
 , d_error(error)
 , d_broker_timeout_error(broker_timeout_error)
+, d_authn_credential_cb(NULL)
 , d_session_mp()
 {
     bsl::shared_ptr<bmqpi::HostHealthMonitor> host_health_monitor_sp;
@@ -107,6 +181,14 @@ Session::Session(
     }
 
     d_message_compression_type = config.message_compression_type;
+
+    bmqt::SessionOptions::AuthnCredentialCb cpp_callback;
+
+    if (authn_credential_cb != NULL && authn_credential_cb != Py_None) {
+        d_authn_credential_cb = authn_credential_cb;
+        cpp_callback = AuthnCredentialCbFunctor(d_authn_credential_cb);
+    }
+
     {
         pybmq::GilReleaseGuard guard;
         bmqt::SessionOptions options;
@@ -130,6 +212,10 @@ Session::Session(
             options.configureEventQueue(
                     config.event_queue_watermarks.value().first,
                     config.event_queue_watermarks.value().second);
+        }
+
+        if (cpp_callback) {
+            options.setAuthnCredentialCb(cpp_callback);
         }
 
         if (config.stats_dump_interval != bsls::TimeInterval()) {
@@ -173,15 +259,22 @@ Session::Session(
     }
     Py_INCREF(d_error);
     Py_INCREF(d_broker_timeout_error);
+    Py_XINCREF(d_authn_credential_cb);
 }
 
 Session::~Session()
 {
+    BSLS_ASSERT(!d_started);
+    {
+        // Destroy the session first: it owns the copies of
+        // `AuthnCredentialCbFunctor`, which borrow `d_authn_credential_cb`.
+        pybmq::GilReleaseGuard gil_release_guard;
+        d_session_mp.reset();
+    }
+
+    Py_XDECREF(d_authn_credential_cb);
     Py_DECREF(d_broker_timeout_error);
     Py_DECREF(d_error);
-    BSLS_ASSERT(!d_started);
-    pybmq::GilReleaseGuard gil_release_guard;
-    d_session_mp.reset();
 }
 
 PyObject*
@@ -519,8 +612,8 @@ Session::post(
             oss << "Failed to post message to " << queue_uri << " queue: " << post_rc;
             throw GenericError(oss.str());
         }
-        // We have a successful post and the SDK now owns the `on_ack` callback object
-        // so release our reference without a DECREF.
+        // We have a successful post and the SDK now owns the `on_ack` callback
+        // object so release our reference without a DECREF.
         managed_on_ack.release();
     } catch (const GenericError& exc) {
         PyErr_SetString(d_error, exc.what());

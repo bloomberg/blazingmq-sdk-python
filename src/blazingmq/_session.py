@@ -1,4 +1,4 @@
-# Copyright 2019-2023 Bloomberg Finance L.P.
+# Copyright 2019-2026 Bloomberg Finance L.P.
 # SPDX-License-Identifier: Apache-2.0
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
@@ -27,6 +27,7 @@ from . import _six as six
 from ._about import __version__
 from ._enums import CompressionAlgorithmType
 from ._enums import PropertyType
+from ._ext import AuthnCredentialCbAdapter
 from ._ext import DEFAULT_CONSUMER_PRIORITY
 from ._ext import DEFAULT_MAX_UNCONFIRMED_BYTES
 from ._ext import DEFAULT_MAX_UNCONFIRMED_MESSAGES
@@ -38,6 +39,7 @@ from ._messages import Message
 from ._messages import MessageHandle
 from ._monitors import BasicHealthMonitor
 from ._timeouts import Timeouts
+from ._typing import AuthnCredentialProvider
 from ._typing import PropertyTypeDict
 from ._typing import PropertyValueDict
 from ._typing import PropertyValueType
@@ -51,6 +53,10 @@ class DefaultTimeoutType(float):
 
 
 def DefaultMonitor() -> Union[BasicHealthMonitor, None]:
+    return None
+
+
+def DefaultAuthnCredentialProvider() -> Optional[AuthnCredentialProvider]:
     return None
 
 
@@ -349,6 +355,15 @@ class SessionOptions:
             96 bytes long.  This is provided for libraries that are wrapping
             this SDK.  Applications directly using the SDK are encouraged *NOT*
             to set this value.
+        authn_credential_provider (Optional[`~blazingmq.AuthnCredentialProvider`]):
+            An optional callable that returns authentication credentials as a
+            ``(mechanism, data)`` tuple of ``(str, bytes)``.  It is called
+            each time the session authenticates with the broker, including on
+            reauthentication.  If it returns ``None`` or raises, the
+            connection is closed: starting a session fails, while an
+            already-started session sees `.ConnectionLost` and then
+            reconnects, calling this callable again.  If not provided, no
+            authentication credentials are sent to the broker.
     """
 
     def __init__(
@@ -362,6 +377,9 @@ class SessionOptions:
         event_queue_watermarks: Optional[tuple[int, int]] = None,
         stats_dump_interval: Optional[float] = None,
         user_agent_prefix: Optional[bytes] = None,
+        authn_credential_provider: Optional[AuthnCredentialProvider] = (
+            DefaultAuthnCredentialProvider()
+        ),
     ) -> None:
         self.message_compression_algorithm = message_compression_algorithm
         self.timeouts = timeouts
@@ -372,6 +390,7 @@ class SessionOptions:
         self.event_queue_watermarks = event_queue_watermarks
         self.stats_dump_interval = stats_dump_interval
         self.user_agent_prefix = user_agent_prefix
+        self.authn_credential_provider = authn_credential_provider
 
     def __eq__(self, other: object) -> bool:
         if not isinstance(other, SessionOptions):
@@ -386,6 +405,7 @@ class SessionOptions:
             and self.event_queue_watermarks == other.event_queue_watermarks
             and self.stats_dump_interval == other.stats_dump_interval
             and self.user_agent_prefix == other.user_agent_prefix
+            and self.authn_credential_provider == other.authn_credential_provider
         )
 
     def __ne__(self, other: object) -> bool:
@@ -402,6 +422,7 @@ class SessionOptions:
             "event_queue_watermarks",
             "stats_dump_interval",
             "user_agent_prefix",
+            "authn_credential_provider",
         )
 
         params = []
@@ -470,6 +491,15 @@ class Session:
             must be at most 96 bytes long.  This is provided for libraries
             that are wrapping this SDK.  Applications directly using the SDK
             are encouraged *NOT* to set this value.
+        authn_credential_provider (Optional[`~blazingmq.AuthnCredentialProvider`]):
+            an optional callable that returns authentication credentials as a
+            ``(mechanism, data)`` tuple of ``(str, bytes)``.  It is called
+            each time the session authenticates with the broker, including on
+            reauthentication.  If it returns ``None`` or raises, the
+            connection is closed: starting a session fails, while an
+            already-started session sees `.ConnectionLost` and then
+            reconnects, calling this callable again.  If not provided, no
+            authentication credentials are sent to the broker.
 
     Raises:
         `~blazingmq.Error`: If the session start request was not successful.
@@ -496,6 +526,9 @@ class Session:
         event_queue_watermarks: Optional[tuple[int, int]] = None,
         stats_dump_interval: Optional[float] = None,
         user_agent_prefix: Optional[bytes] = None,
+        authn_credential_provider: Optional[AuthnCredentialProvider] = (
+            DefaultAuthnCredentialProvider()
+        ),
     ) -> None:
         if host_health_monitor is not None:
             if not isinstance(host_health_monitor, BasicHealthMonitor):
@@ -506,6 +539,11 @@ class Session:
 
         monitor_host_health = host_health_monitor is not None
         fake_host_health_monitor = getattr(host_health_monitor, "_monitor", None)
+        authn_credential_cb = (
+            AuthnCredentialCbAdapter(authn_credential_provider)
+            if authn_credential_provider is not None
+            else None
+        )
 
         self._has_no_on_message = on_message is None
 
@@ -537,6 +575,7 @@ class Session:
             timeouts=_validate_timeouts(timeout),
             monitor_host_health=monitor_host_health,
             fake_host_health_monitor=fake_host_health_monitor,
+            authn_credential_cb=authn_credential_cb,
             user_agent_prefix=_make_user_agent_prefix(user_agent_prefix),
         )
         self._ext.set_owned_by_session()
@@ -600,6 +639,7 @@ class Session:
             event_queue_watermarks=session_options.event_queue_watermarks,
             stats_dump_interval=session_options.stats_dump_interval,
             user_agent_prefix=session_options.user_agent_prefix,
+            authn_credential_provider=session_options.authn_credential_provider,
         )
 
     def open_queue(

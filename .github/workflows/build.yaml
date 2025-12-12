@@ -175,10 +175,10 @@ jobs:
           PYTHON: ./venv/bin/python
           PKG_CONFIG_PATH: /usr/lib/x86_64-linux-gnu/pkgconfig:/opt/bb/lib64/pkgconfig:./blazingmq_artifacts/lib64/pkgconfig
       - name: Lint sources
+        run: tox run -e lint-types
         env:
-          PYTHON: ./venv/bin/python
-        run: |
-          make lint
+          PREFIX: blazingmq_artifacts
+          PKG_CONFIG_PATH: /usr/lib/x86_64-linux-gnu/pkgconfig:/opt/bb/lib64/pkgconfig:./blazingmq_artifacts/lib64/pkgconfig
       - name: Build docs
         run: |
           ./venv/bin/python -m towncrier build --version 99.99 --name blazingmq --keep

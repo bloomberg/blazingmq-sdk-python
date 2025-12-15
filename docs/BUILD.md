@@ -8,42 +8,47 @@ CI to test on all other combinations in your pull request. See
 `.github/workflows/build.yaml` for more details on how we build and
 test on all supported interpreters and architectures.
 
-The instructions below assume `PYEXEC=python3.9` and will focus on Linux only.
-This should be sufficient in most cases.
-
 Before following any of the instructions, make sure to `git clone` the project onto the host machine.
 
-## Using `make` vs. `tox`
+## Using `tox`
 
-Once the build environment is properly initialized, the project can
-be built in-tree (in the project's working directory tree) using
-`make build`. This is useful to iterate quickly. However, it has the
-disadvantages of having to install all of the required
-build/test/lint dependencies, along with the potential to
-accidentally test against the wrong artifact due to the in-tree build.
+The recommended way to build, test, lint, and format is through `tox`.
+It manages isolated environments and dependencies automatically.
+Run `tox -l` to see all available environments.
 
-For a more comprehensive, self-contained setup, use `tox` to build the project
-and run the entire test suite targeting a specific version of the interpreter.
-Run `tox -l` to see all available `tox` environments.
+Key environments:
+
+| Command | Description |
+|---|---|
+| `tox run -e py313` | Run tests under Python 3.13 |
+| `tox run -e lint` | Run all linters (black, flake8, isort, mypy, clang-format) |
+| `tox run -e format` | Auto-format Python and C++ files |
+| `tox run -e docs` | Build Sphinx documentation |
+| `tox run -e dist` | Build source distribution |
+| `tox run -e gen-news` | Generate changelog with towncrier |
 
 ## Local Development
 
-The BlazingMQ Python SDK provides a `./build-manylinux.sh` script and a
-`./build-macosx-universal.sh` script for setting up a development environment.
+The BlazingMQ Python SDK provides a `bin/build-manylinux.sh` script and a
+`bin/build-macos-universal.sh` script for building the C++ dependencies.
+These need to be run once before building the extension.
 
-## Working with Make Targets
-
-When in an interactive command line prompt, you can use the following `make`
-targets to build and test the BlazingMQ Python SDK. Check the
-appropriate GitHub Actions configuration to set up the appropriate environment
-variables that may be needed prior to running these commands (such as setting
-`PYEXEC`).  The following targets build Python SDK:
+For fast in-tree iteration without tox, you can also use `make`:
 
 ```shell
-make test-install
+make build         # Build extension in-place
+make test-build    # Build with test/coverage instrumentation
 ```
 
-To run the tests, we need to start a broker running at `tcp://localhost:30114`:
+## Running Tests
+
+To run unit tests (no broker needed):
+
+```shell
+tox run -e py313
+```
+
+To run integration tests, start a broker at `tcp://localhost:30114` first:
 
 ```shell
 mkdir -p bmq/logs
@@ -51,26 +56,26 @@ mkdir -p bmq/storage/archive
 ./build/blazingmq/src/applications/bmqbrkr/bmqbrkr.tsk ./tests/broker-config
 ```
 
-And then run the tests as below:
+Then run:
 
 ```shell
-BMQ_BROKER_URI=tcp://localhost:30114 make check
+BMQ_BROKER_URI=tcp://localhost:30114 tox run -e py313
 ```
 
-Note that on OSX, the
+Note that on macOS, the
 `tests/integration/test_deadlock_detection.py::test_deadlock_detection_warning`
 test may display a dialog warning you of a crashed Python process,
-depending on your system configuration.  This crash is intentional, and
+depending on your system configuration. This crash is intentional and
 is part of the test.
 
-Additional `make` targets are provided, such as for test coverage.
-Dependencies for these can be installed as follows:
+## Coverage
+
+Install dependencies and run coverage:
 
 ```shell
 python3.9 -m pip install -r requirements-dev.txt
+make coverage
 ```
 
-And now you should be able to run `make coverage`.
-
-Examine the `Makefile`, the GitHub Actions configuration, and the `tox.ini`
-file to understand more about these targets and how to use them.
+Examine the `tox.ini` file and the GitHub Actions configuration for more
+details on available workflows.

@@ -153,39 +153,20 @@ jobs:
           key: ${{ needs.blazingmq-dependency.outputs.blazingmq_sha }}
       - name: Restore cached BlazingMQ build artifacts
         run: tar xzf blazingmq_artifacts.tar.gz
-      - name: Set up Python 3.9
+      - name: Set up Python 3.13
         uses: actions/setup-python@v5
         with:
-          python-version: "3.9"
-      - name: Create virtual environment
-        run: |
-          python3 -m venv venv
-      - name: Install Python dependencies
-        run: |
-          ./venv/bin/python -m pip install --upgrade pip
-          ./venv/bin/python -m pip install -r requirements-dev.txt
-      - name: Set up dependencies
-        run:
-          sudo apt-get install clang-format
-      - name: Install Package
-        run: |
-          ./venv/bin/python -m pip install -e .
-        env:
-          PREFIX: blazingmq_artifacts
-          PYTHON: ./venv/bin/python
-          PKG_CONFIG_PATH: /usr/lib/x86_64-linux-gnu/pkgconfig:/opt/bb/lib64/pkgconfig:./blazingmq_artifacts/lib64/pkgconfig
+          python-version: "3.13"
+      - name: Install tox
+        run: pip install tox
       - name: Lint sources
-        run: tox run -e lint-types
+        run: |
+          tox run -e lint
+          tox run -e lint-cython
+          tox run -e lint-types
         env:
           PREFIX: blazingmq_artifacts
           PKG_CONFIG_PATH: /usr/lib/x86_64-linux-gnu/pkgconfig:/opt/bb/lib64/pkgconfig:./blazingmq_artifacts/lib64/pkgconfig
-      - name: Build docs
-        run: |
-          ./venv/bin/python -m towncrier build --version 99.99 --name blazingmq --keep
-          make docs
-        env:
-          PYTHON: ./venv/bin/python
-          SPHINXBUILD: ../venv/bin/sphinx-build
 
   coverage:
     name: Coverage

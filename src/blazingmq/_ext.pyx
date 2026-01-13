@@ -58,7 +58,7 @@ cdef _log_callback(const char *name,
                    int level,
                    const char *filename,
                    int line,
-                   const char *msg) noexcept:
+                   const char *msg):
     if LOGGER.isEnabledFor(level):
         rec = LOGGER.makeRecord(name, level, filename, line, msg, (), None)
         LOGGER.handle(rec)

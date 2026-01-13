@@ -14,7 +14,6 @@
 # limitations under the License.
 
 import os
-from pathlib import Path
 import platform
 import sys
 
@@ -178,43 +177,10 @@ Options.generate_cleanup_code = 3
 if not IS_LINUX and not IS_MAC:
     raise RuntimeError(f"BlazingMQ does not support this platform ({sys.platform})")
 
-about = {}
-with open("src/blazingmq/_about.py") as fp:
-    exec(fp.read(), about)
-
-# Read the contents of the README file.
-this_directory = Path(__file__).parent
-long_description = (this_directory / "README.md").read_text()
-
 setup(
-    name="blazingmq",
-    description="Python BlazingMQ API",
-    version=about["__version__"],
-    author="Bloomberg Finance LP",
-    classifiers=[
-        "License :: OSI Approved :: Apache Software License",
-        "Intended Audience :: Developers",
-        "Operating System :: POSIX :: Linux",
-        "Development Status :: 5 - Production/Stable",
-        "Programming Language :: Python :: 3.9",
-        "Programming Language :: Python :: 3.10",
-        "Programming Language :: Python :: 3.11",
-        "Programming Language :: Python :: 3.12",
-        "Programming Language :: Python :: 3.13",
-        "Programming Language :: Python :: Implementation :: CPython",
-        "Topic :: Software Development :: Libraries :: Python Modules",
-        "Typing :: Typed",
-    ],
-    package_data={"blazingmq": ["py.typed", "_ext.pyi"]},
-    package_dir={"": "src"},
-    packages=["blazingmq"],
-    long_description=long_description,
-    long_description_content_type="text/markdown",
     ext_modules=cythonize(
         EXTENSIONS,
         include_path=["src/declarations"],
         compiler_directives=COMPILER_DIRECTIVES,
     ),
-    python_requires=">=3.9",
-    zip_safe=False,
 )

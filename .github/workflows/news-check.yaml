@@ -12,7 +12,7 @@ on:
 
 jobs:
   news_entry_check:
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-slim
     name: Check for news entry
     steps:
       - name: "Check for news entry"

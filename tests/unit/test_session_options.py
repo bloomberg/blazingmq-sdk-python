@@ -29,6 +29,7 @@ def test_session_options_repr():
         channel_high_watermark=8000000,
         event_queue_watermarks=(6000000, 7000000),
         stats_dump_interval=30.0,
+        user_agent_prefix=b"mylib:1.0",
     )
     # THEN
     assert (
@@ -40,7 +41,8 @@ def test_session_options_repr():
         " blob_buffer_size=5000,"
         " channel_high_watermark=8000000,"
         " event_queue_watermarks=(6000000, 7000000),"
-        " stats_dump_interval=30.0)" == repr(one)
+        " stats_dump_interval=30.0,"
+        " user_agent_prefix=b'mylib:1.0')" == repr(one)
     )
 
 
@@ -63,6 +65,7 @@ def test_session_options_default_to_none():
     assert options.channel_high_watermark is None
     assert options.event_queue_watermarks is None
     assert options.stats_dump_interval is None
+    assert options.user_agent_prefix is None
 
 
 def test_session_options_equality():
@@ -92,6 +95,7 @@ def test_session_options_equality():
         blazingmq.SessionOptions(channel_high_watermark=8000000),
         blazingmq.SessionOptions(event_queue_watermarks=(6000000, 7000000)),
         blazingmq.SessionOptions(stats_dump_interval=30.0),
+        blazingmq.SessionOptions(user_agent_prefix=b"mylib:1.0"),
     ],
 )
 def test_queue_options_other_inequality(right):

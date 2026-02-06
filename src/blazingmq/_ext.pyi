@@ -53,6 +53,7 @@ class Session:
         timeouts: Timeouts = Timeouts(),
         monitor_host_health: bool = False,
         fake_host_health_monitor: Optional[FakeHostHealthMonitor] = None,
+        user_agent_prefix: bytes = b"",
     ) -> None: ...
     def stop(self) -> None: ...
     def open_queue_sync(

@@ -175,6 +175,7 @@ cdef class Session:
         monitor_host_health: bool = False,
         fake_host_health_monitor: FakeHostHealthMonitor = None,
         _mock: Optional[object] = None,
+        user_agent_prefix: bytes = b"",
     ) -> None:
         cdef shared_ptr[ManualHostHealthMonitor] fake_host_health_monitor_sp
         cdef optional[int] c_num_processing_threads
@@ -221,6 +222,7 @@ cdef class Session:
         cdef char *c_broker_uri = broker
         script_name = _script_name.get_script_name()
         cdef char *c_script_name = script_name
+        cdef char *c_user_agent_prefix = user_agent_prefix
         self._session = new NativeSession(
             session_cb,
             message_cb,
@@ -242,7 +244,8 @@ cdef class Session:
             fake_host_health_monitor_sp,
             Error,
             BrokerTimeoutError,
-            _mock)
+            _mock,
+            c_user_agent_prefix)
         self._session.start(c_connect_timeout)
         atexit.register(ensure_stop_session_impl, weakref.ref(self))
 

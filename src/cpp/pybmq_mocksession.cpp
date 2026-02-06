@@ -295,7 +295,8 @@ MockSession::MockSession(
             "channel_high_watermark",
             "event_queue_low_watermark",
             "event_queue_high_watermark",
-            "stats_dump_interval"};
+            "stats_dump_interval",
+            "user_agent_prefix"};
 
     double timeout_connect_secs = time_interval_to_seconds(options.connectTimeout());
     double timeout_disconnect_secs =
@@ -309,7 +310,7 @@ MockSession::MockSession(
 
     bslma::ManagedPtr<PyObject> py_options = RefUtils::toManagedPtr(_Py_DictBuilder(
             option_names,
-            "(s# N f f f f f i i i i i f)",
+            "(s# N f f f f f i i i i i f s#)",
             options.brokerUri().c_str(),
             options.brokerUri().length(),
             PyBytes_FromStringAndSize(
@@ -325,7 +326,9 @@ MockSession::MockSession(
             options.channelHighWatermark(),
             options.eventQueueLowWatermark(),
             options.eventQueueHighWatermark(),
-            stats_dump_interval_secs));
+            stats_dump_interval_secs,
+            options.userAgentPrefix().c_str(),
+            options.userAgentPrefix().length()));
     if (!py_options) throw bsl::runtime_error("propagating Python error");
     PyObject_SetAttrString(d_mock, "options", py_options.get());
 }

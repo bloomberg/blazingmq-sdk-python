@@ -17,7 +17,7 @@ authors = [
     {name = "Bloomberg Finance LP"}
 ]
 dynamic = ["version"]
-license = {text = "Apache-2.0"}
+license = "Apache-2.0"
 classifiers = [
     "Intended Audience :: Developers",
     "Operating System :: POSIX :: Linux",

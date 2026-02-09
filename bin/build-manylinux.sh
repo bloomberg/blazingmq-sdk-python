@@ -14,6 +14,7 @@ sudo yum install -y \
     ninja-build \
     flex-devel \
     zlib-devel \
+    openssl-devel \
     m4
 PREREQUISITES
 

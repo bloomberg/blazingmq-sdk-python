@@ -2,21 +2,18 @@
 
 # This script builds BlazingMQ and all of its dependencies on RHEL7.
 #
-# Before running this script, install following prerequisites, if not present
-# yet, by copy-and-pasting the commands between `<<PREREQUISITES` and
-# `PREREQUISITES` below:
-                                                    # shellcheck disable=SC2188
-<<PREREQUISITES
-sudo yum install -y \
-    gdb \
-    curl \
-    pkgconfig \
-    ninja-build \
-    flex-devel \
-    zlib-devel \
-    openssl-devel \
-    m4
-PREREQUISITES
+# Before running this script, install the following prerequisites if not
+# present yet:
+#
+#   sudo yum install -y \
+#       gdb \
+#       curl \
+#       pkgconfig \
+#       ninja-build \
+#       flex-devel \
+#       zlib-devel \
+#       openssl-devel \
+#       m4
 
 set -e
 set -u

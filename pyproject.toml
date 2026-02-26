@@ -63,7 +63,7 @@ PKG_CONFIG_PATH="install/lib/pkgconfig"
 
 [tool.cibuildwheel.linux]
 before-all = [
-  "yum install -y gdb curl pkgconfig ninja-build flex flex-devel zlib-devel",
+  "yum install -y gdb curl pkgconfig ninja-build flex flex-devel zlib-devel openssl-devel",
   "DIR_INSTALL=/usr/local bash bin/build-manylinux.sh"
 ]
 
@@ -81,6 +81,6 @@ before-test = [
 [[tool.cibuildwheel.overrides]]
 select = "*-musllinux*"
 before-all = [
-  "apk add --update gdb curl pkgconfig ninja flex flex-dev zlib-dev",
+  "apk add --update gdb curl pkgconfig ninja flex flex-dev zlib-dev openssl-dev",
   "DIR_INSTALL=/usr/local bash bin/build-manylinux.sh"
 ]

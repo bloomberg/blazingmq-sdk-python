@@ -102,17 +102,6 @@ jobs:
           key: ${{ needs.blazingmq-dependency.outputs.blazingmq_sha }}
       - name: Restore cached BlazingMQ build artifacts
         run: tar xzf blazingmq_artifacts.tar.gz
-      - name: Set up Python ${{ matrix.python-version }}
-        uses: actions/setup-python@v5
-        with:
-          python-version: ${{ matrix.python-version }}
-      - name: Create virtual environment
-        run: |
-          python3 -m venv venv
-      - name: Install Python dependencies
-        run: |
-          ./venv/bin/python -m pip install --upgrade pip
-          ./venv/bin/python -m pip install -r requirements-dev.txt
       - name: Install package manager dependencies
         run: |
           sudo apt-get update
@@ -127,6 +116,20 @@ jobs:
             libfl-dev \
             libbenchmark-dev \
             libz-dev
+      - name: Set up Python ${{ matrix.python-version }}
+        uses: actions/setup-python@v5
+        with:
+          python-version: ${{ matrix.python-version }}
+      - name: Create virtual environment
+        run: |
+          python3 -m venv venv
+      - name: Install Python dependencies
+        env:
+          CYTHON_TEST_MACROS: "1"
+          PKG_CONFIG_PATH: /usr/lib/x86_64-linux-gnu/pkgconfig:/opt/bb/lib64/pkgconfig:./blazingmq_artifacts/lib64/pkgconfig
+        run: |
+          ./venv/bin/python -m pip install --upgrade pip
+          ./venv/bin/python -m pip install -e ".[dev]"
       - name: Run tests
         env:
           BMQ_BROKER_URI: tcp://localhost:30114
@@ -153,6 +156,9 @@ jobs:
           key: ${{ needs.blazingmq-dependency.outputs.blazingmq_sha }}
       - name: Restore cached BlazingMQ build artifacts
         run: tar xzf blazingmq_artifacts.tar.gz
+      - name: Set up dependencies
+        run:
+          sudo apt-get install clang-format
       - name: Set up Python 3.9
         uses: actions/setup-python@v5
         with:
@@ -161,19 +167,13 @@ jobs:
         run: |
           python3 -m venv venv
       - name: Install Python dependencies
-        run: |
-          ./venv/bin/python -m pip install --upgrade pip
-          ./venv/bin/python -m pip install -r requirements-dev.txt
-      - name: Set up dependencies
-        run:
-          sudo apt-get install clang-format
-      - name: Install Package
-        run: |
-          ./venv/bin/python -m pip install -e .
         env:
           PREFIX: blazingmq_artifacts
           PYTHON: ./venv/bin/python
           PKG_CONFIG_PATH: /usr/lib/x86_64-linux-gnu/pkgconfig:/opt/bb/lib64/pkgconfig:./blazingmq_artifacts/lib64/pkgconfig
+        run: |
+          ./venv/bin/python -m pip install --upgrade pip
+          ./venv/bin/python -m pip install -e ".[dev]"
       - name: Lint sources
         env:
           PYTHON: ./venv/bin/python
@@ -209,9 +209,11 @@ jobs:
         run: |
           python3 -m venv venv
       - name: Install Python dependencies
+        env:
+          PKG_CONFIG_PATH: /usr/lib/x86_64-linux-gnu/pkgconfig:/opt/bb/lib64/pkgconfig:./blazingmq_artifacts/lib64/pkgconfig
         run: |
           ./venv/bin/python3 -m pip install --upgrade pip
-          ./venv/bin/python3 -m pip install -r requirements-dev.txt
+          ./venv/bin/python3 -m pip install -e ".[dev]"
       - name: Setup Core Dumps config
         run: |
           sudo mkdir /cores

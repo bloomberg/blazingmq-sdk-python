@@ -148,12 +148,13 @@ jobs:
         env:
           PREFIX: blazingmq_artifacts
           PKG_CONFIG_PATH: /usr/lib/x86_64-linux-gnu/pkgconfig:/opt/bb/lib64/pkgconfig:./blazingmq_artifacts/lib64/pkgconfig
+          PYTEST_ARGS: -vvv --showlocals -x
         run: |
           mkdir -p bmq/logs
           mkdir -p bmq/storage/archive
           make test-build
           make test-install
-          make check
+          make check || docker logs blazingmq
 
   lint-docs:
     name: Lint and Docs

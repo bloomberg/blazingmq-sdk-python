@@ -17,6 +17,36 @@ authors = [
     {name = "Bloomberg Finance LP"}
 ]
 dynamic = ["version"]
+
+[project.optional-dependencies]
+test = [
+    "mock",
+    "pytest",
+    "pkgconfig",
+]
+coverage = [
+    "blazingmq[test]",
+    "pytest-cov",
+    "Cython>=3,<4",
+]
+lint = [
+    "black",
+    "flake8<5",
+    "isort",
+    "mypy",
+    "types-enum34",
+]
+docs = [
+    "recommonmark",
+    "Sphinx",
+    "sphinx_rtd_theme",
+    "towncrier",
+]
+dev = [
+    "blazingmq[test,coverage,lint,docs]",
+    "tox",
+    "setuptools",
+]
 license = {text = "Apache-2.0"}
 classifiers = [
     "Intended Audience :: Developers",

@@ -159,6 +159,11 @@ jobs:
     name: Lint and Docs
     needs: blazingmq-dependency
     runs-on: ubuntu-24.04
+    strategy:
+      matrix:
+        python-version:
+          - "3.13"
+
     steps:
       - uses: actions/checkout@v4
       - name: Try to get cached BlazingMQ build artifacts
@@ -169,10 +174,10 @@ jobs:
           key: ${{ needs.blazingmq-dependency.outputs.blazingmq_sha }}
       - name: Restore cached BlazingMQ build artifacts
         run: tar xzf blazingmq_artifacts.tar.gz
-      - name: Set up Python 3.9
+      - name: Set up Python ${{ matrix.python-version }}
         uses: actions/setup-python@v5
         with:
-          python-version: "3.9"
+          python-version: ${{ matrix.python-version }}
       - name: Install Python dependencies
         run: pip install -r requirements-dev.txt
       - name: Set up dependencies
@@ -196,6 +201,10 @@ jobs:
     runs-on: ubuntu-24.04
     permissions:
       packages: read
+    strategy:
+      matrix:
+        python-version:
+          - "3.13"
 
     services:
       blazingmq:
@@ -235,10 +244,10 @@ jobs:
           key: ${{ needs.blazingmq-dependency.outputs.blazingmq_sha }}
       - name: Restore cached BlazingMQ build artifacts
         run: tar xzf blazingmq_artifacts.tar.gz
-      - name: Set up Python
+      - name: Set up Python ${{ matrix.python-version }}
         uses: actions/setup-python@v5
         with:
-          python-version: "3.9"
+          python-version: ${{ matrix.python-version }}
       - name: Install Python dependencies
         run: pip install -r requirements-dev.txt
       - name: Setup Core Dumps config

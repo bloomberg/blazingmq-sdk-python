@@ -1,5 +1,5 @@
 black
-flake8<5
+flake8
 isort
 mypy
 recommonmark

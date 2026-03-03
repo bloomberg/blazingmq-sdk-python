@@ -157,7 +157,7 @@ def test_message_received_in_callback():
     spy.assert_called_once()
     args, kwargs = spy.call_args
     assert not kwargs
-    (msg, msg_handle) = args
+    msg, msg_handle = args
     assert isinstance(msg, blazingmq.Message)
     assert isinstance(msg_handle, blazingmq.MessageHandle)
     assert msg.data == raw[0]

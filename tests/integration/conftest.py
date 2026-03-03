@@ -25,7 +25,7 @@ from blazingmq.session_events import log_session_event
 
 @pytest.fixture
 def unique_queue():
-    return f"bmq://bmq.test.mmap.priority/{str(uuid.uuid4())}"
+    return f"bmq://bmq.test.persistent.priority.sc/{str(uuid.uuid4())}"
 
 
 @pytest.fixture

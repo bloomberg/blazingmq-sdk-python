@@ -22,7 +22,7 @@ from typing import Optional
 
 import blazingmq
 
-QUEUE_URI = "bmq://bmq.test.mmap.priority/blazingmq-examples"
+QUEUE_URI = "bmq://bmq.test.persistent.priority.sc/blazingmq-examples"
 
 MESSAGES: queue.Queue[Optional[blazingmq.Message]] = queue.Queue()
 

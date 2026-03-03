@@ -21,7 +21,7 @@ from typing import Any
 
 import blazingmq
 
-QUEUE_URI = "bmq://bmq.test.mmap.priority/blazingmq-examples"
+QUEUE_URI = "bmq://bmq.test.persistent.priority.sc/blazingmq-examples"
 EXITING = threading.Event()
 
 

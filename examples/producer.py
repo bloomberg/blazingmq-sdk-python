@@ -20,7 +20,7 @@ import threading
 
 import blazingmq
 
-QUEUE_URI = "bmq://bmq.test.mmap.priority/blazingmq-examples"
+QUEUE_URI = "bmq://bmq.test.persistent.priority.sc/blazingmq-examples"
 
 
 def on_ack(event: threading.Event, ack: blazingmq.Ack) -> None:

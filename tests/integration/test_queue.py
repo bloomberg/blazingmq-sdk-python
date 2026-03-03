@@ -91,7 +91,7 @@ def test_open_queue_raises_invalid_flags(
     # THEN
     assert exc.type is exceptions.Error
     assert exc.match(
-        "Failed to open bmq://bmq.test.mmap.priority.+ queue: INVALID_FLAGS: .+"
+        "Failed to open bmq://bmq.test.persistent.priority.sc.+ queue: INVALID_FLAGS: .+"
     )
 
 
@@ -132,7 +132,7 @@ def test_open_queue_raises_negative_unconfirmed_messages(default_session, unique
     # THEN
     assert exc.type is exceptions.Error
     assert exc.match(
-        "Failed to open bmq://bmq.test.mmap.priority.+ queue: INVALID_ARGUMENT: .+"
+        "Failed to open bmq://bmq.test.persistent.priority.sc.+ queue: INVALID_ARGUMENT: .+"
     )
 
 
@@ -155,7 +155,7 @@ def test_open_queue_raises_negative_unconfirmed_bytes(default_session, unique_qu
     # THEN
     assert exc.type is exceptions.Error
     assert exc.match(
-        "Failed to open bmq://bmq.test.mmap.priority.+ queue: INVALID_ARGUMENT: .+"
+        "Failed to open bmq://bmq.test.persistent.priority.sc.+ queue: INVALID_ARGUMENT: .+"
     )
 
 
@@ -202,7 +202,7 @@ def test_open_queue_raises_invalid_consumer_priority(
     # THEN
     assert exc.type is exceptions.Error
     assert exc.match(
-        "Failed to open bmq://bmq.test.mmap.priority.+ queue: INVALID_ARGUMENT: .+"
+        "Failed to open bmq://bmq.test.persistent.priority.sc.+ queue: INVALID_ARGUMENT: .+"
     )
 
 
@@ -234,7 +234,7 @@ def test_configure_queue_raises_invalid_consumer_priority(
     # THEN
     assert exc.type is exceptions.Error
     assert exc.match(
-        "Failed to configure bmq://bmq.test.mmap.priority.+ queue: INVALID_ARGUMENT: .+"
+        "Failed to configure bmq://bmq.test.persistent.priority.sc.+ queue: INVALID_ARGUMENT: .+"
     )
 
 
@@ -292,7 +292,7 @@ def test_configure_queue_raises_invalid_max_unconfirmed_messages(
     # THEN
     assert exc.type is exceptions.Error
     assert exc.match(
-        "Failed to configure bmq://bmq.test.mmap.priority.+ queue: INVALID_ARGUMENT: .+"
+        "Failed to configure bmq://bmq.test.persistent.priority.sc.+ queue: INVALID_ARGUMENT: .+"
     )
 
 
@@ -323,7 +323,7 @@ def test_configure_queue_raises_invalid_max_unconfirmed_bytes(
     # THEN
     assert exc.type is exceptions.Error
     assert exc.match(
-        "Failed to configure bmq://bmq.test.mmap.priority.+ queue: INVALID_ARGUMENT: .+"
+        "Failed to configure bmq://bmq.test.persistent.priority.sc.+ queue: INVALID_ARGUMENT: .+"
     )
 
 

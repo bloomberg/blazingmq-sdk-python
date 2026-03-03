@@ -20,7 +20,7 @@ import time
 
 import blazingmq
 
-QUEUE_URI = "bmq://bmq.test.mmap.priority/blazingmq-examples"
+QUEUE_URI = "bmq://bmq.test.persistent.priority.sc/blazingmq-examples"
 MSG_COUNT = 10
 
 

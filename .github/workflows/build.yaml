@@ -84,6 +84,8 @@ jobs:
     name: Test on Linux
     needs: blazingmq-dependency
     runs-on: ubuntu-24.04
+    permissions:
+      packages: read
     strategy:
       matrix:
         python-version:
@@ -92,8 +94,25 @@ jobs:
           - "3.11"
           - "3.12"
           - "3.13"
+
     steps:
       - uses: actions/checkout@v4
+
+      - name: Log in to GitHub Container Registry
+        uses: docker/login-action@v3
+        with:
+          registry: ghcr.io
+          username: ${{ github.repository_owner }}
+          password: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Start BlazingMQ broker
+        run: |
+          docker run -d --name blazingmq \
+            -p 30114:30114 \
+            -v ${{ github.workspace }}/tests/broker-config:/etc/local/bmq:ro \
+            ghcr.io/bloomberg/blazingmq:latest \
+            /usr/local/bin/bmqbrkr /etc/local/bmq
+
       - name: Try to get cached BlazingMQ build artifacts
         id: cache-restore
         uses: actions/cache/restore@v4
@@ -136,8 +155,9 @@ jobs:
         run: |
           mkdir -p bmq/logs
           mkdir -p bmq/storage/archive
-          ./blazingmq_artifacts/bin/bmqbrkr.tsk ./tests/broker-config &
-          (sleep 5; make test-build && make test-install && make check)
+          make test-build
+          make test-install
+          make check
 
   lint-docs:
     name: Lint and Docs
@@ -191,8 +211,36 @@ jobs:
     name: Coverage
     needs: blazingmq-dependency
     runs-on: ubuntu-24.04
+    permissions:
+      packages: read
+
+    services:
+      blazingmq:
+        image: ghcr.io/bloomberg/blazingmq:latest
+        ports:
+          - 30114:30114
+        credentials:
+          username: ${{ github.repository_owner }}
+          password: ${{ secrets.GITHUB_TOKEN }}
+
     steps:
       - uses: actions/checkout@v4
+
+      - name: Log in to GitHub Container Registry
+        uses: docker/login-action@v3
+        with:
+          registry: ghcr.io
+          username: ${{ github.repository_owner }}
+          password: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Start BlazingMQ broker
+        run: |
+          docker run -d --name blazingmq \
+            -p 30114:30114 \
+            -v ${{ github.workspace }}/tests/broker-config:/etc/local/bmq:ro \
+            ghcr.io/bloomberg/blazingmq:latest \
+            /usr/local/bin/bmqbrkr /etc/local/bmq
+
       - name: Try to get cached BlazingMQ build artifacts
         id: cache-restore
         uses: actions/cache/restore@v4
@@ -228,8 +276,8 @@ jobs:
           mkdir -p bmq/storage/archive
           # Allow core dumps
           ulimit -c unlimited
-          ./blazingmq_artifacts/bin/bmqbrkr.tsk ./tests/broker-config &
-          (sleep 5; make coverage-install && make coverage)
+          make coverage-install
+          make coverage
       - name: Output code coverage summary
         uses: irongut/CodeCoverageSummary@v1.3.0
         with:

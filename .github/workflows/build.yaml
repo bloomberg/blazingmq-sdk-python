@@ -95,6 +95,9 @@ jobs:
           - "3.12"
           - "3.13"
 
+    env:
+      BMQ_BROKER_URI: tcp://localhost:30114
+
     steps:
       - uses: actions/checkout@v4
 
@@ -148,7 +151,6 @@ jobs:
             libz-dev
       - name: Run tests
         env:
-          BMQ_BROKER_URI: tcp://localhost:30114
           PREFIX: blazingmq_artifacts
           PYTHON: ./venv/bin/python
           PKG_CONFIG_PATH: /usr/lib/x86_64-linux-gnu/pkgconfig:/opt/bb/lib64/pkgconfig:./blazingmq_artifacts/lib64/pkgconfig
@@ -223,6 +225,9 @@ jobs:
           username: ${{ github.repository_owner }}
           password: ${{ secrets.GITHUB_TOKEN }}
 
+    env:
+      BMQ_BROKER_URI: tcp://localhost:30114
+
     steps:
       - uses: actions/checkout@v4
 
@@ -267,7 +272,6 @@ jobs:
           echo "/cores/%e.%p.%s.%t" | sudo tee /proc/sys/kernel/core_pattern
       - name: Run tests with coverage
         env:
-          BMQ_BROKER_URI: tcp://localhost:30114
           PREFIX: blazingmq_artifacts
           PYTHON: ./venv/bin/python
           PKG_CONFIG_PATH: /usr/lib/x86_64-linux-gnu/pkgconfig:/opt/bb/lib64/pkgconfig:./blazingmq_artifacts/lib64/pkgconfig

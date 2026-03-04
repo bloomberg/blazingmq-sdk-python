@@ -43,13 +43,6 @@ fi
 source ./bin/clone-dependencies.sh
 
 # Download additional dependencies that are not packaged on manylinux:
-if [ ! -d "${DIR_THIRDPARTY}/google-benchmark" ]; then
-    git clone --depth 1 https://github.com/google/benchmark.git "${DIR_THIRDPARTY}/google-benchmark"
-fi
-if [ ! -d "${DIR_THIRDPARTY}/bison" ]; then
-    mkdir -p "${DIR_THIRDPARTY}/bison"
-    curl https://ftp.gnu.org/gnu/bison/bison-3.8.2.tar.xz | tar -Jx -C "${DIR_THIRDPARTY}/bison" --strip-components 1
-fi
 
 if [ ! -e "${DIR_THIRDPARTY}/cmake/.complete" ]; then
     mkdir -p "${DIR_THIRDPARTY}/cmake"
@@ -61,26 +54,6 @@ if [ ! -e "${DIR_THIRDPARTY}/cmake/.complete" ]; then
 fi
 
 PATH="${DIR_THIRDPARTY}/cmake/bin:$PATH"
-
-if [ ! -e "${DIR_THIRDPARTY}/bison/.complete" ]; then
-    # Build and install bison
-    pushd "${DIR_THIRDPARTY}/bison"
-    ./configure
-    make -j 16
-    make install
-    popd
-    touch "${DIR_THIRDPARTY}/bison/.complete"
-fi
-
-if [ ! -e "${DIR_BUILD}/google-benchmark/.complete" ]; then
-    pushd "${DIR_THIRDPARTY}/google-benchmark"
-    cmake -E make_directory "${DIR_BUILD}/google-benchmark"
-    cmake -DCMAKE_BUILD_TYPE=Release -DBENCHMARK_DOWNLOAD_DEPENDENCIES=on -S . -B "${DIR_BUILD}/google-benchmark"
-    cmake --build "${DIR_BUILD}/google-benchmark" --config Release -j16
-    cmake --build "${DIR_BUILD}/google-benchmark" --config Release --target install
-    popd
-    touch "${DIR_BUILD}/google-benchmark/.complete"
-fi
 
 # Build and install BDE
 # Refer to https://bloomberg.github.io/bde/library_information/build.html
@@ -131,7 +104,7 @@ if [ ! -e "${DIR_BUILD}/blazingmq/.complete" ]; then
         -G "Ninja")
     PKG_CONFIG_PATH="$(pkg-config --variable pc_path pkg-config):${DIR_INSTALL}/lib64/pkgconfig" \
     cmake -B "${DIR_BUILD}/blazingmq" -S "." "${CMAKE_OPTIONS[@]}"
-    cmake --build "${DIR_BUILD}/blazingmq" -j 16 --target all
+    cmake --build "${DIR_BUILD}/blazingmq" -j 16 --target bmq
     cmake --install "${DIR_BUILD}/blazingmq"
     popd
     touch "${DIR_BUILD}/blazingmq/.complete"

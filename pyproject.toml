@@ -51,27 +51,30 @@ filename    = "CHANGELOG.md"
 directory   = "news"
 
 [tool.cibuildwheel]
-build = ["cp39-*", "cp310-*", "cp311-*", "cp312-*"]
+build = ["cp3*"]
 skip = "*-musllinux_*"
 manylinux-x86_64-image = "manylinux_2_28"
-
-[tool.cibuildwheel.linux.environment]
-PKG_CONFIG_PATH="/usr/local/lib64/pkgconfig:/usr/lib64/pkgconfig"
-
-[tool.cibuildwheel.macos.environment]
-PKG_CONFIG_PATH="install/lib/pkgconfig"
+build-frontend = "build"
+build-verbosity = 1
 
 [tool.cibuildwheel.linux]
 before-all = [
   "dnf install -y epel-release",
-  "dnf install -y gdb curl pkgconfig ninja-build",
+  "dnf install -y gdb curl pkgconfig ninja-build kernel-headers perl-IPC-Cmd",
   "dnf install -y bison bison-devel",
   "dnf install -y flex flex-devel",
-  "dnf install -y zlib-static zlib-devel",
-  "dnf install -y openssl-static openssl-devel",
   "dnf install -y google-benchmark-devel",
+  "dnf copr enable -y swt2c/vcpkg-epel8",
+  "dnf install -y vcpkg",
+  "git clone https://github.com/microsoft/vcpkg.git $VCPKG_ROOT",
+  "vcpkg install openssl zlib --triplet=$VCPKG_TRIPLET", 
   "DIR_INSTALL=/usr/local bash bin/build-manylinux.sh",
 ]
+
+[tool.cibuildwheel.linux.environment]
+VCPKG_ROOT = "$HOME/.local/share/vcpkg"
+VCPKG_FORCE_SYSTEM_BINARIES = "true"
+PKG_CONFIG_PATH="/usr/local/lib64/pkgconfig:/usr/lib64/pkgconfig"
 
 [tool.cibuildwheel.macos]
 before-all = [
@@ -82,6 +85,11 @@ before-test = [
   "codesign --remove-signature /Library/Frameworks/Python.framework/Versions/*/bin/python3 || true",
   "codesign --remove-signature /Library/Frameworks/Python.framework/Versions/*/Resources/Python.app/Contents/MacOS/Python || true",
 ]
+
+[[tool.cibuildwheel.overrides]]
+select = "cp*-manylinux_x86_64"
+inherit.environment = "prepend"
+environment.VCPKG_TRIPLET = "x64-linux-dynamic"
 
 # Override the default linux before-all for musl linux
 [[tool.cibuildwheel.overrides]]

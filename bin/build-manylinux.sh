@@ -1,6 +1,7 @@
 #!/usr/bin/env bash
 
-# This script builds BlazingMQ and all of its dependencies on RHEL7.
+# This script builds BlazingMQ and all of its dependencies on AlmaLinux 8
+# (manylinux_2_28).
 #
 # Before running this script, install the following prerequisites if not
 # present yet:

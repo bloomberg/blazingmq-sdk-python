@@ -13,7 +13,6 @@
 #       ninja-build \
 #       flex-devel \
 #       zlib-devel \
-#       openssl-devel \
 #       m4
 
 set -e
@@ -120,6 +119,7 @@ if [ ! -e "${DIR_BUILD}/ntf-core/.complete" ]; then
         --with-zlib \
         --without-lz4 \
         --without-zstd \
+        --without-openssl \
         --without-warnings-as-errors \
         --without-usage-examples \
         --without-applications

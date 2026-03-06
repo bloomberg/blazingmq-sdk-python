@@ -64,7 +64,7 @@ PKG_CONFIG_PATH="install/lib/pkgconfig"
 
 [tool.cibuildwheel.linux]
 before-all = [
-  "dnf install -y gdb curl pkgconfig ninja-build flex flex-devel zlib-devel zlib-static openssl-devel",
+  "dnf install -y gdb curl pkgconfig ninja-build flex flex-devel zlib-devel zlib-static perl-core",
   "DIR_INSTALL=/usr/local bash bin/build-manylinux.sh"
 ]
 

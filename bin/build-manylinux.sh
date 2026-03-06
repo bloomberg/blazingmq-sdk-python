@@ -75,6 +75,20 @@ if [ ! -e "${DIR_THIRDPARTY}/bison/.complete" ]; then
     touch "${DIR_THIRDPARTY}/bison/.complete"
 fi
 
+if [ ! -e "${DIR_BUILD}/openssl/.complete" ]; then
+    if [ ! -d "${DIR_THIRDPARTY}/openssl" ]; then
+        mkdir -p "${DIR_THIRDPARTY}/openssl"
+        curl -sL https://www.openssl.org/source/openssl-1.1.1w.tar.gz | tar -xz -C "${DIR_THIRDPARTY}/openssl" --strip-components 1
+    fi
+    pushd "${DIR_THIRDPARTY}/openssl"
+    ./config --prefix="${DIR_INSTALL}" --openssldir="${DIR_INSTALL}/ssl" --libdir=lib64 no-shared -fPIC
+    make -j 16
+    make install_sw
+    popd
+    mkdir -p "${DIR_BUILD}/openssl"
+    touch "${DIR_BUILD}/openssl/.complete"
+fi
+
 if [ ! -e "${DIR_BUILD}/google-benchmark/.complete" ]; then
     pushd "${DIR_THIRDPARTY}/google-benchmark"
     cmake -E make_directory "${DIR_BUILD}/google-benchmark"
@@ -112,6 +126,7 @@ fi
 if [ ! -e "${DIR_BUILD}/ntf-core/.complete" ]; then
     # Build and install NTF
     pushd "${DIR_THIRDPARTY}/ntf-core"
+    OPENSSL_ROOT_DIR="${DIR_INSTALL}" \
     ./configure --prefix "${DIR_INSTALL}" \
         --output "${DIR_BUILD}/ntf-core" \
         --ufid opt_64_pic_cpp17 \

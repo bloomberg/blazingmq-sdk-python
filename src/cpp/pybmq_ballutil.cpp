@@ -15,6 +15,7 @@
 
 #include <pybmq_ballutil.h>
 #include <pybmq_gilacquireguard.h>
+#include <pybmq_gilreleaseguard.h>
 #include <pybmq_refutils.h>
 
 #include <ball_context.h>
@@ -131,8 +132,27 @@ PyObject*
 BallUtil::shutDownBallSingleton()
 {
     BALL_LOG_SET_CATEGORY("pybmq_ballutil");
+
+    if (!ball::LoggerManager::isInitialized()) {
+        Py_RETURN_NONE;
+    }
+
     BALL_LOG_DEBUG << "Shutting down BALL redirection";
-    ball::LoggerManager::shutDownSingleton();
+
+    // Since our Observer owns Python objects, it can't be destroyed with the
+    // GIL released.  Save a reference so it survives deregisterAllObservers,
+    // and it is instead destroyed after PyEval_RestoreThread.
+    bsl::shared_ptr<ball::Observer> observer =
+            ball::LoggerManager::singleton().findObserver("default");
+
+    {
+        GilReleaseGuard release_gil;
+        // Note: We leak the logger manager singleton. Destroying it could race
+        //       with some still living C++ thread that wants to log, resulting
+        //       in a crash after main.  Instead of risking that, we put it
+        //       into a state where further logs will be silently dropped.
+        ball::LoggerManager::singleton().deregisterAllObservers();
+    }
     Py_RETURN_NONE;
 }
 

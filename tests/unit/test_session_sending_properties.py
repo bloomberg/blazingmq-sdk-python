@@ -30,7 +30,7 @@ from .support import make_session
 
 def test_session_post_with_properties(ext):
     # GIVEN
-    ext.mock_add_spec(["post"])
+    ext.mock_add_spec(["post", "set_owned_by_session", "clear_owned_by_session"])
     session = make_session()
     properties = {"a": "b"}
     property_type_overrides = {}
@@ -55,7 +55,7 @@ def test_session_post_with_properties(ext):
 
 def test_session_post_property_default_types(ext):
     # GIVEN
-    ext.mock_add_spec(["post"])
+    ext.mock_add_spec(["post", "set_owned_by_session", "clear_owned_by_session"])
     session = make_session()
     properties = {"Bool": True, "Int": 65536, "Str": "\xe4"}
     merged = {
@@ -82,7 +82,7 @@ def test_session_post_property_default_types(ext):
 
 def test_session_post_property_default_for_byte_string_is_binary_in_3(ext):
     # GIVEN
-    ext.mock_add_spec(["post"])
+    ext.mock_add_spec(["post", "set_owned_by_session", "clear_owned_by_session"])
     session = make_session()
     properties = {"Bytes": b"a\0b"}
     merged = {b"Bytes": (b"a\0b", BINARY)}
@@ -101,7 +101,7 @@ def test_session_post_property_default_for_byte_string_is_binary_in_3(ext):
 
 def test_session_post_property_type_overrides(ext):
     # GIVEN
-    ext.mock_add_spec(["post"])
+    ext.mock_add_spec(["post", "set_owned_by_session", "clear_owned_by_session"])
     session = make_session()
     properties = {"Bool": True, "Int": 65536, "Bytes": b"a"}
     property_type_overrides = {
@@ -134,7 +134,7 @@ def test_session_post_property_type_overrides(ext):
 
 def test_session_post_property_type_overrides_mixed_bytes_unicode(ext):
     # GIVEN
-    ext.mock_add_spec(["post"])
+    ext.mock_add_spec(["post", "set_owned_by_session", "clear_owned_by_session"])
     session = make_session()
     properties = {"Bool": True, "Int": 65536, b"Bytes": b"a"}
     property_type_overrides = {
@@ -167,7 +167,7 @@ def test_session_post_property_type_overrides_mixed_bytes_unicode(ext):
 
 def test_session_post_property_type_with_invalid_property_name_type(ext):
     # GIVEN
-    ext.mock_add_spec(["post"])
+    ext.mock_add_spec(["post", "set_owned_by_session", "clear_owned_by_session"])
     session = make_session()
     properties = {True: True}
     property_type_overrides = {
@@ -190,7 +190,7 @@ def test_session_post_property_type_with_invalid_property_name_type(ext):
 
 def test_session_post_extra_property_type_overrides(ext):
     # GIVEN
-    ext.mock_add_spec(["post"])
+    ext.mock_add_spec(["post", "set_owned_by_session", "clear_owned_by_session"])
     session = make_session()
     properties = {"Bool": True}
     property_type_overrides = {"Bool": PropertyType.SHORT, "Int": PropertyType.INT32}
@@ -211,7 +211,7 @@ def test_session_post_extra_property_type_overrides(ext):
 
 def test_session_post_property_type_overrides_without_properties(ext):
     # GIVEN
-    ext.mock_add_spec(["post"])
+    ext.mock_add_spec(["post", "set_owned_by_session", "clear_owned_by_session"])
     session = make_session()
     property_type_overrides = {"Bool": PropertyType.SHORT}
 
@@ -230,7 +230,7 @@ def test_session_post_property_type_overrides_without_properties(ext):
 
 def test_session_post_unsupported_property_value(ext):
     # GIVEN
-    ext.mock_add_spec(["post"])
+    ext.mock_add_spec(["post", "set_owned_by_session", "clear_owned_by_session"])
     session = make_session()
     properties = {"Float": 42.0}
 

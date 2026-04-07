@@ -460,6 +460,12 @@ class Session:
             monitor_host_health=monitor_host_health,
             fake_host_health_monitor=fake_host_health_monitor,
         )
+        self._ext.set_owned_by_session()
+
+    def __del__(self) -> None:
+        # In case constructor failed
+        if getattr(self, "_ext", None) is not None:
+            self._ext.clear_owned_by_session()
 
     @classmethod
     def with_options(

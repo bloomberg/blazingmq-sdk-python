@@ -18,6 +18,7 @@ import mock
 from blazingmq import PropertyType
 from blazingmq import Session
 from blazingmq._ext import PROPERTY_TYPES_FROM_PY_MAPPING
+from blazingmq._ext import Session as ExtSession
 
 QUEUE_NAME = b"bmq://bmq.dummy_domain.some_namespace/dummy_queue"
 
@@ -37,6 +38,12 @@ def sdk_mock(**kwargs):
 
 def make_session():
     return Session(dummy_callback, dummy_callback, host_health_monitor=None)
+
+
+def make_ext_session(*args, **kwargs):
+    session = ExtSession(*args, **kwargs)
+    session.set_owned_by_session()
+    return session
 
 
 CHAR = PROPERTY_TYPES_FROM_PY_MAPPING[PropertyType.CHAR]

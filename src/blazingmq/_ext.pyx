@@ -157,6 +157,7 @@ cdef class Session:
     cdef object __weakref__
     cdef NativeSession* _session
     cdef readonly object monitor_host_health
+    cdef readonly bint owned_by_session
 
     def __cinit__(
         self,
@@ -247,6 +248,36 @@ cdef class Session:
 
     def stop(self) -> None:
         self._session.stop(False)
+
+    def set_owned_by_session(self):
+        """Mark that a Session holds a strong reference to this object.
+
+        When the Session is garbage collected without an explicit stop(),
+        this object's __dealloc__ will be called, which calls stop() on
+        the C++ session synchronously.  If that happens while a callback
+        (e.g. on_message) is running on a BlazingMQ background thread,
+        stop() will wait for the thread to finish, but the thread can't
+        finish because it's blocked in stop() -- a deadlock.
+
+        The on_message callback checks owned_by_session to detect this
+        scenario and abort before the deadlock can occur.
+        """
+        self.owned_by_session = True
+
+    def clear_owned_by_session(self):
+        """Mark that the owning Session no longer holds a reference.
+
+        Called from Session.__del__.  When the Session is garbage collected
+        without an explicit stop(), this object's __dealloc__ will be called,
+        which calls stop() on the C++ session synchronously.  If that happens
+        while a callback (e.g. on_message) is running on a BlazingMQ
+        background thread, stop() will wait for the thread to finish, but the
+        thread can't finish because it's blocked in stop() -- a deadlock.
+
+        The on_message callback checks owned_by_session to detect this
+        scenario and abort before the deadlock can occur.
+        """
+        self.owned_by_session = False
 
     def open_queue_sync(self,
                         queue_uri not None: bytes,

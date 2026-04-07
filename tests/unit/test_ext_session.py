@@ -28,6 +28,7 @@ from blazingmq.session_events import InterfaceError
 
 from .support import QUEUE_NAME
 from .support import dummy_callback
+from .support import make_ext_session
 from .support import mock
 from .support import sdk_mock
 
@@ -330,7 +331,7 @@ def test_message_handle_keeps_session_alive():
     def on_message(msg, msg_handle):
         msg_handles.put(msg_handle)
 
-    session = Session(dummy_callback, on_message=on_message, _mock=_mock)
+    session = make_ext_session(dummy_callback, on_message=on_message, _mock=_mock)
     session_wr = weakref.ref(session)
 
     # WHEN

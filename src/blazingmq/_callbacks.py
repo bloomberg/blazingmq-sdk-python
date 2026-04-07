@@ -123,9 +123,10 @@ def on_message(
         user_callback(message, message_handle)
 
     del message_handle  # The message handle holds a reference to the extension session.
-    if sys.getrefcount(ext_session) == 2:  # covered in a subprocess  # pragma: no cover
-        # Dropping our reference to the extension session will drop its reference count
-        # to 0, calling __dealloc__ and stop() from its own background thread.
+    if not ext_session.owned_by_session:  # covered in a subprocess  # pragma: no cover
+        # The Session that owns ext_session has been garbage collected. Dropping
+        # our reference will call __dealloc__ and stop() from its own background
+        # thread, causing a deadlock.
         print(
             "Deadlock detected by blazingmq after calling %s; aborting process."
             % user_callback,

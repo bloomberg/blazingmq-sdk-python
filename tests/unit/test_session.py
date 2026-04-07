@@ -360,7 +360,9 @@ def test_constructing_with_bad_type_for_host_health_monitor(ext_cls):
 
 def test_session_open_queue(ext):
     # GIVEN
-    ext.mock_add_spec(["open_queue_sync"])
+    ext.mock_add_spec(
+        ["open_queue_sync", "set_owned_by_session", "clear_owned_by_session"]
+    )
     session = make_session()
     timeout = 60.0
     queue_uri = "queue_uri"
@@ -400,7 +402,9 @@ def test_session_open_queue(ext):
 
 def test_session_open_queue_defaults(ext):
     # GIVEN
-    ext.mock_add_spec(["open_queue_sync"])
+    ext.mock_add_spec(
+        ["open_queue_sync", "set_owned_by_session", "clear_owned_by_session"]
+    )
     session = make_session()
 
     # WHEN
@@ -421,7 +425,7 @@ def test_session_open_queue_defaults(ext):
 
 def test_session_open_queue_for_read_no_on_message_raises(ext):
     # GIVEN
-    ext.mock_add_spec([])
+    ext.mock_add_spec(["set_owned_by_session", "clear_owned_by_session"])
     session = Session(dummy_callback)
 
     # WHEN
@@ -438,7 +442,14 @@ def test_session_open_queue_for_read_no_on_message_raises(ext):
 
 def test_session_open_with_suspension_without_health_monitoring(ext):
     # GIVEN
-    ext.mock_add_spec(["open_queue_sync", "monitor_host_health"])
+    ext.mock_add_spec(
+        [
+            "open_queue_sync",
+            "monitor_host_health",
+            "set_owned_by_session",
+            "clear_owned_by_session",
+        ]
+    )
     ext.monitor_host_health = False
     session = make_session()
     queue_uri = "queue_uri"
@@ -458,7 +469,9 @@ def test_session_open_with_suspension_without_health_monitoring(ext):
 
 def test_session_close_queue(ext):
     # GIVEN
-    ext.mock_add_spec(["close_queue_sync"])
+    ext.mock_add_spec(
+        ["close_queue_sync", "set_owned_by_session", "clear_owned_by_session"]
+    )
     session = make_session()
     queue_uri = "queue_uri"
     timeout = 60.0
@@ -475,7 +488,9 @@ def test_session_close_queue(ext):
 
 def test_session_configure_queue(ext):
     # GIVEN
-    ext.mock_add_spec(["configure_queue_sync"])
+    ext.mock_add_spec(
+        ["configure_queue_sync", "set_owned_by_session", "clear_owned_by_session"]
+    )
     session = make_session()
     queue_uri = "queue_uri"
     timeout = 60.0
@@ -509,7 +524,9 @@ def test_session_configure_queue(ext):
 
 def test_session_configure_queue_defaults(ext):
     # GIVEN
-    ext.mock_add_spec(["configure_queue_sync"])
+    ext.mock_add_spec(
+        ["configure_queue_sync", "set_owned_by_session", "clear_owned_by_session"]
+    )
     session = make_session()
     queue_uri = "queue_uri"
 
@@ -529,7 +546,14 @@ def test_session_configure_queue_defaults(ext):
 
 def test_session_configure_suspension_without_health_monitoring(ext):
     # GIVEN
-    ext.mock_add_spec(["configure_queue_sync", "monitor_host_health"])
+    ext.mock_add_spec(
+        [
+            "configure_queue_sync",
+            "monitor_host_health",
+            "set_owned_by_session",
+            "clear_owned_by_session",
+        ]
+    )
     ext.monitor_host_health = False
     session = make_session()
     queue_uri = "queue_uri"
@@ -549,7 +573,7 @@ def test_session_configure_suspension_without_health_monitoring(ext):
 
 def test_session_stop(ext):
     # GIVEN
-    ext.mock_add_spec(["stop"])
+    ext.mock_add_spec(["stop", "set_owned_by_session", "clear_owned_by_session"])
     session = make_session()
 
     # WHEN
@@ -561,7 +585,7 @@ def test_session_stop(ext):
 
 def test_session_post_no_ack_no_properties(ext):
     # GIVEN
-    ext.mock_add_spec(["post"])
+    ext.mock_add_spec(["post", "set_owned_by_session", "clear_owned_by_session"])
     session = make_session()
 
     # WHEN
@@ -581,7 +605,7 @@ def test_session_post_no_ack_no_properties(ext):
 
 def test_session_post_with_ack(ext):
     # GIVEN
-    ext.mock_add_spec(["post"])
+    ext.mock_add_spec(["post", "set_owned_by_session", "clear_owned_by_session"])
     session = make_session()
 
     def dummy():
@@ -601,7 +625,7 @@ def test_session_post_with_ack(ext):
 
 def test_session_confirm(ext):
     # GIVEN
-    ext.mock_add_spec(["confirm"])
+    ext.mock_add_spec(["confirm", "set_owned_by_session", "clear_owned_by_session"])
     session = make_session()
     msg = create_message(b"data", b"guid", "queue_uri", {}, {})
 
@@ -614,7 +638,7 @@ def test_session_confirm(ext):
 
 def test_session_as_context_manager(ext):
     # GIVEN
-    ext.mock_add_spec(["stop"])
+    ext.mock_add_spec(["stop", "set_owned_by_session", "clear_owned_by_session"])
     session = make_session()
 
     # WHEN

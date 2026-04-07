@@ -23,6 +23,7 @@ from blazingmq._messages import create_message
 
 from .support import QUEUE_NAME
 from .support import dummy_callback
+from .support import make_ext_session
 from .support import sdk_mock
 
 
@@ -183,7 +184,7 @@ def test_message_handle_can_confirm():
         msg_handle.confirm()
         waiting.set()
 
-    session = Session(dummy_callback, on_message=on_message, _mock=_mock)
+    session = make_ext_session(dummy_callback, on_message=on_message, _mock=_mock)
 
     # WHEN
     session.open_queue_sync(

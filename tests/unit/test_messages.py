@@ -145,7 +145,7 @@ def test_message_received_in_callback():
     spy = mock.MagicMock()
 
     class FakeSession:
-        pass
+        owned_by_session = True
 
     ext_session = FakeSession()
     raw = (b"data", b"guid", b"queue_uri", ({}, {}))

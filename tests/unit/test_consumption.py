@@ -31,6 +31,7 @@ from .support import QUEUE_NAME
 from .support import SHORT
 from .support import STRING
 from .support import dummy_callback
+from .support import make_ext_session
 from .support import sdk_mock
 
 
@@ -72,7 +73,7 @@ def test_multiple_message_consumption():
     def go_on(*args):
         q.put(*args)
 
-    session = Session(dummy_callback, on_message=go_on, _mock=mock)
+    session = make_ext_session(dummy_callback, on_message=go_on, _mock=mock)
 
     # WHEN
     session.open_queue_sync(
@@ -131,7 +132,7 @@ def test_mock_enforces_all_message_params(params):
     def go_on(*args):
         q.put(*args)
 
-    session = Session(dummy_callback, on_message=go_on, _mock=mock)
+    session = make_ext_session(dummy_callback, on_message=go_on, _mock=mock)
 
     # WHEN
     with pytest.raises(Exception) as exc:
@@ -166,7 +167,7 @@ def test_enqueue_messages_with_invalid_guid():
     def go_on(*args):
         q.put(*args)
 
-    session = Session(dummy_callback, on_message=go_on, _mock=mock)
+    session = make_ext_session(dummy_callback, on_message=go_on, _mock=mock)
 
     # WHEN
     with pytest.raises(Exception) as exc:
@@ -194,7 +195,7 @@ def test_enqueue_messages_with_invalid_queue():
     def go_on(*args):
         q.put(*args)
 
-    session = Session(dummy_callback, on_message=go_on, _mock=mock)
+    session = make_ext_session(dummy_callback, on_message=go_on, _mock=mock)
 
     # WHEN
     with pytest.raises(Exception) as exc:
@@ -375,7 +376,7 @@ def test_receiving_message_properties_success():
     def go_on(*args):
         q.put(*args)
 
-    session = Session(dummy_callback, on_message=go_on, _mock=mock)
+    session = make_ext_session(dummy_callback, on_message=go_on, _mock=mock)
 
     # WHEN
     session.open_queue_sync(
@@ -438,7 +439,7 @@ def test_receiving_empty_does_not_raise(properties, p_type, expected_value):
     def go_on(*args):
         q.put(*args)
 
-    session = Session(dummy_callback, on_message=go_on, _mock=mock)
+    session = make_ext_session(dummy_callback, on_message=go_on, _mock=mock)
 
     # WHEN
     session.open_queue_sync(
@@ -475,7 +476,7 @@ def test_interface_error_on_non_utf8_string_property():
     def record_events(*args):
         q.put(*args)
 
-    session = Session(record_events, on_message=dummy_callback, _mock=mock)
+    session = make_ext_session(record_events, on_message=dummy_callback, _mock=mock)
 
     # WHEN
     session.open_queue_sync(

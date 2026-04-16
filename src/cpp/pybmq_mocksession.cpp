@@ -26,6 +26,9 @@
 #include <bdlbb_blob.h>
 #include <bdlbb_blobutil.h>
 #include <bdlbb_simpleblobbufferfactory.h>
+#include <bdlcc_sharedobjectpool.h>
+#include <bdlf_bind.h>
+#include <bsl_memory.h>
 #include <bsl_stdexcept.h>
 #include <bsl_string.h>
 #include <bsl_vector.h>
@@ -37,6 +40,38 @@ namespace BloombergLP {
 namespace pybmq {
 
 namespace {
+
+typedef bdlcc::SharedObjectPool<
+        bdlbb::Blob,
+        bdlcc::ObjectPoolFunctors::DefaultCreator,
+        bdlcc::ObjectPoolFunctors::RemoveAll<bdlbb::Blob> >
+        BlobSpPool;
+
+typedef bsl::shared_ptr<BlobSpPool> BlobSpPoolSp;
+
+const int k_BLOB_POOL_GROWTH_STRATEGY = 1024;
+
+void
+createBlob(
+        bdlbb::BlobBufferFactory* bufferFactory,
+        void* arena,
+        bslma::Allocator* allocator)
+{
+    new (arena) bdlbb::Blob(bufferFactory, allocator);
+}
+
+BlobSpPoolSp
+makeBlobSpPool(bdlbb::BlobBufferFactory* factory, bslma::Allocator* allocator)
+{
+    return bsl::allocate_shared<BlobSpPool>(
+            allocator,
+            bdlf::BindUtil::bind(
+                    &createBlob,
+                    factory,
+                    bdlf::PlaceHolders::_1,
+                    bdlf::PlaceHolders::_2),
+            k_BLOB_POOL_GROWTH_STRATEGY);
+}
 
 #ifdef BSLS_PLATFORM_CMP_GNU
 void
@@ -185,10 +220,13 @@ maybe_emit_messages(PyObject* mock, bmqa::MockSession* mock_session)
         throw bsl::runtime_error("propagating Python error");
 
     bslma::Allocator* allocator_p = bslma::Default::defaultAllocator();
-    mock_session->enqueueEvent(bmqa::MockSessionUtil::createPushEvent(
-            push_msg_params,
-            &factory,
-            allocator_p));
+    BlobSpPoolSp blobSpPool = makeBlobSpPool(&factory, allocator_p);
+    mock_session->enqueueEvent(
+            bmqa::MockSessionUtil::createPushEvent(
+                    push_msg_params,
+                    blobSpPool.get(),
+                    &factory,
+                    allocator_p));
     if (!mock_session->emitEvent()) {
         PyErr_SetString(PyExc_RuntimeError, "Failed to emit event");
         throw bsl::runtime_error("propagating Python error");
@@ -253,8 +291,12 @@ maybe_emit_acks(PyObject* mock, bmqa::MockSession* mock_session)
 
     bdlbb::SimpleBlobBufferFactory factory(1024);
     bslma::Allocator* allocator_p = bslma::Default::defaultAllocator();
+    BlobSpPoolSp blobSpPool = makeBlobSpPool(&factory, allocator_p);
     mock_session->enqueueEvent(
-            bmqa::MockSessionUtil::createAckEvent(ack_params, &factory, allocator_p));
+            bmqa::MockSessionUtil::createAckEvent(
+                    ack_params,
+                    blobSpPool.get(),
+                    allocator_p));
     if (!mock_session->emitEvent()) {
         PyErr_SetString(PyExc_RuntimeError, "Failed to emit event");
         throw bsl::runtime_error("propagating Python error");

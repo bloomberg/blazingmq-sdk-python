@@ -21,7 +21,7 @@
             "partitionConfig": {
                 "name": "local",
                 "flushAtShutdown": true,
-                "location": "./bmq/storage",
+                "location": "/var/local/bmq/storage",
                 "maxArchivedFileSets": 0,
                 "maxDataFileSize": 268435456,
                 "maxJournalFileSize": 67108864,
@@ -29,7 +29,7 @@
                 "numPartitions": 1,
                 "preallocate": false,
                 "prefaultPages": false,
-                "archiveLocation": "./bmq/storage/archive",
+                "archiveLocation": "/var/local/bmq/storage/archive",
                 "syncConfig": {
                     "fileChunkSize": 0,
                     "masterSyncMaxDurationMs": 0,

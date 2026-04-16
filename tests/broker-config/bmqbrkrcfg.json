@@ -3,7 +3,7 @@
         "allocatorType": "STACKTRACETEST",
         "allocationLimit": 34359738368,
         "logController": {
-            "fileName": "./bmq/logs/logs.%T.%p",
+            "fileName": "/var/local/bmq/logs/logs.%T.%p",
             "fileMaxAgeDays": 10,
             "rotationBytes": 268435456,
             "logfileFormat": "%d (%t) %s %F:%l %m\n\n",
@@ -66,7 +66,7 @@
             "snapshotInterval": 1,
             "printer": {
                 "printInterval": 60,
-                "file": "./bmq/logs/stat.%T.%p",
+                "file": "/var/local/bmq/logs/stat.%T.%p",
                 "maxAgeDays": 3,
                 "rotateBytes": 268435456,
                 "rotateDays": 1

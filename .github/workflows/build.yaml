@@ -10,6 +10,10 @@ concurrency:
   group: ${{ github.workflow }}-${{ github.head_ref || github.run_id }}
   cancel-in-progress: true
 
+permissions:
+  contents: read
+  packages: read
+
 jobs:
   blazingmq-dependency:
     name: Build BlazingMQ as a dependency
@@ -128,17 +132,32 @@ jobs:
             libfl-dev \
             libbenchmark-dev \
             libz-dev
-      - name: Run tests
+      - name: Log in to GHCR
+        uses: docker/login-action@v3
+        with:
+          registry: ghcr.io
+          username: ${{ github.actor }}
+          password: ${{ secrets.GITHUB_TOKEN }}
+      - name: Start BlazingMQ broker
+        run: |
+          docker run -d --name bmqbrkr \
+            --network host \
+            -v ${{ github.workspace }}/tests/broker-config:/broker-config:ro \
+            ghcr.io/bloomberg/blazingmq:latest \
+            /usr/local/bin/bmqbrkr /broker-config
+          timeout 30 bash -c 'until nc -z localhost 30114; do sleep 1; done' \
+            || (docker logs bmqbrkr; exit 1)
+      - name: Build and run tests
         env:
           BMQ_BROKER_URI: tcp://localhost:30114
           PREFIX: blazingmq_artifacts
           PYTHON: ./venv/bin/python
           PKG_CONFIG_PATH: /usr/lib/x86_64-linux-gnu/pkgconfig:/opt/bb/lib64/pkgconfig:./blazingmq_artifacts/lib64/pkgconfig
         run: |
-          mkdir -p bmq/logs
-          mkdir -p bmq/storage/archive
-          ./blazingmq_artifacts/bin/bmqbrkr.tsk ./tests/broker-config &
-          (sleep 5; make test-build && make test-install && make check)
+          make test-build && make test-install && make check
+      - name: Stop BlazingMQ broker
+        if: always()
+        run: docker rm -f bmqbrkr
 
   lint-docs:
     name: Lint and Docs
@@ -218,6 +237,21 @@ jobs:
           sudo mkdir /cores
           sudo chmod 777 /cores
           echo "/cores/%e.%p.%s.%t" | sudo tee /proc/sys/kernel/core_pattern
+      - name: Log in to GHCR
+        uses: docker/login-action@v3
+        with:
+          registry: ghcr.io
+          username: ${{ github.actor }}
+          password: ${{ secrets.GITHUB_TOKEN }}
+      - name: Start BlazingMQ broker
+        run: |
+          docker run -d --name bmqbrkr \
+            --network host \
+            -v ${{ github.workspace }}/tests/broker-config:/broker-config:ro \
+            ghcr.io/bloomberg/blazingmq:latest \
+            /usr/local/bin/bmqbrkr /broker-config
+          timeout 30 bash -c 'until nc -z localhost 30114; do sleep 1; done' \
+            || (docker logs bmqbrkr; exit 1)
       - name: Run tests with coverage
         env:
           BMQ_BROKER_URI: tcp://localhost:30114
@@ -225,19 +259,24 @@ jobs:
           PYTHON: ./venv/bin/python
           PKG_CONFIG_PATH: /usr/lib/x86_64-linux-gnu/pkgconfig:/opt/bb/lib64/pkgconfig:./blazingmq_artifacts/lib64/pkgconfig
         run: |
-          mkdir -p bmq/logs
-          mkdir -p bmq/storage/archive
           # Allow core dumps
           ulimit -c unlimited
-          ./blazingmq_artifacts/bin/bmqbrkr.tsk ./tests/broker-config &
-          (sleep 5; make coverage-install && make coverage)
+          make coverage-install && make coverage
+      - name: Stop BlazingMQ broker
+        if: always()
+        run: docker rm -f bmqbrkr
       - name: Output code coverage summary
         uses: irongut/CodeCoverageSummary@v1.3.0
         with:
           filename: coverage*.xml
       - name: Upload broker logs as artifacts
         if: failure()
-        uses: actions/upload-artifact@v4
+        run: |
+          mkdir -p bmq/logs
+          docker logs bmqbrkr > bmq/logs/broker_stdout.log 2> bmq/logs/broker_stderr.log || true
+          docker cp bmqbrkr:/var/local/bmq/logs/. bmq/logs/ || true
+      - uses: actions/upload-artifact@v4
+        if: failure()
         with:
           name: broker_logs
           path: ./bmq/logs
@@ -250,10 +289,4 @@ jobs:
           name: core_dumps
           path: /cores
           retention-days: 5
-      - name: Upload broker executable as artifacts to debug the core
-        if: failure()
-        uses: actions/upload-artifact@v4
-        with:
-          name: bmqbrkr
-          path: ./blazingmq_artifacts/bin/bmqbrkr.tsk
-          retention-days: 5
+

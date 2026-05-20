@@ -148,6 +148,11 @@ jobs:
             /usr/local/bin/bmqbrkr /broker-config
           timeout 30 bash -c 'until nc -z localhost 30114; do sleep 1; done' \
             || (docker logs bmqbrkr; exit 1)
+      - name: Setup core dumps
+        run: |
+          sudo mkdir -p /cores
+          sudo chmod 777 /cores
+          echo "/cores/%e.%p.%s.%t" | sudo tee /proc/sys/kernel/core_pattern
       - name: Build and run tests
         env:
           BMQ_BROKER_URI: tcp://localhost:30114
@@ -155,7 +160,22 @@ jobs:
           PYTHON: ./venv/bin/python
           PKG_CONFIG_PATH: /usr/lib/x86_64-linux-gnu/pkgconfig:/opt/bb/lib64/pkgconfig:./blazingmq_artifacts/lib64/pkgconfig
         run: |
+          ulimit -c unlimited
           make test-build && make test-install && make check
+      - name: Print backtrace from core dump
+        if: failure()
+        run: |
+          for core in /cores/*; do
+            if [ -f "$core" ]; then
+              echo "=== Backtrace from $core ==="
+              gdb -batch \
+                -ex "set print frame-arguments all" \
+                -ex "bt full" \
+                -ex "echo \n=== All threads ===\n" \
+                -ex "thread apply all bt" \
+                ./venv/bin/python "$core"
+            fi
+          done
       - name: Stop BlazingMQ broker
         if: always()
         run: docker rm -f bmqbrkr

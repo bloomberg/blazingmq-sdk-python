@@ -19,24 +19,20 @@ jobs:
     name: Build BlazingMQ as a dependency
     runs-on: ubuntu-24.04
     outputs:
-      blazingmq_sha: ${{ steps.get-sha.outputs.blazingmq_sha }}
+      deps_cache_key: ${{ steps.cache-key.outputs.deps_cache_key }}
     steps:
       - uses: actions/checkout@v4
 
-      - name: Checkout BlazingMQ
-        run:  git clone --depth 1 https://github.com/bloomberg/blazingmq
-
-      - name: Get latest BlazingMQ commit SHA
-        id: get-sha
-        working-directory: blazingmq
-        run: echo "blazingmq_sha=$(git rev-parse --short HEAD)" >> $GITHUB_OUTPUT
+      - name: Compute dependency cache key
+        id: cache-key
+        run: echo "deps_cache_key=deps-${{ hashFiles('bin/clone-dependencies.sh') }}" >> $GITHUB_OUTPUT
 
       - name: Try to get cached BlazingMQ build artifacts
         id: cache-restore
         uses: actions/cache/restore@v4
         with:
           path: blazingmq_artifacts.tar.gz
-          key: ${{ steps.get-sha.outputs.blazingmq_sha }}
+          key: ${{ steps.cache-key.outputs.deps_cache_key }}
 
       - name: Set up dependencies
         if: steps.cache-restore.outputs.cache-hit != 'true'
@@ -82,7 +78,7 @@ jobs:
         uses: actions/cache/save@v4
         with:
           path: blazingmq_artifacts.tar.gz
-          key: ${{ steps.get-sha.outputs.blazingmq_sha }}
+          key: ${{ steps.cache-key.outputs.deps_cache_key }}
 
   linux-check:
     name: Test on Linux
@@ -104,7 +100,7 @@ jobs:
         uses: actions/cache/restore@v4
         with:
           path: blazingmq_artifacts.tar.gz
-          key: ${{ needs.blazingmq-dependency.outputs.blazingmq_sha }}
+          key: ${{ needs.blazingmq-dependency.outputs.deps_cache_key }}
       - name: Restore cached BlazingMQ build artifacts
         run: tar xzf blazingmq_artifacts.tar.gz
       - name: Set up Python ${{ matrix.python-version }}
@@ -170,7 +166,7 @@ jobs:
         uses: actions/cache/restore@v4
         with:
           path: blazingmq_artifacts.tar.gz
-          key: ${{ needs.blazingmq-dependency.outputs.blazingmq_sha }}
+          key: ${{ needs.blazingmq-dependency.outputs.deps_cache_key }}
       - name: Restore cached BlazingMQ build artifacts
         run: tar xzf blazingmq_artifacts.tar.gz
       - name: Set up Python 3.9
@@ -218,7 +214,7 @@ jobs:
         uses: actions/cache/restore@v4
         with:
           path: blazingmq_artifacts.tar.gz
-          key: ${{ needs.blazingmq-dependency.outputs.blazingmq_sha }}
+          key: ${{ needs.blazingmq-dependency.outputs.deps_cache_key }}
       - name: Restore cached BlazingMQ build artifacts
         run: tar xzf blazingmq_artifacts.tar.gz
       - name: Set up Python

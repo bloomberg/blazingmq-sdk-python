@@ -20,32 +20,28 @@ BLAZINGMQ_TAG=v0.95.14
 
 if [ ! -d "${DIR_THIRDPARTY}/bde-tools" ]; then
     git clone                                                                  \
-        --depth 1                                                              \
-        --branch ${BDE_TOOLS_TAG}                                              \
         https://github.com/bloomberg/bde-tools                                 \
         "${DIR_THIRDPARTY}/bde-tools"
+    git -C "${DIR_THIRDPARTY}/bde-tools" checkout ${BDE_TOOLS_TAG}
 fi
 
 if [ ! -d "${DIR_THIRDPARTY}/bde" ]; then
     git clone                                                                  \
-        --depth 1                                                              \
-        --branch ${BDE_TAG}                                                    \
         https://github.com/bloomberg/bde.git                                   \
         "${DIR_THIRDPARTY}/bde"
+    git -C "${DIR_THIRDPARTY}/bde" checkout ${BDE_TAG}
 fi
 
 if [ ! -d "${DIR_THIRDPARTY}/ntf-core" ]; then
     git clone                                                                  \
-        --depth 1                                                              \
-        --branch ${NTF_CORE_TAG}                                               \
         https://github.com/bloomberg/ntf-core.git                              \
         "${DIR_THIRDPARTY}/ntf-core"
+    git -C "${DIR_THIRDPARTY}/ntf-core" checkout ${NTF_CORE_TAG}
 fi
 
 if [ ! -d "${DIR_THIRDPARTY}/blazingmq" ]; then
     git clone                                                                  \
-        --depth 1                                                              \
-        --branch ${BLAZINGMQ_TAG}                                              \
         https://github.com/bloomberg/blazingmq.git                             \
         "${DIR_THIRDPARTY}/blazingmq"
+    git -C "${DIR_THIRDPARTY}/blazingmq" checkout ${BLAZINGMQ_TAG}
 fi

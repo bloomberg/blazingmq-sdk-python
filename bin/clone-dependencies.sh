@@ -14,7 +14,7 @@ set -u
 # Update these to update the version of each dependency we build against.
 BDE_TOOLS_TAG=4.38.0.0
 BDE_TAG=4.38.0.0
-NTF_CORE_TAG=2.6.6
+NTF_CORE_TAG=2.6.12
 BLAZINGMQ_TAG=v0.95.14
 
 

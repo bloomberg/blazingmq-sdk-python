@@ -48,19 +48,22 @@ jobs:
               bison \
               libfl-dev \
               libbenchmark-dev \
+              libgtest-dev \
+              libgmock-dev \
               libz-dev
 
       - name: Create install directory for BlazingMQ and its dependencies
         if: steps.cache-restore.outputs.cache-hit != 'true'
         run: mkdir -p blazingmq_artifacts
 
-      - name: Skip building bison and google-benchmark
+      - name: Skip building bison, google-benchmark, and googletest
         if: steps.cache-restore.outputs.cache-hit != 'true'
         run: |
-          mkdir -p thirdparty/{bison,google-benchmark}
-          mkdir -p build/{bison,google-benchmark}
+          mkdir -p thirdparty/{bison,google-benchmark,googletest}
+          mkdir -p build/{bison,google-benchmark,googletest}
           touch thirdparty/bison/.complete
           touch build/google-benchmark/.complete
+          touch build/googletest/.complete
 
       - name: Build and install BlazingMQ and its dependencies
         if: steps.cache-restore.outputs.cache-hit != 'true'
@@ -127,6 +130,8 @@ jobs:
             bison \
             libfl-dev \
             libbenchmark-dev \
+            libgtest-dev \
+            libgmock-dev \
             libz-dev
       - name: Log in to GHCR
         uses: docker/login-action@v3

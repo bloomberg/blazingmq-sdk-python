@@ -131,6 +131,7 @@ Session::Session(
         has_auth_callback = true;
 
         // Create a C++ lambda that wraps the Python callback
+        // TODO this can't be a lambda
         cpp_callback =
                 [fake_authn_credential_cb](
                         bsl::ostream& error) -> bsl::optional<bmqt::AuthnCredential> {
@@ -215,7 +216,6 @@ Session::Session(
         }
 
         if (has_auth_callback) {
-            // TODO: This will only compile with setAuthnCredentialCb in SessionOptions
             options.setAuthnCredentialCb(cpp_callback);
         }
 

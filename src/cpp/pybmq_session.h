@@ -48,10 +48,6 @@ class Session
     Session(const Session&);
     Session& operator=(const Session&);
 
-    // TODO: Remove this once it's added in SessionOptions
-    typedef bsl::function<bsl::optional<bmqt::AuthnCredential>(bsl::ostream& error)>
-            AuthnCredentialCb;
-
   public:
     Session(PyObject* py_session_event_callback,
             PyObject* py_message_event_callback,

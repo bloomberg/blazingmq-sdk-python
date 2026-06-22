@@ -70,7 +70,7 @@ before-all = [
 
 [tool.cibuildwheel.macos]
 before-all = [
-  "brew install cmake ninja flex bison zlib google-benchmark",
+  "brew install cmake ninja flex bison zlib google-benchmark googletest",
   "bash bin/build-macos-universal.sh"
 ]
 before-test = [

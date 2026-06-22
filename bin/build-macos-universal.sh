@@ -16,6 +16,7 @@ brew install \
     bison \
     flex \
     google-benchmark \
+    googletest \
     cmake
 PREREQUISITES
 

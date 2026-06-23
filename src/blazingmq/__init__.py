@@ -16,7 +16,6 @@
 from . import exceptions
 from . import session_events
 from ._about import __version__
-from ._authncb import BasicAuthnCredentialCb
 from ._enums import AckStatus
 from ._enums import CompressionAlgorithmType
 from ._enums import PropertyType
@@ -35,7 +34,6 @@ from .exceptions import Error
 __all__ = [
     "Ack",
     "AckStatus",
-    "BasicAuthnCredentialCb",
     "BasicHealthMonitor",
     "CompressionAlgorithmType",
     "Error",

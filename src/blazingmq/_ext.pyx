@@ -160,8 +160,6 @@ cdef class FakeAuthnCredentialCb:
     cdef object _callback  # Store the Python callable
 
     def __cinit__(self, callback):
-        if not callable(callback):
-            raise TypeError("callback must be callable")
         self._callback = callback
 
     # This method will be called by C++ code via PyObject_CallMethod

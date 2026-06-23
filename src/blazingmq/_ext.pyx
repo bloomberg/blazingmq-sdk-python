@@ -182,7 +182,7 @@ cdef class FakeAuthnCredentialCb:
             # Return as-is, let C++ side handle conversion
             return result
 
-        except Exception as e:
+        except Exception:
             # Log error or handle as needed
             LOGGER.exception("Error in authentication credential callback")
             return None

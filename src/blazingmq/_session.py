@@ -53,6 +53,10 @@ def DefaultMonitor() -> Union[BasicHealthMonitor, None]:
     return None
 
 
+def DefaultAuthnCredentialCb() -> Optional[Callable]:
+    return None
+
+
 DEFAULT_TIMEOUT = DefaultTimeoutType()
 KNOWN_MONITORS = ("blazingmq.BasicHealthMonitor",)
 
@@ -419,7 +423,7 @@ class Session:
         ),
         timeout: Union[Timeouts, float] = DEFAULT_TIMEOUT,
         host_health_monitor: Union[BasicHealthMonitor, None] = (DefaultMonitor()),
-        authn_credential_cb: Optional[Callable] = None,
+        authn_credential_cb: Optional[Callable] = (DefaultAuthnCredentialCb()),
         num_processing_threads: Optional[int] = None,
         blob_buffer_size: Optional[int] = None,
         channel_high_watermark: Optional[int] = None,

@@ -46,6 +46,9 @@ source ./bin/clone-dependencies.sh
 if [ ! -d "${DIR_THIRDPARTY}/google-benchmark" ]; then
     git clone --depth 1 https://github.com/google/benchmark.git "${DIR_THIRDPARTY}/google-benchmark"
 fi
+if [ ! -d "${DIR_THIRDPARTY}/googletest" ]; then
+    git clone --depth 1 https://github.com/google/googletest.git "${DIR_THIRDPARTY}/googletest"
+fi
 if [ ! -d "${DIR_THIRDPARTY}/bison" ]; then
     mkdir -p "${DIR_THIRDPARTY}/bison"
     curl https://ftp.gnu.org/gnu/bison/bison-3.8.2.tar.xz | tar -Jx -C "${DIR_THIRDPARTY}/bison" --strip-components 1
@@ -72,6 +75,20 @@ if [ ! -e "${DIR_THIRDPARTY}/bison/.complete" ]; then
     touch "${DIR_THIRDPARTY}/bison/.complete"
 fi
 
+if [ ! -e "${DIR_BUILD}/openssl/.complete" ]; then
+    if [ ! -d "${DIR_THIRDPARTY}/openssl" ]; then
+        mkdir -p "${DIR_THIRDPARTY}/openssl"
+        curl -sL https://www.openssl.org/source/openssl-1.1.1w.tar.gz | tar -xz -C "${DIR_THIRDPARTY}/openssl" --strip-components 1
+    fi
+    pushd "${DIR_THIRDPARTY}/openssl"
+    ./config --prefix="${DIR_INSTALL}" --openssldir="${DIR_INSTALL}/ssl" --libdir=lib64 no-shared -fPIC
+    make -j 16
+    make install_sw
+    popd
+    mkdir -p "${DIR_BUILD}/openssl"
+    touch "${DIR_BUILD}/openssl/.complete"
+fi
+
 if [ ! -e "${DIR_BUILD}/google-benchmark/.complete" ]; then
     pushd "${DIR_THIRDPARTY}/google-benchmark"
     cmake -E make_directory "${DIR_BUILD}/google-benchmark"
@@ -80,6 +97,15 @@ if [ ! -e "${DIR_BUILD}/google-benchmark/.complete" ]; then
     cmake --build "${DIR_BUILD}/google-benchmark" --config Release --target install
     popd
     touch "${DIR_BUILD}/google-benchmark/.complete"
+fi
+
+if [ ! -e "${DIR_BUILD}/googletest/.complete" ]; then
+    pushd "${DIR_THIRDPARTY}/googletest"
+    cmake -DCMAKE_BUILD_TYPE=Release -DCMAKE_INSTALL_PREFIX="${DIR_INSTALL}" -DCMAKE_INSTALL_LIBDIR="lib64" -S . -B "${DIR_BUILD}/googletest"
+    cmake --build "${DIR_BUILD}/googletest" --config Release -j16
+    cmake --build "${DIR_BUILD}/googletest" --config Release --target install
+    popd
+    touch "${DIR_BUILD}/googletest/.complete"
 fi
 
 # Build and install BDE
@@ -100,10 +126,12 @@ fi
 if [ ! -e "${DIR_BUILD}/ntf-core/.complete" ]; then
     # Build and install NTF
     pushd "${DIR_THIRDPARTY}/ntf-core"
+    OPENSSL_ROOT_DIR="${DIR_INSTALL}" \
     ./configure --prefix "${DIR_INSTALL}" \
         --output "${DIR_BUILD}/ntf-core" \
         --ufid opt_64_pic_cpp17 \
         --generator "Ninja" \
+        --without-zlib \
         --without-lz4 \
         --without-zstd \
         --without-warnings-as-errors \

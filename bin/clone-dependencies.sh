@@ -12,40 +12,36 @@ set -u
 
 # These are the release tags for each of the dependencies we manually clone.
 # Update these to update the version of each dependency we build against.
-BDE_TOOLS_TAG=4.32.0.0
-BDE_TAG=4.32.0.0
-NTF_CORE_TAG=2.6.6
-BLAZINGMQ_TAG=BMQBRKR_0.94.8
+BDE_TOOLS_TAG=4.38.0.0
+BDE_TAG=4.38.0.0
+NTF_CORE_TAG=2.6.12
+BLAZINGMQ_TAG=v0.95.14
 
 
 if [ ! -d "${DIR_THIRDPARTY}/bde-tools" ]; then
     git clone                                                                  \
-        --depth 1                                                              \
-        --branch ${BDE_TOOLS_TAG}                                              \
         https://github.com/bloomberg/bde-tools                                 \
         "${DIR_THIRDPARTY}/bde-tools"
+    git -C "${DIR_THIRDPARTY}/bde-tools" checkout ${BDE_TOOLS_TAG}
 fi
 
 if [ ! -d "${DIR_THIRDPARTY}/bde" ]; then
     git clone                                                                  \
-        --depth 1                                                              \
-        --branch ${BDE_TAG}                                                    \
         https://github.com/bloomberg/bde.git                                   \
         "${DIR_THIRDPARTY}/bde"
+    git -C "${DIR_THIRDPARTY}/bde" checkout ${BDE_TAG}
 fi
 
 if [ ! -d "${DIR_THIRDPARTY}/ntf-core" ]; then
     git clone                                                                  \
-        --depth 1                                                              \
-        --branch ${NTF_CORE_TAG}                                               \
         https://github.com/bloomberg/ntf-core.git                              \
         "${DIR_THIRDPARTY}/ntf-core"
+    git -C "${DIR_THIRDPARTY}/ntf-core" checkout ${NTF_CORE_TAG}
 fi
 
 if [ ! -d "${DIR_THIRDPARTY}/blazingmq" ]; then
     git clone                                                                  \
-        --depth 1                                                              \
-        --branch ${BLAZINGMQ_TAG}                                              \
         https://github.com/bloomberg/blazingmq.git                             \
         "${DIR_THIRDPARTY}/blazingmq"
+    git -C "${DIR_THIRDPARTY}/blazingmq" checkout ${BLAZINGMQ_TAG}
 fi

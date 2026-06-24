@@ -500,7 +500,9 @@ Session::post(
 
         bmqa::Message& message = builder.startMessage();
 
-        message.setDataRef(payload, payload_length);
+        if (payload_length > 0) {
+            message.setDataRef(payload, payload_length);
+        }
 
         if (properties != Py_None) {
             message.setPropertiesRef(&c_properties);

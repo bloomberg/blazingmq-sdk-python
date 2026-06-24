@@ -4,6 +4,7 @@ requires = ['setuptools>=39.2.0',
             'Cython>=0.28.4, <3; python_version < "3.8"',
             'Cython >= 3, <4; python_version >= "3.8"',
             'wheel>=0.31.0',
+            'packaging>=24.2',
             'pkgconfig>1.5.0']
 
 build-backend = "setuptools.build_meta"
@@ -53,8 +54,7 @@ directory   = "news"
 [tool.cibuildwheel]
 build = ["cp39-*", "cp310-*", "cp311-*", "cp312-*"]
 skip = "*-musllinux_*"
-manylinux-x86_64-image = "manylinux2014"
-manylinux-i686-image = "manylinux2014"
+manylinux-x86_64-image = "manylinux_2_28"
 
 [tool.cibuildwheel.linux.environment]
 PKG_CONFIG_PATH="/usr/local/lib64/pkgconfig:/usr/lib64/pkgconfig"
@@ -64,7 +64,7 @@ PKG_CONFIG_PATH="install/lib/pkgconfig"
 
 [tool.cibuildwheel.linux]
 before-all = [
-  "yum install -y gdb curl pkgconfig ninja-build flex flex-devel zlib-devel openssl-devel",
+  "dnf install -y gdb curl pkgconfig ninja-build flex flex-devel zlib-devel zlib-static perl-core",
   "DIR_INSTALL=/usr/local bash bin/build-manylinux.sh"
 ]
 

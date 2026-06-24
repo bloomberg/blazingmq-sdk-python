@@ -19,24 +19,20 @@ jobs:
     name: Build BlazingMQ as a dependency
     runs-on: ubuntu-24.04
     outputs:
-      blazingmq_sha: ${{ steps.get-sha.outputs.blazingmq_sha }}
+      deps_cache_key: ${{ steps.cache-key.outputs.deps_cache_key }}
     steps:
       - uses: actions/checkout@v4
 
-      - name: Checkout BlazingMQ
-        run:  git clone --depth 1 https://github.com/bloomberg/blazingmq
-
-      - name: Get latest BlazingMQ commit SHA
-        id: get-sha
-        working-directory: blazingmq
-        run: echo "blazingmq_sha=$(git rev-parse --short HEAD)" >> $GITHUB_OUTPUT
+      - name: Compute dependency cache key
+        id: cache-key
+        run: echo "deps_cache_key=deps-${{ hashFiles('bin/clone-dependencies.sh') }}" >> $GITHUB_OUTPUT
 
       - name: Try to get cached BlazingMQ build artifacts
         id: cache-restore
         uses: actions/cache/restore@v4
         with:
           path: blazingmq_artifacts.tar.gz
-          key: ${{ steps.get-sha.outputs.blazingmq_sha }}
+          key: ${{ steps.cache-key.outputs.deps_cache_key }}
 
       - name: Set up dependencies
         if: steps.cache-restore.outputs.cache-hit != 'true'
@@ -52,19 +48,22 @@ jobs:
               bison \
               libfl-dev \
               libbenchmark-dev \
+              libgtest-dev \
+              libgmock-dev \
               libz-dev
 
       - name: Create install directory for BlazingMQ and its dependencies
         if: steps.cache-restore.outputs.cache-hit != 'true'
         run: mkdir -p blazingmq_artifacts
 
-      - name: Skip building bison and google-benchmark
+      - name: Skip building bison, google-benchmark, and googletest
         if: steps.cache-restore.outputs.cache-hit != 'true'
         run: |
-          mkdir -p thirdparty/{bison,google-benchmark}
-          mkdir -p build/{bison,google-benchmark}
+          mkdir -p thirdparty/{bison,google-benchmark,googletest}
+          mkdir -p build/{bison,google-benchmark,googletest}
           touch thirdparty/bison/.complete
           touch build/google-benchmark/.complete
+          touch build/googletest/.complete
 
       - name: Build and install BlazingMQ and its dependencies
         if: steps.cache-restore.outputs.cache-hit != 'true'
@@ -82,7 +81,7 @@ jobs:
         uses: actions/cache/save@v4
         with:
           path: blazingmq_artifacts.tar.gz
-          key: ${{ steps.get-sha.outputs.blazingmq_sha }}
+          key: ${{ steps.cache-key.outputs.deps_cache_key }}
 
   linux-check:
     name: Test on Linux
@@ -104,7 +103,7 @@ jobs:
         uses: actions/cache/restore@v4
         with:
           path: blazingmq_artifacts.tar.gz
-          key: ${{ needs.blazingmq-dependency.outputs.blazingmq_sha }}
+          key: ${{ needs.blazingmq-dependency.outputs.deps_cache_key }}
       - name: Restore cached BlazingMQ build artifacts
         run: tar xzf blazingmq_artifacts.tar.gz
       - name: Set up Python ${{ matrix.python-version }}
@@ -131,6 +130,8 @@ jobs:
             bison \
             libfl-dev \
             libbenchmark-dev \
+            libgtest-dev \
+            libgmock-dev \
             libz-dev
       - name: Log in to GHCR
         uses: docker/login-action@v3
@@ -147,6 +148,11 @@ jobs:
             /usr/local/bin/bmqbrkr /broker-config
           timeout 30 bash -c 'until nc -z localhost 30114; do sleep 1; done' \
             || (docker logs bmqbrkr; exit 1)
+      - name: Setup core dumps
+        run: |
+          sudo mkdir -p /cores
+          sudo chmod 777 /cores
+          echo "/cores/%e.%p.%s.%t" | sudo tee /proc/sys/kernel/core_pattern
       - name: Build and run tests
         env:
           BMQ_BROKER_URI: tcp://localhost:30114
@@ -154,7 +160,22 @@ jobs:
           PYTHON: ./venv/bin/python
           PKG_CONFIG_PATH: /usr/lib/x86_64-linux-gnu/pkgconfig:/opt/bb/lib64/pkgconfig:./blazingmq_artifacts/lib64/pkgconfig
         run: |
+          ulimit -c unlimited
           make test-build && make test-install && make check
+      - name: Print backtrace from core dump
+        if: failure()
+        run: |
+          for core in /cores/*; do
+            if [ -f "$core" ]; then
+              echo "=== Backtrace from $core ==="
+              gdb -batch \
+                -ex "set print frame-arguments all" \
+                -ex "bt full" \
+                -ex "echo \n=== All threads ===\n" \
+                -ex "thread apply all bt" \
+                ./venv/bin/python "$core"
+            fi
+          done
       - name: Stop BlazingMQ broker
         if: always()
         run: docker rm -f bmqbrkr
@@ -170,7 +191,7 @@ jobs:
         uses: actions/cache/restore@v4
         with:
           path: blazingmq_artifacts.tar.gz
-          key: ${{ needs.blazingmq-dependency.outputs.blazingmq_sha }}
+          key: ${{ needs.blazingmq-dependency.outputs.deps_cache_key }}
       - name: Restore cached BlazingMQ build artifacts
         run: tar xzf blazingmq_artifacts.tar.gz
       - name: Set up Python 3.9
@@ -218,7 +239,7 @@ jobs:
         uses: actions/cache/restore@v4
         with:
           path: blazingmq_artifacts.tar.gz
-          key: ${{ needs.blazingmq-dependency.outputs.blazingmq_sha }}
+          key: ${{ needs.blazingmq-dependency.outputs.deps_cache_key }}
       - name: Restore cached BlazingMQ build artifacts
         run: tar xzf blazingmq_artifacts.tar.gz
       - name: Set up Python

@@ -16,6 +16,7 @@ brew install \
     bison \
     flex \
     google-benchmark \
+    googletest \
     cmake
 PREREQUISITES
 
@@ -68,6 +69,7 @@ if [ ! -e "${DIR_BUILD}/ntf-core/.complete" ]; then
         --output "${DIR_BUILD}/ntf-core" \
         --ufid opt_64_pic_cpp17 \
         --generator "Ninja" \
+        --with-zlib \
         --without-lz4 \
         --without-zstd \
         --without-warnings-as-errors \

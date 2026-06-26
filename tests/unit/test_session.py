@@ -78,6 +78,7 @@ def test_session_constructed(ext_cls):
         ),
         monitor_host_health=False,
         fake_host_health_monitor=None,
+        fake_authn_credential_cb=None,
         user_agent_prefix=mock.ANY,  # varies by version; see dedicated tests
     )
 
@@ -129,6 +130,7 @@ def test_session_constructed_with_timeouts(ext_cls):
         timeouts=timeouts,
         monitor_host_health=False,
         fake_host_health_monitor=None,
+        fake_authn_credential_cb=None,
         user_agent_prefix=mock.ANY,  # varies by version; see dedicated tests
     )
 
@@ -174,6 +176,7 @@ def test_session_constructed_with_default_timeouts(ext_cls):
         timeouts=timeouts,
         monitor_host_health=False,
         fake_host_health_monitor=None,
+        fake_authn_credential_cb=None,
         user_agent_prefix=mock.ANY,  # varies by version; see dedicated tests
     )
 
@@ -210,6 +213,7 @@ def test_session_default_with_options(ext_cls):
         timeouts=Timeouts(),
         monitor_host_health=False,
         fake_host_health_monitor=None,
+        fake_authn_credential_cb=None,
         user_agent_prefix=mock.ANY,  # varies by version; see dedicated tests
     )
 
@@ -263,6 +267,7 @@ def test_session_with_options(ext_cls):
         timeouts=timeouts,
         monitor_host_health=False,
         fake_host_health_monitor=None,
+        fake_authn_credential_cb=None,
         user_agent_prefix=mock.ANY,  # varies by version; see dedicated tests
     )
 
@@ -337,6 +342,7 @@ def test_session_basic_monitor(ext_cls):
         ),
         monitor_host_health=True,
         fake_host_health_monitor=monitor._monitor,
+        fake_authn_credential_cb=None,
         user_agent_prefix=mock.ANY,  # varies by version; see dedicated tests
     )
 
@@ -369,6 +375,7 @@ def test_session_default_constructed(ext_cls):
         timeouts=Timeouts(),
         monitor_host_health=False,
         fake_host_health_monitor=None,
+        fake_authn_credential_cb=None,
         user_agent_prefix=mock.ANY,  # varies by version; see dedicated tests
     )
 

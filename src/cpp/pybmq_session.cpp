@@ -94,7 +94,8 @@ Session::Session(
         bsl::shared_ptr<bmqa::ManualHostHealthMonitor> fake_host_health_monitor_sp,
         PyObject* error,
         PyObject* broker_timeout_error,
-        PyObject* mock)
+        PyObject* mock,
+        const char* user_agent_prefix)
 : d_started_lock()
 , d_started(false)
 , d_message_compression_type(bmqt::CompressionAlgorithmType::e_NONE)
@@ -167,6 +168,8 @@ Session::Session(
         if (close_queue_timeout != bsls::TimeInterval()) {
             options.setCloseQueueTimeout(close_queue_timeout);
         }
+
+        options.setUserAgentPrefix(user_agent_prefix);
 
         bslma::ManagedPtr<bmqa::SessionEventHandler> handler(
                 new pybmq::SessionEventHandler(

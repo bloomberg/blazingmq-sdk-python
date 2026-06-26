@@ -305,7 +305,9 @@ class SessionOptions:
         message_compression_algorithm: Optional[CompressionAlgorithmType] = None,
         timeouts: Optional[Timeouts] = None,
         host_health_monitor: Union[BasicHealthMonitor, None] = (DefaultMonitor()),
-        authn_credential_provider: Optional[Callable] = (DefaultAuthnCredentialProvider()),
+        authn_credential_provider: Optional[Callable] = (
+            DefaultAuthnCredentialProvider()
+        ),
         num_processing_threads: Optional[int] = None,
         blob_buffer_size: Optional[int] = None,
         channel_high_watermark: Optional[int] = None,
@@ -436,7 +438,9 @@ class Session:
         ),
         timeout: Union[Timeouts, float] = DEFAULT_TIMEOUT,
         host_health_monitor: Union[BasicHealthMonitor, None] = (DefaultMonitor()),
-        authn_credential_provider: Optional[Callable] = (DefaultAuthnCredentialProvider()),
+        authn_credential_provider: Optional[Callable] = (
+            DefaultAuthnCredentialProvider()
+        ),
         num_processing_threads: Optional[int] = None,
         blob_buffer_size: Optional[int] = None,
         channel_high_watermark: Optional[int] = None,

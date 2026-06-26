@@ -1,4 +1,4 @@
-# Copyright 2019-2023 Bloomberg Finance L.P.
+# Copyright 2019-2026 Bloomberg Finance L.P.
 # SPDX-License-Identifier: Apache-2.0
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
@@ -13,9 +13,9 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-from libcpp cimport bool
 from bsl cimport string
 from bsl cimport vector
+from libcpp cimport bool
 
 
 cdef extern from "bmqt_sessioneventtype.h" namespace "BloombergLP::bmqt::SessionEventType" nogil:
@@ -79,7 +79,7 @@ cdef extern from "bmqt_queueoptions.h" namespace "BloombergLP::bmqt::QueueOption
 cdef extern from "bmqt_authncredential.h" namespace "BloombergLP::bmqt" nogil:
     cdef cppclass AuthnCredential:
         AuthnCredential() except +
-        AuthnCredential& setMechanism(const string&) except +
-        AuthnCredential& setData(const vector[char]&) except +
+        AuthnCredential(const AuthnCredential&) except +
+        AuthnCredential(const string& mechanism, const vector[char]& data) except +
         const string& mechanism() const
         const vector[char]& data() const

@@ -122,7 +122,7 @@ Session::Session(
 
     d_message_compression_type = message_compression_type;
 
-    AuthnCredentialCb cpp_callback;
+    bmqt::SessionOptions::AuthnCredentialCb cpp_callback;
     bool has_auth_callback = false;
 
     if (fake_authn_credential_cb != nullptr && fake_authn_credential_cb != Py_None) {

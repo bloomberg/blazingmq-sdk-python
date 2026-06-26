@@ -179,13 +179,11 @@ Session::Session(
             PyBytes_AsStringAndSize(data_obj, &data_ptr, &data_len);
             bsl::vector<char> data(data_ptr, data_ptr + data_len);
 
-            // Construct and return AuthnCredential
-            bmqt::AuthnCredential credential;
-            credential.setMechanism(mechanism).setData(data);
-
-            // Move credential into optional (AuthnCredential is move-only)
-            bsl::optional<bmqt::AuthnCredential> opt_credential;
-            opt_credential.emplace(bslmf::MovableRefUtil::move(credential));
+            // Construct and move credential into optional
+            // (AuthnCredential is move-only)
+            bmqt::AuthnCredential credential(mechanism, data);
+            bsl::optional<bmqt::AuthnCredential> opt_credential(
+                bslmf::MovableRefUtil::move(credential));
             return opt_credential;
         };
     }

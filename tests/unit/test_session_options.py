@@ -60,6 +60,7 @@ def test_session_options_default_to_none():
     assert options.message_compression_algorithm is None
     assert options.timeouts is None
     assert options.host_health_monitor is None
+    assert options.authn_credential_provider is None
     assert options.num_processing_threads is None
     assert options.blob_buffer_size is None
     assert options.channel_high_watermark is None
@@ -95,6 +96,7 @@ def test_session_options_equality():
         blazingmq.SessionOptions(channel_high_watermark=8000000),
         blazingmq.SessionOptions(event_queue_watermarks=(6000000, 7000000)),
         blazingmq.SessionOptions(stats_dump_interval=30.0),
+        blazingmq.SessionOptions(authn_credential_provider=lambda: None),
         blazingmq.SessionOptions(user_agent_prefix=b"mylib:1.0"),
     ],
 )
@@ -104,3 +106,15 @@ def test_queue_options_other_inequality(right):
 
     # THEN
     assert not left == right
+
+
+def test_session_options_repr_with_authn_credential_provider():
+    # GIVEN
+    def my_provider():
+        return ("mechanism", b"data")
+
+    # WHEN
+    options = blazingmq.SessionOptions(authn_credential_provider=my_provider)
+
+    # THEN
+    assert "authn_credential_provider=" in repr(options)

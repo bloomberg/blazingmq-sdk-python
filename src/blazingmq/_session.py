@@ -39,6 +39,7 @@ from ._messages import Message
 from ._messages import MessageHandle
 from ._monitors import BasicHealthMonitor
 from ._timeouts import Timeouts
+from ._typing import AuthnCredentialProvider
 from ._typing import PropertyTypeDict
 from ._typing import PropertyValueDict
 from ._typing import PropertyValueType
@@ -55,7 +56,7 @@ def DefaultMonitor() -> Union[BasicHealthMonitor, None]:
     return None
 
 
-def DefaultAuthnCredentialCb() -> Optional[Callable]:
+def DefaultAuthnCredentialProvider() -> Optional[AuthnCredentialProvider]:
     return None
 
 
@@ -348,7 +349,7 @@ class SessionOptions:
         message_compression_algorithm: Optional[CompressionAlgorithmType] = None,
         timeouts: Optional[Timeouts] = None,
         host_health_monitor: Union[BasicHealthMonitor, None] = (DefaultMonitor()),
-        authn_credential_provider: Optional[Callable] = (
+        authn_credential_provider: Optional[AuthnCredentialProvider] = (
             DefaultAuthnCredentialProvider()
         ),
         num_processing_threads: Optional[int] = None,
@@ -490,8 +491,8 @@ class Session:
         ),
         timeout: Union[Timeouts, float] = DEFAULT_TIMEOUT,
         host_health_monitor: Union[BasicHealthMonitor, None] = (DefaultMonitor()),
-        authn_credential_provider: Optional[Callable] = (
-            DefaultAuthnCredentialCb()
+        authn_credential_provider: Optional[AuthnCredentialProvider] = (
+            DefaultAuthnCredentialProvider()
         ),
         num_processing_threads: Optional[int] = None,
         blob_buffer_size: Optional[int] = None,

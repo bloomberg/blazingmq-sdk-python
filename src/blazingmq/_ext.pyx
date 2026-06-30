@@ -157,7 +157,7 @@ cdef class FakeHostHealthMonitor:
             self._monitor.get().setState(HostHealthState.e_UNHEALTHY)
 
 
-cdef class FakeAuthnCredentialCb:
+cdef class AuthnCredentialCbAdapter:
     cdef object _callback  # Store the Python callable
 
     def __cinit__(self, callback):
@@ -208,7 +208,7 @@ cdef class Session:
         timeouts: _timeouts.Timeouts = _timeouts.Timeouts(),
         monitor_host_health: bool = False,
         fake_host_health_monitor: FakeHostHealthMonitor = None,
-        fake_authn_credential_cb: FakeAuthnCredentialCb = None,
+        authn_credential_cb: AuthnCredentialCbAdapter = None,
         _mock: Optional[object] = None,
     ) -> None:
         cdef shared_ptr[ManualHostHealthMonitor] fake_host_health_monitor_sp
@@ -278,7 +278,7 @@ cdef class Session:
             session_cb,
             message_cb,
             ack_cb,
-            fake_authn_credential_cb,
+            authn_credential_cb,
             config,
             fake_host_health_monitor_sp,
             Error,

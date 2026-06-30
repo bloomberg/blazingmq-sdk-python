@@ -25,6 +25,7 @@ from typing import Union
 from . import _six as six
 from ._enums import CompressionAlgorithmType
 from ._enums import PropertyType
+from ._ext import AuthnCredentialCbAdapter
 from ._ext import DEFAULT_CONSUMER_PRIORITY
 from ._ext import DEFAULT_MAX_UNCONFIRMED_BYTES
 from ._ext import DEFAULT_MAX_UNCONFIRMED_MESSAGES
@@ -35,7 +36,6 @@ from ._messages import Ack
 from ._messages import Message
 from ._messages import MessageHandle
 from ._monitors import BasicHealthMonitor
-from ._ext import FakeAuthnCredentialCb
 from ._timeouts import Timeouts
 from ._typing import PropertyTypeDict
 from ._typing import PropertyValueDict
@@ -456,8 +456,8 @@ class Session:
 
         monitor_host_health = host_health_monitor is not None
         fake_host_health_monitor = getattr(host_health_monitor, "_monitor", None)
-        fake_authn_credential_provider = (
-            FakeAuthnCredentialCb(authn_credential_provider)
+        authn_credential_cb = (
+            AuthnCredentialCbAdapter(authn_credential_provider)
             if authn_credential_provider is not None
             else None
         )
@@ -487,7 +487,7 @@ class Session:
             timeouts=_validate_timeouts(timeout),
             monitor_host_health=monitor_host_health,
             fake_host_health_monitor=fake_host_health_monitor,
-            fake_authn_credential_cb=fake_authn_credential_provider,
+            authn_credential_cb=authn_credential_cb,
         )
         self._ext.set_owned_by_session()
 

@@ -54,7 +54,7 @@ class Session
     Session(PyObject* py_session_event_callback,
             PyObject* py_message_event_callback,
             PyObject* py_ack_event_callback,
-            PyObject* fake_authn_credential_cb,
+            PyObject* authn_credential_cb,
             const SessionConfig& config,
             bsl::shared_ptr<bmqa::ManualHostHealthMonitor> fake_host_health_monitor,
             PyObject* d_error,

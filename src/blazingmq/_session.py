@@ -456,7 +456,7 @@ class Session:
 
         monitor_host_health = host_health_monitor is not None
         fake_host_health_monitor = getattr(host_health_monitor, "_monitor", None)
-        fake_authn_credential_provider = (
+        authn_credential_cb = (
             AuthnCredentialCbAdapter(authn_credential_provider)
             if authn_credential_provider is not None
             else None
@@ -487,7 +487,7 @@ class Session:
             timeouts=_validate_timeouts(timeout),
             monitor_host_health=monitor_host_health,
             fake_host_health_monitor=fake_host_health_monitor,
-            fake_authn_credential_cb=fake_authn_credential_provider,
+            authn_credential_cb=authn_credential_cb,
         )
         self._ext.set_owned_by_session()
 

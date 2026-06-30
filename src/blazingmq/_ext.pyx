@@ -207,7 +207,7 @@ cdef class Session:
         timeouts: _timeouts.Timeouts = _timeouts.Timeouts(),
         monitor_host_health: bool = False,
         fake_host_health_monitor: FakeHostHealthMonitor = None,
-        fake_authn_credential_cb: AuthnCredentialCbAdapter = None,
+        authn_credential_cb: AuthnCredentialCbAdapter = None,
         _mock: Optional[object] = None,
     ) -> None:
         cdef shared_ptr[ManualHostHealthMonitor] fake_host_health_monitor_sp
@@ -259,7 +259,7 @@ cdef class Session:
             session_cb,
             message_cb,
             ack_cb,
-            fake_authn_credential_cb,
+            authn_credential_cb,
             c_broker_uri,
             c_script_name,
             COMPRESSION_ALGO_FROM_PY_MAPPING[message_compression_algorithm],

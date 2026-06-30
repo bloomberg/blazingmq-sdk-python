@@ -52,7 +52,7 @@ class Session
     Session(PyObject* py_session_event_callback,
             PyObject* py_message_event_callback,
             PyObject* py_ack_event_callback,
-            PyObject* fake_authn_credential_cb,
+            PyObject* authn_credential_cb,
             const char* broker_uri,
             const char* script_name,
             bmqt::CompressionAlgorithmType::Enum message_compression_type,

@@ -78,7 +78,7 @@ Session::Session(
         PyObject* py_session_event_callback,
         PyObject* py_message_event_callback,
         PyObject* py_ack_event_callback,
-        PyObject* fake_authn_credential_cb,
+        PyObject* authn_credential_cb,
         const char* broker_uri,
         const char* script_name,
         bmqt::CompressionAlgorithmType::Enum message_compression_type,
@@ -125,22 +125,22 @@ Session::Session(
     bmqt::SessionOptions::AuthnCredentialCb cpp_callback;
     bool has_auth_callback = false;
 
-    if (fake_authn_credential_cb != nullptr && fake_authn_credential_cb != Py_None) {
+    if (authn_credential_cb != nullptr && authn_credential_cb != Py_None) {
         // Increment reference count since we're storing the Python object
-        Py_INCREF(fake_authn_credential_cb);
+        Py_INCREF(authn_credential_cb);
         has_auth_callback = true;
 
         // Create a C++ lambda that wraps the Python callback
         // TODO this can't be a lambda
         cpp_callback =
-                [fake_authn_credential_cb](
+                [authn_credential_cb](
                         bsl::ostream& error) -> bsl::optional<bmqt::AuthnCredential> {
             pybmq::GilAcquireGuard guard;
 
             // Call get_credential_data() method on the Python object
             bslma::ManagedPtr<PyObject> result =
                     RefUtils::toManagedPtr(PyObject_CallMethod(
-                            fake_authn_credential_cb,
+                            authn_credential_cb,
                             "get_credential_data",
                             nullptr));
 

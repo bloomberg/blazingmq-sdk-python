@@ -183,7 +183,7 @@ Session::Session(
             // (AuthnCredential is move-only)
             bmqt::AuthnCredential credential(mechanism, data);
             bsl::optional<bmqt::AuthnCredential> opt_credential(
-                bslmf::MovableRefUtil::move(credential));
+                    bslmf::MovableRefUtil::move(credential));
             return opt_credential;
         };
     }

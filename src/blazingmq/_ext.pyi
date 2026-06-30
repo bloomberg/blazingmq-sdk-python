@@ -37,7 +37,7 @@ class FakeHostHealthMonitor:
     def set_healthy(self) -> None: ...
     def set_unhealthy(self) -> None: ...
 
-class FakeAuthnCredentialCb:
+class AuthnCredentialCbAdapter:
     def __init__(self, callback: Callable[[], Optional[tuple[str, bytes]]]) -> None: ...
 
 class Session:
@@ -56,7 +56,7 @@ class Session:
         timeouts: Timeouts = Timeouts(),
         monitor_host_health: bool = False,
         fake_host_health_monitor: Optional[FakeHostHealthMonitor] = None,
-        fake_authn_credential_cb: Optional[FakeAuthnCredentialCb] = None,
+        fake_authn_credential_cb: Optional[AuthnCredentialCbAdapter] = None,
     ) -> None: ...
     def stop(self) -> None: ...
     def open_queue_sync(

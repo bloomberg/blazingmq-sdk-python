@@ -21,8 +21,8 @@ import weakref
 from bsl cimport optional
 from bsl cimport pair
 from bsl cimport shared_ptr
-from bsl cimport vector
 from bsl cimport string
+from bsl cimport vector
 from bsl.bsls cimport TimeInterval
 from cpython.ceval cimport PyEval_InitThreads
 from libcpp cimport bool as cppbool

@@ -27,6 +27,7 @@ from ._session import QueueOptions
 from ._session import Session
 from ._session import SessionOptions
 from ._timeouts import Timeouts
+from ._typing import AuthnCredentialProvider
 from ._typing import PropertyTypeDict
 from ._typing import PropertyValueDict
 from .exceptions import Error
@@ -34,6 +35,7 @@ from .exceptions import Error
 __all__ = [
     "Ack",
     "AckStatus",
+    "AuthnCredentialProvider",
     "BasicHealthMonitor",
     "CompressionAlgorithmType",
     "Error",

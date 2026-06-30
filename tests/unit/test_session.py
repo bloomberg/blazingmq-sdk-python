@@ -78,7 +78,7 @@ def test_session_constructed(ext_cls):
         ),
         monitor_host_health=False,
         fake_host_health_monitor=None,
-        fake_authn_credential_cb=None,
+        authn_credential_cb=None,
         user_agent_prefix=mock.ANY,  # varies by version; see dedicated tests
     )
 
@@ -127,10 +127,10 @@ def test_session_constructed_with_authn_credential_provider(ext_cls):
         ),
         monitor_host_health=False,
         fake_host_health_monitor=None,
-        fake_authn_credential_cb=mock.ANY,
+        authn_credential_cb=mock.ANY,
     )
     call_kwargs = ext_cls.call_args[1]
-    assert call_kwargs["fake_authn_credential_cb"] is not None
+    assert call_kwargs["authn_credential_cb"] is not None
 
 
 @mock.patch("blazingmq._session.ExtSession")
@@ -180,7 +180,7 @@ def test_session_constructed_with_timeouts(ext_cls):
         timeouts=timeouts,
         monitor_host_health=False,
         fake_host_health_monitor=None,
-        fake_authn_credential_cb=None,
+        authn_credential_cb=None,
         user_agent_prefix=mock.ANY,  # varies by version; see dedicated tests
     )
 
@@ -226,7 +226,7 @@ def test_session_constructed_with_default_timeouts(ext_cls):
         timeouts=timeouts,
         monitor_host_health=False,
         fake_host_health_monitor=None,
-        fake_authn_credential_cb=None,
+        authn_credential_cb=None,
         user_agent_prefix=mock.ANY,  # varies by version; see dedicated tests
     )
 
@@ -263,7 +263,7 @@ def test_session_default_with_options(ext_cls):
         timeouts=Timeouts(),
         monitor_host_health=False,
         fake_host_health_monitor=None,
-        fake_authn_credential_cb=None,
+        authn_credential_cb=None,
         user_agent_prefix=mock.ANY,  # varies by version; see dedicated tests
     )
 
@@ -317,7 +317,7 @@ def test_session_with_options(ext_cls):
         timeouts=timeouts,
         monitor_host_health=False,
         fake_host_health_monitor=None,
-        fake_authn_credential_cb=None,
+        authn_credential_cb=None,
         user_agent_prefix=mock.ANY,  # varies by version; see dedicated tests
     )
 
@@ -385,10 +385,10 @@ def test_session_default_with_options_authn_credential_provider(ext_cls):
         timeouts=Timeouts(),
         monitor_host_health=False,
         fake_host_health_monitor=None,
-        fake_authn_credential_cb=mock.ANY,
+        authn_credential_cb=mock.ANY,
     )
     call_kwargs = ext_cls.call_args[1]
-    assert call_kwargs["fake_authn_credential_cb"] is not None
+    assert call_kwargs["authn_credential_cb"] is not None
 
 
 @mock.patch("blazingmq._session.ExtSession")
@@ -437,10 +437,10 @@ def test_session_with_options_authn_credential_provider(ext_cls):
         timeouts=timeouts,
         monitor_host_health=False,
         fake_host_health_monitor=None,
-        fake_authn_credential_cb=mock.ANY,
+        authn_credential_cb=mock.ANY,
     )
     call_kwargs = ext_cls.call_args[1]
-    assert call_kwargs["fake_authn_credential_cb"] is not None
+    assert call_kwargs["authn_credential_cb"] is not None
 
 
 @mock.patch("blazingmq._session.ExtSession")
@@ -485,7 +485,7 @@ def test_session_basic_monitor(ext_cls):
         ),
         monitor_host_health=True,
         fake_host_health_monitor=monitor._monitor,
-        fake_authn_credential_cb=None,
+        authn_credential_cb=None,
         user_agent_prefix=mock.ANY,  # varies by version; see dedicated tests
     )
 
@@ -518,7 +518,7 @@ def test_session_default_constructed(ext_cls):
         timeouts=Timeouts(),
         monitor_host_health=False,
         fake_host_health_monitor=None,
-        fake_authn_credential_cb=None,
+        authn_credential_cb=None,
         user_agent_prefix=mock.ANY,  # varies by version; see dedicated tests
     )
 

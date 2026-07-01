@@ -185,6 +185,9 @@ intersphinx_mapping = {
 
 autodoc_typehints = 'description'
 autodoc_typehints_description_target = 'documented'
+autodoc_type_aliases = {
+    "AuthnCredentialProvider": "blazingmq.AuthnCredentialProvider",
+}
 
 
 def document_as_keyword_only(app, what, name, obj, options, signature, return_hint):

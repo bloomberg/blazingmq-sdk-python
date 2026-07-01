@@ -21,6 +21,7 @@
 
 #include <bmqa_abstractsession.h>
 #include <bmqa_manualhosthealthmonitor.h>
+#include <bmqt_authncredential.h>
 #include <bmqt_compressionalgorithmtype.h>
 
 #include <bsl_memory.h>
@@ -51,6 +52,7 @@ class Session
     Session(PyObject* py_session_event_callback,
             PyObject* py_message_event_callback,
             PyObject* py_ack_event_callback,
+            PyObject* authn_credential_cb,
             const char* broker_uri,
             const char* script_name,
             bmqt::CompressionAlgorithmType::Enum message_compression_type,

@@ -271,7 +271,7 @@ class SessionOptions:
             healthy, `.HostUnhealthy` and `.HostHealthRestored` events with
             never be emitted, and the *suspends_on_bad_host_health* option of
             `QueueOptions` cannot be used.
-        authn_credential_provider:
+        authn_credential_provider (Optional[`~blazingmq.AuthnCredentialProvider`]):
             An optional callable that returns authentication credentials as a
             ``(mechanism, data)`` tuple of ``(str, bytes)``, or ``None`` if no
             credentials are available.  If not provided, no authentication
@@ -396,10 +396,11 @@ class Session:
             `.HostHealthRestored` events will never be emitted, and the
             *suspends_on_bad_host_health* option of `QueueOptions` cannot be
             used.
-        authn_credential_provider: an optional callable that returns authentication
-            credentials as a ``(mechanism, data)`` tuple of ``(str, bytes)``,
-            or ``None`` if no credentials are available.  If not provided, no
-            authentication credentials are sent to the broker.
+        authn_credential_provider (Optional[`~blazingmq.AuthnCredentialProvider`]):
+            an optional callable that returns authentication credentials as a
+            ``(mechanism, data)`` tuple of ``(str, bytes)``, or ``None`` if no
+            credentials are available.  If not provided, no authentication
+            credentials are sent to the broker.
         num_processing_threads: The number of threads for the SDK to use for
             processing events.  This defaults to 1.
         blob_buffer_size: The size (in bytes) of the blob buffers to use.  This

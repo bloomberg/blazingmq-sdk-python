@@ -6,14 +6,15 @@
 # Before running this script, install the following prerequisites if not
 # present yet:
 #
-#   sudo yum install -y \
-#       gdb \
-#       curl \
-#       pkgconfig \
-#       ninja-build \
-#       flex-devel \
-#       zlib-devel \
-#       m4
+#   sudo dnf install -y \
+#       gdb             \
+#       curl            \
+#       pkgconfig       \
+#       ninja-build     \
+#       flex            \
+#       flex-devel      \
+#       zlib-devel      \
+#       zlib-static
 
 set -e
 set -u

@@ -23,7 +23,7 @@ jobs:
 
       - name: Build sdist
         env:
-          BLAZINGMQ_PYTHON_NO_PKGCONFIG: ’1’
+          BLAZINGMQ_PYTHON_NO_PKGCONFIG: '1'
         run: pipx run build --sdist
 
       - uses: actions/upload-artifact@v4

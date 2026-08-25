@@ -2,23 +2,20 @@
 
 # This script builds BlazingMQ and all of its dependencies for MacOS 11.0.
 #
-# Before running this script, install following prerequisites, if not present
-# yet, by copy-and-pasting the commands between `<<PREREQUISITES` and
-# `PREREQUISITES` below:
-                                                    # shellcheck disable=SC2188
-<<PREREQUISITES
-brew install \
-    curl \
-    pkgconfig \
-    ninja \
-    flex \
-    zlib \
-    bison \
-    flex \
-    google-benchmark \
-    googletest \
-    cmake
-PREREQUISITES
+# Before running this script, install the following prerequisites if not
+# present yet:
+#
+#   brew install \
+#       curl \
+#       pkgconfig \
+#       ninja \
+#       flex \
+#       zlib \
+#       bison \
+#       flex \
+#       google-benchmark \
+#       googletest \
+#       cmake
 
 set -e
 set -u

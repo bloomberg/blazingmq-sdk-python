@@ -27,14 +27,11 @@ import pytest
 )
 def test_ball_logger_redirection(diagnostics_enabled, logger_level, emitted):
     # GIVEN
-    program = textwrap.dedent(
-        """
+    program = textwrap.dedent("""
         import blazingmq._ext
         import logging
         logging.basicConfig(level='%s')
-    """
-        % logger_level
-    )
+    """ % logger_level)
 
     env = os.environ.copy()
     if diagnostics_enabled:
@@ -59,14 +56,12 @@ def test_ball_logger_redirection(diagnostics_enabled, logger_level, emitted):
 
 def test_ball_logger_python_exception_handling():
     # GIVEN
-    program = textwrap.dedent(
-        """
+    program = textwrap.dedent("""
         import blazingmq._ext
         import logging
         logging.basicConfig(level="DEBUG")
         logging.setLogRecordFactory("something not callable")
-        """
-    )
+        """)
 
     env = os.environ.copy()
     env["_PYBMQ_ENABLE_DIAGNOSTICS"] = "1"

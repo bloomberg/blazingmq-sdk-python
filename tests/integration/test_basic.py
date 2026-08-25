@@ -68,8 +68,7 @@ def test_raising_in_session_callback(capsys):
 
 def test_session_stopped_atexit():
     # GIVEN
-    program = textwrap.dedent(
-        """
+    program = textwrap.dedent("""
         import blazingmq
         # make sure this works even if monkey-patched
         blazingmq._ext.ensure_stop_session = print
@@ -86,8 +85,7 @@ def test_session_stopped_atexit():
         s = blazingmq.Session(event_handler, print)
         e.wait()
         atexit.register(print, "last atexit handler")
-        """
-    )
+        """)
 
     # WHEN
     process = subprocess.Popen(
@@ -161,8 +159,7 @@ def test_session_reassignment():
 
 def test_session_ref_cycle_interpreter_shutdown(capsys):
     # GIVEN
-    program = textwrap.dedent(
-        """
+    program = textwrap.dedent("""
         import blazingmq
         import os
 
@@ -177,8 +174,7 @@ def test_session_ref_cycle_interpreter_shutdown(capsys):
 
         session1.other = session2
         session2.other = session1
-        """
-    )
+        """)
 
     # WHEN
     process = subprocess.Popen(

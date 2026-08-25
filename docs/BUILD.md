@@ -8,8 +8,8 @@ CI to test on all other combinations in your pull request. See
 `.github/workflows/build.yaml` for more details on how we build and
 test on all supported interpreters and architectures.
 
-The instructions below assume `PYEXEC=python3.9` and will focus on Linux only.
-This should be sufficient in most cases.
+The instructions below assume `PYEXEC=python3.14` and will focus on
+Linux only.  This should be sufficient in most cases.
 
 Before following any of the instructions, make sure to `git clone` the project onto the host machine.
 

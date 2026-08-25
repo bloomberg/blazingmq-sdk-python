@@ -27,8 +27,7 @@ import textwrap
 
 def test_deadlock_detection_warning(unique_queue):
     # GIVEN
-    program = textwrap.dedent(
-        """
+    program = textwrap.dedent("""
         import blazingmq
 
         import resource
@@ -66,8 +65,7 @@ def test_deadlock_detection_warning(unique_queue):
         main()
         message_processed.set()
         time.sleep(10)
-        """
-    ).format(unique_queue=unique_queue)
+        """).format(unique_queue=unique_queue)
 
     # WHEN
     process = subprocess.Popen(

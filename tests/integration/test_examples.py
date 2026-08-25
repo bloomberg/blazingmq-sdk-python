@@ -29,8 +29,7 @@ from blazingmq.session_events import log_session_event
 
 
 def script_wrapper(queue, script):
-    return textwrap.dedent(
-        """
+    return textwrap.dedent("""
             import signal
 
             import examples.{} as script
@@ -42,8 +41,7 @@ def script_wrapper(queue, script):
                 signal.signal(signal.SIGTERM, script.on_signal)
 
             script.main()
-        """
-    ).format(script, queue)
+        """).format(script, queue)
 
 
 def run_wrapper(queue, script):

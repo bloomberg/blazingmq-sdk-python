@@ -5,17 +5,14 @@
 # Before running this script, install the following prerequisites if not
 # present yet:
 #
-#   brew install \
-#       curl \
-#       pkgconfig \
-#       ninja \
-#       flex \
-#       zlib \
-#       bison \
-#       flex \
+#   brew install         \
+#       cmake            \
+#       ninja            \
+#       flex             \
+#       bison            \
+#       zlib             \
 #       google-benchmark \
-#       googletest \
-#       cmake
+#       googletest
 
 set -e
 set -u

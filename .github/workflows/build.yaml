@@ -22,6 +22,8 @@ jobs:
       deps_cache_key: ${{ steps.cache-key.outputs.deps_cache_key }}
     steps:
       - uses: actions/checkout@v4
+        with:
+          persist-credentials: false
 
       - name: Compute dependency cache key
         id: cache-key
@@ -98,6 +100,8 @@ jobs:
           - "3.14"
     steps:
       - uses: actions/checkout@v4
+        with:
+          persist-credentials: false
       - name: Try to get cached BlazingMQ build artifacts
         id: cache-restore
         uses: actions/cache/restore@v4
@@ -186,6 +190,8 @@ jobs:
     runs-on: ubuntu-24.04
     steps:
       - uses: actions/checkout@v4
+        with:
+          persist-credentials: false
       - name: Try to get cached BlazingMQ build artifacts
         id: cache-restore
         uses: actions/cache/restore@v4
@@ -234,6 +240,8 @@ jobs:
     runs-on: ubuntu-24.04
     steps:
       - uses: actions/checkout@v4
+        with:
+          persist-credentials: false
       - name: Try to get cached BlazingMQ build artifacts
         id: cache-restore
         uses: actions/cache/restore@v4

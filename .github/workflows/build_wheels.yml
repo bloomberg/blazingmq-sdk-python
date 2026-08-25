@@ -75,7 +75,7 @@ jobs:
         with:
           name: bin-sdist
           path: bin
-      - uses: docker/setup-qemu-action@v3
+      - uses: docker/setup-qemu-action@v4
         if: runner.os == 'Linux'
         name: Set up QEMU
       - name: Extract sdist

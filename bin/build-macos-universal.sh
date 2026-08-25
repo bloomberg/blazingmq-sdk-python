@@ -50,7 +50,7 @@ PATH="${DIR_THIRDPARTY}/bde-tools/bin:$PATH"
 
 if [ ! -e "${DIR_BUILD}/bde/.complete" ]; then
     pushd "${DIR_THIRDPARTY}/bde"
-    eval "$(bbs_build_env -u opt_64_pic_cpp17 -b "${DIR_BUILD}/bde" -i ${DIR_INSTALL})"
+    eval "$(bbs_build_env -p clang -u opt_64_pic_cpp17 -b "${DIR_BUILD}/bde" -i ${DIR_INSTALL})"
     bbs_build configure --prefix="${DIR_INSTALL}"
     bbs_build build -j 16
     bbs_build install --install_dir "/" --prefix="${DIR_INSTALL}"
@@ -100,7 +100,7 @@ if [ ! -e "${DIR_BUILD}/blazingmq/.complete" ]; then
         -DCMAKE_INSTALL_PREFIX="${DIR_INSTALL}" \
         -DCMAKE_MODULE_PATH="${DIR_ROOT}" \
         -DCMAKE_PREFIX_PATH="${DIR_THIRDPARTY}/bde-tools" \
-        -DCMAKE_TOOLCHAIN_FILE="${DIR_THIRDPARTY}/bde-tools/BdeBuildSystem/toolchains/darwin/gcc-default.cmake" \
+        -DCMAKE_TOOLCHAIN_FILE="${DIR_THIRDPARTY}/bde-tools/BdeBuildSystem/toolchains/darwin/clang-default.cmake" \
         -DFLEX_ROOT="${FLEX_ROOT}"
         -G "Ninja")
     cmake -B "${DIR_BUILD}/blazingmq" -S "." "${CMAKE_OPTIONS[@]}"

@@ -21,7 +21,7 @@ jobs:
     outputs:
       deps_cache_key: ${{ steps.cache-key.outputs.deps_cache_key }}
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v7
         with:
           persist-credentials: false
 
@@ -31,7 +31,7 @@ jobs:
 
       - name: Try to get cached BlazingMQ build artifacts
         id: cache-restore
-        uses: actions/cache/restore@v4
+        uses: actions/cache/restore@v6
         with:
           path: blazingmq_artifacts.tar.gz
           key: ${{ steps.cache-key.outputs.deps_cache_key }}
@@ -80,7 +80,7 @@ jobs:
       - name: Cache built BlazingMQ build artifacts
         id: cache-save
         if: steps.cache-restore.outputs.cache-hit != 'true'
-        uses: actions/cache/save@v4
+        uses: actions/cache/save@v6
         with:
           path: blazingmq_artifacts.tar.gz
           key: ${{ steps.cache-key.outputs.deps_cache_key }}
@@ -99,19 +99,19 @@ jobs:
           - "3.13"
           - "3.14"
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v7
         with:
           persist-credentials: false
       - name: Try to get cached BlazingMQ build artifacts
         id: cache-restore
-        uses: actions/cache/restore@v4
+        uses: actions/cache/restore@v6
         with:
           path: blazingmq_artifacts.tar.gz
           key: ${{ needs.blazingmq-dependency.outputs.deps_cache_key }}
       - name: Restore cached BlazingMQ build artifacts
         run: tar xzf blazingmq_artifacts.tar.gz
       - name: Set up Python ${{ matrix.python-version }}
-        uses: actions/setup-python@v5
+        uses: actions/setup-python@v7
         with:
           python-version: ${{ matrix.python-version }}
       - name: Create virtual environment
@@ -189,19 +189,19 @@ jobs:
     needs: blazingmq-dependency
     runs-on: ubuntu-24.04
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v7
         with:
           persist-credentials: false
       - name: Try to get cached BlazingMQ build artifacts
         id: cache-restore
-        uses: actions/cache/restore@v4
+        uses: actions/cache/restore@v6
         with:
           path: blazingmq_artifacts.tar.gz
           key: ${{ needs.blazingmq-dependency.outputs.deps_cache_key }}
       - name: Restore cached BlazingMQ build artifacts
         run: tar xzf blazingmq_artifacts.tar.gz
       - name: Set up Python 3.14
-        uses: actions/setup-python@v5
+        uses: actions/setup-python@v7
         with:
           python-version: "3.14"
       - name: Create virtual environment
@@ -239,19 +239,19 @@ jobs:
     needs: blazingmq-dependency
     runs-on: ubuntu-24.04
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v7
         with:
           persist-credentials: false
       - name: Try to get cached BlazingMQ build artifacts
         id: cache-restore
-        uses: actions/cache/restore@v4
+        uses: actions/cache/restore@v6
         with:
           path: blazingmq_artifacts.tar.gz
           key: ${{ needs.blazingmq-dependency.outputs.deps_cache_key }}
       - name: Restore cached BlazingMQ build artifacts
         run: tar xzf blazingmq_artifacts.tar.gz
       - name: Set up Python
-        uses: actions/setup-python@v5
+        uses: actions/setup-python@v7
         with:
           python-version: "3.14"
       - name: Create virtual environment
@@ -304,7 +304,7 @@ jobs:
           mkdir -p bmq/logs
           docker logs bmqbrkr > bmq/logs/broker_stdout.log 2> bmq/logs/broker_stderr.log || true
           docker cp bmqbrkr:/var/local/bmq/logs/. bmq/logs/ || true
-      - uses: actions/upload-artifact@v4
+      - uses: actions/upload-artifact@v7
         if: failure()
         with:
           name: broker_logs
@@ -313,7 +313,7 @@ jobs:
           compression-level: 9
       - name: Upload broker core dump as artifacts
         if: failure()
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@v7
         with:
           name: core_dumps
           path: /cores

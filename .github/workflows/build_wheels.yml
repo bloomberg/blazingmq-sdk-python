@@ -24,7 +24,7 @@ jobs:
     name: Build source distribution
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v7
         with:
           persist-credentials: false
 
@@ -33,17 +33,17 @@ jobs:
           BLAZINGMQ_PYTHON_NO_PKGCONFIG: '1'
         run: pipx run build --sdist
 
-      - uses: actions/upload-artifact@v4
+      - uses: actions/upload-artifact@v7
         with:
           name: dist-sdist
           path: dist
 
-      - uses: actions/upload-artifact@v4
+      - uses: actions/upload-artifact@v7
         with:
           name: tests-sdist
           path: tests
 
-      - uses: actions/upload-artifact@v4
+      - uses: actions/upload-artifact@v7
         with:
           name: bin-sdist
           path: bin
@@ -70,15 +70,15 @@ jobs:
         cibw_arch: ${{ fromJSON(needs.choose_architectures.outputs.cibw_arches) }}
 
     steps:
-      - uses: actions/download-artifact@v4
+      - uses: actions/download-artifact@v8
         with:
           name: dist-sdist
           path: dist
-      - uses: actions/download-artifact@v4
+      - uses: actions/download-artifact@v8
         with:
           name: tests-sdist
           path: tests
-      - uses: actions/download-artifact@v4
+      - uses: actions/download-artifact@v8
         with:
           name: bin-sdist
           path: bin
@@ -98,7 +98,7 @@ jobs:
           CIBW_BUILD: ${{ matrix.cibw_python }}-*
           CIBW_TEST_COMMAND: python3 -m pytest {project}/tests/unit
           CIBW_TEST_REQUIRES: pytest mock pkgconfig
-      - uses: actions/upload-artifact@v4
+      - uses: actions/upload-artifact@v7
         with:
           name: dist-Linux-${{ matrix.cibw_python }}-${{ matrix.cibw_arch }}
           path: ./wheelhouse/*.whl
@@ -116,15 +116,15 @@ jobs:
         cibw_arch: ["arm64"]
 
     steps:
-      - uses: actions/download-artifact@v4
+      - uses: actions/download-artifact@v8
         with:
           name: dist-sdist
           path: dist
-      - uses: actions/download-artifact@v4
+      - uses: actions/download-artifact@v8
         with:
           name: tests-sdist
           path: tests
-      - uses: actions/download-artifact@v4
+      - uses: actions/download-artifact@v8
         with:
           name: bin-sdist
           path: bin
@@ -146,7 +146,7 @@ jobs:
           MACOSX_DEPLOYMENT_TARGET: "14.0"
           SYSTEM_VERSION_COMPAT: 0
 
-      - uses: actions/upload-artifact@v4
+      - uses: actions/upload-artifact@v7
         with:
           name: dist-MacOS-${{ matrix.cibw_python }}-${{ matrix.cibw_arch }}
           path: ./wheelhouse/*.whl
@@ -155,7 +155,7 @@ jobs:
     needs: [build_wheels, build_wheels_macos, build_sdist]
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/upload-artifact/merge@v4
+      - uses: actions/upload-artifact/merge@v7
         with:
           name: dist
           pattern: dist-*
@@ -167,7 +167,7 @@ jobs:
       github.event_name == 'release' && github.event.action == 'published'
         || github.event_name == 'workflow_dispatch'
     steps:
-      - uses: actions/download-artifact@v4
+      - uses: actions/download-artifact@v8
         with:
           name: dist
           path: dist

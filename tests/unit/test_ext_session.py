@@ -238,6 +238,7 @@ def test_session_session_options_propagated():
     event_queue_low_watermark = 1000000
     event_queue_high_watermark = 10000000
     stats_dump_interval = 90.0
+    user_agent_prefix = b"mylib:1.0"
 
     # WHEN
     Session(
@@ -247,6 +248,7 @@ def test_session_session_options_propagated():
         channel_high_watermark=channel_high_watermark,
         event_queue_watermarks=(event_queue_low_watermark, event_queue_high_watermark),
         stats_dump_interval=stats_dump_interval,
+        user_agent_prefix=user_agent_prefix,
         _mock=mock,
     )
 
@@ -257,6 +259,7 @@ def test_session_session_options_propagated():
     assert mock.options["event_queue_low_watermark"] == event_queue_low_watermark
     assert mock.options["event_queue_high_watermark"] == event_queue_high_watermark
     assert mock.options["stats_dump_interval"] == stats_dump_interval
+    assert mock.options["user_agent_prefix"] == user_agent_prefix.decode("ascii")
 
 
 def test_ensure_stop_session_callback_calls_sdk_stop():

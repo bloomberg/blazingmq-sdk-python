@@ -56,7 +56,8 @@ cdef extern from "pybmq_session.h" namespace "BloombergLP::pybmq" nogil:
                 shared_ptr[ManualHostHealthMonitor] fake_host_health_monitor_sp,
                 object error,
                 object broker_timeout_error,
-                object mock) except+
+                object mock,
+                const char* user_agent_prefix) except+
 
         object start(TimeInterval) except+
         object stop(bint) except+

@@ -68,7 +68,8 @@ class Session
             bsl::shared_ptr<bmqa::ManualHostHealthMonitor> fake_host_health_monitor,
             PyObject* d_error,
             PyObject* d_broker_timeout_error,
-            PyObject* mock);
+            PyObject* mock,
+            const char* user_agent_prefix);
 
     ~Session();
 

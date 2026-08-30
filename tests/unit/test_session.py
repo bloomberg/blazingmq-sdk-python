@@ -78,6 +78,7 @@ def test_session_constructed(ext_cls):
         ),
         monitor_host_health=False,
         fake_host_health_monitor=None,
+        user_agent_prefix=mock.ANY,  # varies by version; see dedicated tests
     )
 
 
@@ -128,6 +129,7 @@ def test_session_constructed_with_timeouts(ext_cls):
         timeouts=timeouts,
         monitor_host_health=False,
         fake_host_health_monitor=None,
+        user_agent_prefix=mock.ANY,  # varies by version; see dedicated tests
     )
 
 
@@ -172,6 +174,7 @@ def test_session_constructed_with_default_timeouts(ext_cls):
         timeouts=timeouts,
         monitor_host_health=False,
         fake_host_health_monitor=None,
+        user_agent_prefix=mock.ANY,  # varies by version; see dedicated tests
     )
 
 
@@ -207,6 +210,7 @@ def test_session_default_with_options(ext_cls):
         timeouts=Timeouts(),
         monitor_host_health=False,
         fake_host_health_monitor=None,
+        user_agent_prefix=mock.ANY,  # varies by version; see dedicated tests
     )
 
 
@@ -259,6 +263,35 @@ def test_session_with_options(ext_cls):
         timeouts=timeouts,
         monitor_host_health=False,
         fake_host_health_monitor=None,
+        user_agent_prefix=mock.ANY,  # varies by version; see dedicated tests
+    )
+
+
+@mock.patch("blazingmq._session.ExtSession")
+def test_session_with_options_user_agent_prefix(ext_cls):
+    # GIVEN
+    ext_cls.mock_add_spec([])
+
+    def dummy1():
+        pass
+
+    def dummy2():
+        pass
+
+    session_options = SessionOptions(
+        user_agent_prefix=b"mylib:1.0",
+    )
+
+    # WHEN
+    Session.with_options(
+        dummy1, on_message=dummy2, broker="some_uri", session_options=session_options
+    )
+
+    # THEN
+    _, kwargs = ext_cls.call_args
+    assert re.fullmatch(
+        rb"mylib:1\.0 blazingmq\(python[^)]+\):\S+",
+        kwargs["user_agent_prefix"],
     )
 
 
@@ -304,6 +337,7 @@ def test_session_basic_monitor(ext_cls):
         ),
         monitor_host_health=True,
         fake_host_health_monitor=monitor._monitor,
+        user_agent_prefix=mock.ANY,  # varies by version; see dedicated tests
     )
 
 
@@ -335,6 +369,7 @@ def test_session_default_constructed(ext_cls):
         timeouts=Timeouts(),
         monitor_host_health=False,
         fake_host_health_monitor=None,
+        user_agent_prefix=mock.ANY,  # varies by version; see dedicated tests
     )
 
 
@@ -770,6 +805,231 @@ def test_basic_monitor_repr():
     msg = repr(BasicHealthMonitor())
     # THEN
     assert msg == "BasicHealthMonitor()"
+
+
+@mock.patch("blazingmq._session.ExtSession")
+def test_session_constructed_with_user_agent_prefix(ext_cls):
+    # GIVEN
+    ext_cls.mock_add_spec([])
+
+    def dummy():
+        pass
+
+    # WHEN
+    Session(
+        dummy,
+        on_message=dummy,
+        broker="some_uri",
+        user_agent_prefix=b"mylib:1.0",
+    )
+
+    # THEN
+    _, kwargs = ext_cls.call_args
+    assert re.fullmatch(
+        rb"mylib:1\.0 blazingmq\(python[^)]+\):\S+",
+        kwargs["user_agent_prefix"],
+    )
+
+
+@mock.patch("blazingmq._session.ExtSession")
+def test_session_constructed_without_user_agent_prefix(ext_cls):
+    # GIVEN
+    ext_cls.mock_add_spec([])
+
+    def dummy():
+        pass
+
+    # WHEN
+    Session(
+        dummy,
+        on_message=dummy,
+        broker="some_uri",
+    )
+
+    # THEN
+    _, kwargs = ext_cls.call_args
+    assert re.fullmatch(
+        rb"blazingmq\(python[^)]+\):\S+",
+        kwargs["user_agent_prefix"],
+    )
+
+
+@mock.patch("blazingmq._session.ExtSession")
+def test_session_constructed_with_empty_user_agent_prefix(ext_cls):
+    # GIVEN
+    ext_cls.mock_add_spec([])
+
+    def dummy():
+        pass
+
+    # WHEN
+    Session(
+        dummy,
+        on_message=dummy,
+        broker="some_uri",
+        user_agent_prefix=b"",
+    )
+
+    # THEN
+    _, kwargs = ext_cls.call_args
+    assert re.fullmatch(
+        rb"blazingmq\(python[^)]+\):\S+",
+        kwargs["user_agent_prefix"],
+    )
+
+
+@mock.patch("blazingmq._session.ExtSession")
+def test_session_user_agent_prefix_satisfies_bmq_length_precondition(ext_cls):
+    # GIVEN
+    ext_cls.mock_add_spec([])
+
+    def dummy():
+        pass
+
+    # WHEN
+    Session(
+        dummy,
+        on_message=dummy,
+        broker="some_uri",
+        user_agent_prefix=b"x" * 96,
+    )
+
+    # THEN
+    _, kwargs = ext_cls.call_args
+    assert len(kwargs["user_agent_prefix"]) < 128
+
+
+@mock.patch("blazingmq._session.ExtSession")
+def test_session_user_agent_prefix_satisfies_bmq_printable_precondition(ext_cls):
+    # GIVEN
+    ext_cls.mock_add_spec([])
+
+    def dummy():
+        pass
+
+    # WHEN
+    Session(
+        dummy,
+        on_message=dummy,
+        broker="some_uri",
+        user_agent_prefix=b"mylib:1.0",
+    )
+
+    # THEN
+    _, kwargs = ext_cls.call_args
+    assert kwargs["user_agent_prefix"].decode("ascii").isprintable()
+
+
+def test_session_bad_user_agent_prefix_too_long():
+    # GIVEN
+    def dummy():
+        pass
+
+    user_agent_prefix = b"x" * 97
+    expected_pat = re.escape(
+        f"user_agent_prefix ({user_agent_prefix!r}) must be at most 96 "
+        f"bytes (is {len(user_agent_prefix)} bytes)"
+    )
+
+    # WHEN
+    with pytest.raises(Exception) as exc:
+        Session(
+            dummy,
+            on_message=dummy,
+            broker="some_uri",
+            user_agent_prefix=user_agent_prefix,
+        )
+
+    # THEN
+    assert exc.type is ValueError
+    assert exc.match(expected_pat)
+
+
+def test_session_bad_user_agent_prefix_non_printable():
+    # GIVEN
+    def dummy():
+        pass
+
+    user_agent_prefix = b"\x07"
+
+    # WHEN
+    with pytest.raises(Exception) as exc:
+        Session(
+            dummy,
+            on_message=dummy,
+            broker="some_uri",
+            user_agent_prefix=user_agent_prefix,
+        )
+
+    # THEN
+    assert exc.type is ValueError
+    assert exc.match("must only contain printable characters")
+
+
+def test_session_bad_user_agent_prefix_non_ascii():
+    # GIVEN
+    def dummy():
+        pass
+
+    user_agent_prefix = b"\x80"
+
+    # WHEN
+    with pytest.raises(Exception) as exc:
+        Session(
+            dummy,
+            on_message=dummy,
+            broker="some_uri",
+            user_agent_prefix=user_agent_prefix,
+        )
+
+    # THEN
+    assert exc.type is ValueError
+    assert exc.match("must only contain printable characters")
+
+
+def test_session_bad_user_agent_prefix_del():
+    # GIVEN
+    def dummy():
+        pass
+
+    user_agent_prefix = b"\x7f"
+
+    # WHEN
+    with pytest.raises(Exception) as exc:
+        Session(
+            dummy,
+            on_message=dummy,
+            broker="some_uri",
+            user_agent_prefix=user_agent_prefix,
+        )
+
+    # THEN
+    assert exc.type is ValueError
+    assert exc.match("must only contain printable characters")
+
+
+@mock.patch("blazingmq._session.ExtSession")
+def test_session_user_agent_prefix_with_spaces(ext_cls):
+    # GIVEN
+    ext_cls.mock_add_spec([])
+
+    def dummy():
+        pass
+
+    # WHEN
+    Session(
+        dummy,
+        on_message=dummy,
+        broker="some_uri",
+        user_agent_prefix=b"my lib:1.0",
+    )
+
+    # THEN
+    _, kwargs = ext_cls.call_args
+    assert re.fullmatch(
+        rb"my lib:1\.0 blazingmq\(python[^)]+\):\S+",
+        kwargs["user_agent_prefix"],
+    )
 
 
 def test_host_health_repr():

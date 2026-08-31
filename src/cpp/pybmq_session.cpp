@@ -22,6 +22,7 @@
 #include <pybmq_refutils.h>
 #include <pybmq_sessioneventhandler.h>
 
+#include <ball_log.h>
 #include <bsl_memory.h>
 #include <bsl_sstream.h>
 #include <bsl_stdexcept.h>
@@ -119,9 +120,9 @@ Session::Session(
 
         // Create a C++ lambda that wraps the Python callback
         // TODO this can't be a lambda
-        cpp_callback =
-                [authn_credential_cb](
-                        bsl::ostream& error) -> bsl::optional<bmqt::AuthnCredential> {
+        cpp_callback = [authn_credential_cb]() -> bsl::optional<bmqt::AuthnCredential> {
+            BALL_LOG_SET_CATEGORY("pybmq_session");
+
             pybmq::GilAcquireGuard guard;
 
             // Call get_credential_data() method on the Python object
@@ -132,9 +133,10 @@ Session::Session(
                             nullptr));
 
             if (!result) {
-                // Python exception occurred
+                // Python exception occurred.  Clear it before logging, so we
+                // don't re-enter Python via the BALL observer with it set.
                 PyErr_Print();
-                error << "Error calling get_credential_data()";
+                BALL_LOG_ERROR << "Error calling get_credential_data()";
                 return bsl::optional<bmqt::AuthnCredential>();
             }
 
@@ -144,7 +146,8 @@ Session::Session(
 
             // Extract tuple (mechanism, data)
             if (!PyTuple_Check(result.get()) || PyTuple_Size(result.get()) != 2) {
-                error << "get_credential_data() must return (str, bytes) or None";
+                BALL_LOG_ERROR
+                        << "get_credential_data() must return (str, bytes) or None";
                 return bsl::optional<bmqt::AuthnCredential>();
             }
 
@@ -152,7 +155,8 @@ Session::Session(
             PyObject* data_obj = PyTuple_GetItem(result.get(), 1);
 
             if (!PyUnicode_Check(mechanism_obj) || !PyBytes_Check(data_obj)) {
-                error << "get_credential_data() must return (str, bytes) or None";
+                BALL_LOG_ERROR
+                        << "get_credential_data() must return (str, bytes) or None";
                 return bsl::optional<bmqt::AuthnCredential>();
             }
 

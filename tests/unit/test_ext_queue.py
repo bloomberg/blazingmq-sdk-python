@@ -139,6 +139,74 @@ def test_open_options_are_correctly_propagated():
     )
 
 
+def test_open_queue_uri_with_embedded_nul_raises():
+    # GIVEN
+    mock = sdk_mock(start=0, stop=None)
+    session = Session(dummy_callback, _mock=mock)
+    queue_uri = QUEUE_NAME[:5] + b"\x00" + QUEUE_NAME[5:]
+
+    # WHEN
+    with pytest.raises(ValueError) as exc:
+        session.open_queue_sync(
+            queue_uri,
+            read=True,
+            write=True,
+            consumer_priority=0,
+            max_unconfirmed_messages=0,
+            max_unconfirmed_bytes=0,
+        )
+
+    # THEN
+    assert exc.match("queue_uri must not contain an embedded NUL byte")
+
+
+def test_close_queue_uri_with_embedded_nul_raises():
+    # GIVEN
+    mock = sdk_mock(start=0, stop=None)
+    session = Session(dummy_callback, _mock=mock)
+    queue_uri = QUEUE_NAME[:5] + b"\x00" + QUEUE_NAME[5:]
+
+    # WHEN
+    with pytest.raises(ValueError) as exc:
+        session.close_queue_sync(queue_uri)
+
+    # THEN
+    assert exc.match("queue_uri must not contain an embedded NUL byte")
+
+
+def test_configure_queue_uri_with_embedded_nul_raises():
+    # GIVEN
+    mock = sdk_mock(start=0, stop=None)
+    session = Session(dummy_callback, _mock=mock)
+    queue_uri = QUEUE_NAME[:5] + b"\x00" + QUEUE_NAME[5:]
+
+    # WHEN
+    with pytest.raises(ValueError) as exc:
+        session.configure_queue_sync(
+            queue_uri,
+            consumer_priority=0,
+            max_unconfirmed_messages=0,
+            max_unconfirmed_bytes=0,
+        )
+
+    # THEN
+    assert exc.match("queue_uri must not contain an embedded NUL byte")
+
+
+def test_get_queue_options_uri_with_embedded_nul_raises():
+    # GIVEN
+    mock = sdk_mock(start=0, stop=None)
+    session = Session(dummy_callback, _mock=mock)
+    queue_uri = QUEUE_NAME[:5] + b"\x00" + QUEUE_NAME[5:]
+
+    # WHEN
+    with pytest.raises(ValueError) as exc:
+        session.get_queue_options(queue_uri)
+
+    # THEN
+    assert exc.match("queue_uri must not contain an embedded NUL byte")
+
+
 def test_open_fails_with_timeout():
     # GIVEN
     mock = sdk_mock(start=0, openQueueSync=-2, stop=None)

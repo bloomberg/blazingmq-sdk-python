@@ -188,6 +188,9 @@ cdef class Session:
         cdef TimeInterval c_configure_queue_timeout = create_time_interval(timeouts.configure_queue_timeout)
         cdef TimeInterval c_close_queue_timeout = create_time_interval(timeouts.close_queue_timeout)
 
+        if b'\x00' in broker:
+            raise ValueError('broker must not contain an embedded NUL byte')
+
         PyEval_InitThreads()
 
         if num_processing_threads is not None:
@@ -295,6 +298,9 @@ cdef class Session:
         cdef optional[cppbool] c_suspends_on_bad_host_health
         cdef TimeInterval c_timeout = create_time_interval(timeout)
 
+        if b'\x00' in queue_uri:
+            raise ValueError('queue_uri must not contain an embedded NUL byte')
+
         if consumer_priority is not None:
             c_consumer_priority = optional[int](consumer_priority)
 
@@ -330,6 +336,9 @@ cdef class Session:
         cdef optional[cppbool] c_suspends_on_bad_host_health
         cdef TimeInterval c_timeout = create_time_interval(timeout)
 
+        if b'\x00' in queue_uri:
+            raise ValueError('queue_uri must not contain an embedded NUL byte')
+
         if consumer_priority is not None:
             c_consumer_priority = optional[int](consumer_priority)
 
@@ -353,10 +362,17 @@ cdef class Session:
                          queue_uri not None: bytes,
                          timeout: Optional[int|float] = None) -> None:
         cdef TimeInterval c_timeout = create_time_interval(timeout)
+
+        if b'\x00' in queue_uri:
+            raise ValueError('queue_uri must not contain an embedded NUL byte')
+
         self._session.close_queue_sync(queue_uri, c_timeout)
 
     def get_queue_options(self,
                           queue_uri not None: bytes) -> object:
+        if b'\x00' in queue_uri:
+            raise ValueError('queue_uri must not contain an embedded NUL byte')
+
         return self._session.get_queue_options(queue_uri)
 
     def post(self,
@@ -364,6 +380,9 @@ cdef class Session:
              payload not None: bytes,
              properties=None,
              on_ack=None) -> None:
+        if b'\x00' in queue_uri:
+            raise ValueError('queue_uri must not contain an embedded NUL byte')
+
         self._session.post(queue_uri, payload, len(payload), properties, on_ack)
 
     def confirm(self, message not None) -> None:

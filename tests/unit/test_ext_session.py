@@ -79,6 +79,20 @@ def test_set_broker():
     del s
 
 
+def test_broker_with_embedded_nul_raises():
+    # GIVEN
+    mock = sdk_mock(start=0, stop=None)
+    broker = b"tcp://\x00evil"
+
+    # WHEN
+    with pytest.raises(ValueError) as exc:
+        Session(dummy_callback, broker=broker, _mock=mock)
+
+    # THEN
+    assert exc.match("broker must not contain an embedded NUL byte")
+    mock.start.assert_not_called()
+
+
 def test_start_no_timeout():
     # GIVEN
     mock = sdk_mock(start=0, stop=None)

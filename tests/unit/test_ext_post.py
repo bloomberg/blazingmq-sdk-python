@@ -53,6 +53,20 @@ def test_post_fails_with_error(post_rc, post_error):
     assert exc.match(f"Failed to post message to .+dummy_queue queue: {post_error}")
 
 
+def test_post_queue_uri_with_embedded_nul_raises():
+    # GIVEN
+    mock = sdk_mock(start=0, stop=None)
+    session = Session(dummy_callback, _mock=mock)
+    queue_uri = QUEUE_NAME[:5] + b"\x00" + QUEUE_NAME[5:]
+
+    # WHEN
+    with pytest.raises(ValueError) as exc:
+        session.post(queue_uri, b"bladiblah")
+
+    # THEN
+    assert exc.match("queue_uri must not contain an embedded NUL byte")
+
+
 def test_post_failure_reference_not_leaked():
     # GIVEN
     mock = sdk_mock(start=0, openQueueSync=0, post=-1, stop=None)

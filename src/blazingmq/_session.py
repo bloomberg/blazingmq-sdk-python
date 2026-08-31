@@ -436,6 +436,9 @@ class Session:
 
         self._has_no_on_message = on_message is None
 
+        if b"\x00" in six.ensure_binary(broker):
+            raise ValueError("broker must not contain an embedded NUL byte")
+
         # Using our Timeouts class, preserve the old behavior of passing in a
         # simple float as a timeout.  Avoid setting the `connect_timeout` and
         # `disconnect_timeout`.
@@ -586,6 +589,9 @@ class Session:
                 " monitoring was disabled when the Session was created"
             )
 
+        if b"\x00" in six.ensure_binary(queue_uri):
+            raise ValueError("queue_uri must not contain an embedded NUL byte")
+
         self._ext.open_queue_sync(
             six.ensure_binary(queue_uri),
             read=read,
@@ -622,6 +628,9 @@ class Session:
                 respond to the request within a reasonable amount of time.
             `ValueError`: If *timeout* is not > 0.0.
         """
+        if b"\x00" in six.ensure_binary(queue_uri):
+            raise ValueError("queue_uri must not contain an embedded NUL byte")
+
         self._ext.close_queue_sync(
             six.ensure_binary(queue_uri),
             timeout=_convert_timeout(timeout),
@@ -664,6 +673,9 @@ class Session:
                 " monitoring was disabled when the Session was created"
             )
 
+        if b"\x00" in six.ensure_binary(queue_uri):
+            raise ValueError("queue_uri must not contain an embedded NUL byte")
+
         self._ext.configure_queue_sync(
             six.ensure_binary(queue_uri),
             consumer_priority=options.consumer_priority,
@@ -697,6 +709,9 @@ class Session:
             a write-only queue won't be reflected in the `QueueOptions`
             returned by a later call to *get_queue_options*.
         """
+        if b"\x00" in six.ensure_binary(queue_uri):
+            raise ValueError("queue_uri must not contain an embedded NUL byte")
+
         options = self._ext.get_queue_options(six.ensure_binary(queue_uri))
         return QueueOptions(*options)
 
@@ -743,6 +758,9 @@ class Session:
         Raises:
             `~blazingmq.Error`: If the post request was not successful.
         """
+        if b"\x00" in six.ensure_binary(queue_uri):
+            raise ValueError("queue_uri must not contain an embedded NUL byte")
+
         props: Optional[Dict[bytes, Tuple[Union[int, bytes], int]]] = None
         if properties or property_type_overrides:
             props = _collect_properties_and_types(properties, property_type_overrides)

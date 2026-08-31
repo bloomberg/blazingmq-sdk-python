@@ -358,6 +358,93 @@ def test_constructing_with_bad_type_for_host_health_monitor(ext_cls):
     assert exc.match(r"host_health_monitor must be None or an instance of blazingmq\.")
 
 
+@mock.patch("blazingmq._session.ExtSession")
+def test_session_broker_with_embedded_nul_raises(ext_cls):
+    # GIVEN
+    ext_cls.mock_add_spec([])
+
+    def dummy():
+        pass
+
+    # WHEN
+    with pytest.raises(Exception) as exc:
+        Session(dummy, on_message=dummy, broker="tcp://\x00evil")
+
+    # THEN
+    assert exc.type is ValueError
+    assert exc.match("broker must not contain an embedded NUL byte")
+
+
+def test_session_open_queue_uri_with_embedded_nul_raises(ext):
+    # GIVEN
+    ext.mock_add_spec(["set_owned_by_session", "clear_owned_by_session"])
+    session = make_session()
+
+    # WHEN
+    with pytest.raises(Exception) as exc:
+        session.open_queue("queue\x00uri", read=True)
+
+    # THEN
+    assert exc.type is ValueError
+    assert exc.match("queue_uri must not contain an embedded NUL byte")
+
+
+def test_session_close_queue_uri_with_embedded_nul_raises(ext):
+    # GIVEN
+    ext.mock_add_spec(["set_owned_by_session", "clear_owned_by_session"])
+    session = make_session()
+
+    # WHEN
+    with pytest.raises(Exception) as exc:
+        session.close_queue("queue\x00uri")
+
+    # THEN
+    assert exc.type is ValueError
+    assert exc.match("queue_uri must not contain an embedded NUL byte")
+
+
+def test_session_configure_queue_uri_with_embedded_nul_raises(ext):
+    # GIVEN
+    ext.mock_add_spec(["set_owned_by_session", "clear_owned_by_session"])
+    session = make_session()
+
+    # WHEN
+    with pytest.raises(Exception) as exc:
+        session.configure_queue("queue\x00uri", options=QueueOptions())
+
+    # THEN
+    assert exc.type is ValueError
+    assert exc.match("queue_uri must not contain an embedded NUL byte")
+
+
+def test_session_get_queue_options_uri_with_embedded_nul_raises(ext):
+    # GIVEN
+    ext.mock_add_spec(["set_owned_by_session", "clear_owned_by_session"])
+    session = make_session()
+
+    # WHEN
+    with pytest.raises(Exception) as exc:
+        session.get_queue_options("queue\x00uri")
+
+    # THEN
+    assert exc.type is ValueError
+    assert exc.match("queue_uri must not contain an embedded NUL byte")
+
+
+def test_session_post_uri_with_embedded_nul_raises(ext):
+    # GIVEN
+    ext.mock_add_spec(["set_owned_by_session", "clear_owned_by_session"])
+    session = make_session()
+
+    # WHEN
+    with pytest.raises(Exception) as exc:
+        session.post("queue\x00uri", b"data")
+
+    # THEN
+    assert exc.type is ValueError
+    assert exc.match("queue_uri must not contain an embedded NUL byte")
+
+
 def test_session_open_queue(ext):
     # GIVEN
     ext.mock_add_spec(

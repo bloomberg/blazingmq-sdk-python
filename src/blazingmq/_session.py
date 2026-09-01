@@ -509,16 +509,16 @@ class Session:
 
         return cls(
             on_session_event,
-            on_message,
-            broker,
-            message_compression_algorithm,
-            timeout,
-            session_options.host_health_monitor,
-            session_options.num_processing_threads,
-            session_options.blob_buffer_size,
-            session_options.channel_high_watermark,
-            session_options.event_queue_watermarks,
-            session_options.stats_dump_interval,
+            on_message=on_message,
+            broker=broker,
+            message_compression_algorithm=message_compression_algorithm,
+            timeout=timeout,
+            host_health_monitor=session_options.host_health_monitor,
+            num_processing_threads=session_options.num_processing_threads,
+            blob_buffer_size=session_options.blob_buffer_size,
+            channel_high_watermark=session_options.channel_high_watermark,
+            event_queue_watermarks=session_options.event_queue_watermarks,
+            stats_dump_interval=session_options.stats_dump_interval,
         )
 
     def open_queue(

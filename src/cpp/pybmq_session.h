@@ -44,6 +44,7 @@ class Session
     bmqt::CompressionAlgorithmType::Enum d_message_compression_type;
     PyObject* d_error;
     PyObject* d_broker_timeout_error;
+    PyObject* d_authn_credential_cb;
     bslma::ManagedPtr<bmqa::AbstractSession> d_session_mp;
 
     // NOT IMPLEMENTED

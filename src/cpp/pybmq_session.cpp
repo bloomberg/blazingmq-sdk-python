@@ -73,6 +73,81 @@ class BrokerTimeoutError : public bsl::runtime_error
     }
 };
 
+// Invoke `get_credential_data()` on a Python object and convert the result to
+// a `bmqt::AuthnCredential`.  The object is held, not owned: the `Session`
+// holds the reference and drops it only after destroying the `bmqa::Session`
+// that owns every copy of this functor.
+class AuthnCredentialCbFunctor
+{
+  private:
+    // DATA
+    PyObject* d_callback_p;
+
+  public:
+    // CREATORS
+    explicit AuthnCredentialCbFunctor(PyObject* callback);
+
+    // ACCESSORS
+    bsl::optional<bmqt::AuthnCredential> operator()() const;
+};
+
+AuthnCredentialCbFunctor::AuthnCredentialCbFunctor(PyObject* callback)
+: d_callback_p(callback)
+{
+}
+
+bsl::optional<bmqt::AuthnCredential>
+AuthnCredentialCbFunctor::operator()() const
+{
+    BALL_LOG_SET_CATEGORY("pybmq_session");
+
+    pybmq::GilAcquireGuard guard;
+
+    // Call get_credential_data() method on the Python object
+    bslma::ManagedPtr<PyObject> result = RefUtils::toManagedPtr(
+            PyObject_CallMethod(d_callback_p, "get_credential_data", NULL));
+
+    if (!result) {
+        // Python exception occurred.  Clear it before logging, so we
+        // don't re-enter Python via the BALL observer with it set.
+        PyErr_Print();
+        BALL_LOG_ERROR << "Error calling get_credential_data()";
+        return bsl::optional<bmqt::AuthnCredential>();
+    }
+
+    if (result.get() == Py_None) {
+        return bsl::optional<bmqt::AuthnCredential>();
+    }
+
+    // Extract tuple (mechanism, data)
+    if (!PyTuple_Check(result.get()) || PyTuple_Size(result.get()) != 2) {
+        BALL_LOG_ERROR << "get_credential_data() must return (str, bytes) or None";
+        return bsl::optional<bmqt::AuthnCredential>();
+    }
+
+    PyObject* mechanism_obj = PyTuple_GetItem(result.get(), 0);
+    PyObject* data_obj = PyTuple_GetItem(result.get(), 1);
+
+    if (!PyUnicode_Check(mechanism_obj) || !PyBytes_Check(data_obj)) {
+        BALL_LOG_ERROR << "get_credential_data() must return (str, bytes) or None";
+        return bsl::optional<bmqt::AuthnCredential>();
+    }
+
+    // Convert Python str to C++ string
+    const char* mechanism_cstr = PyUnicode_AsUTF8(mechanism_obj);
+    bsl::string mechanism(mechanism_cstr);
+
+    // Convert Python bytes to vector<char>
+    char* data_ptr;
+    Py_ssize_t data_len;
+    PyBytes_AsStringAndSize(data_obj, &data_ptr, &data_len);
+    bsl::vector<char> data(data_ptr, data_ptr + data_len);
+
+    bmqt::AuthnCredential credential(mechanism, data);
+    return bsl::optional<bmqt::AuthnCredential>(
+            bslmf::MovableRefUtil::move(credential));
+}
+
 }  // namespace
 
 Session::Session(
@@ -90,6 +165,7 @@ Session::Session(
 , d_message_compression_type(bmqt::CompressionAlgorithmType::e_NONE)
 , d_error(error)
 , d_broker_timeout_error(broker_timeout_error)
+, d_authn_credential_cb(NULL)
 , d_session_mp()
 {
     bsl::shared_ptr<bmqpi::HostHealthMonitor> host_health_monitor_sp;
@@ -113,70 +189,10 @@ Session::Session(
     bmqt::SessionOptions::AuthnCredentialCb cpp_callback;
     bool has_auth_callback = false;
 
-    if (authn_credential_cb != nullptr && authn_credential_cb != Py_None) {
-        // Increment reference count since we're storing the Python object
-        Py_INCREF(authn_credential_cb);
+    if (authn_credential_cb != NULL && authn_credential_cb != Py_None) {
+        d_authn_credential_cb = authn_credential_cb;
+        cpp_callback = AuthnCredentialCbFunctor(d_authn_credential_cb);
         has_auth_callback = true;
-
-        // Create a C++ lambda that wraps the Python callback
-        // TODO this can't be a lambda
-        cpp_callback = [authn_credential_cb]() -> bsl::optional<bmqt::AuthnCredential> {
-            BALL_LOG_SET_CATEGORY("pybmq_session");
-
-            pybmq::GilAcquireGuard guard;
-
-            // Call get_credential_data() method on the Python object
-            bslma::ManagedPtr<PyObject> result =
-                    RefUtils::toManagedPtr(PyObject_CallMethod(
-                            authn_credential_cb,
-                            "get_credential_data",
-                            nullptr));
-
-            if (!result) {
-                // Python exception occurred.  Clear it before logging, so we
-                // don't re-enter Python via the BALL observer with it set.
-                PyErr_Print();
-                BALL_LOG_ERROR << "Error calling get_credential_data()";
-                return bsl::optional<bmqt::AuthnCredential>();
-            }
-
-            if (result.get() == Py_None) {
-                return bsl::optional<bmqt::AuthnCredential>();
-            }
-
-            // Extract tuple (mechanism, data)
-            if (!PyTuple_Check(result.get()) || PyTuple_Size(result.get()) != 2) {
-                BALL_LOG_ERROR
-                        << "get_credential_data() must return (str, bytes) or None";
-                return bsl::optional<bmqt::AuthnCredential>();
-            }
-
-            PyObject* mechanism_obj = PyTuple_GetItem(result.get(), 0);
-            PyObject* data_obj = PyTuple_GetItem(result.get(), 1);
-
-            if (!PyUnicode_Check(mechanism_obj) || !PyBytes_Check(data_obj)) {
-                BALL_LOG_ERROR
-                        << "get_credential_data() must return (str, bytes) or None";
-                return bsl::optional<bmqt::AuthnCredential>();
-            }
-
-            // Convert Python str to C++ string
-            const char* mechanism_cstr = PyUnicode_AsUTF8(mechanism_obj);
-            bsl::string mechanism(mechanism_cstr);
-
-            // Convert Python bytes to vector<char>
-            char* data_ptr;
-            Py_ssize_t data_len;
-            PyBytes_AsStringAndSize(data_obj, &data_ptr, &data_len);
-            bsl::vector<char> data(data_ptr, data_ptr + data_len);
-
-            // Construct and move credential into optional
-            // (AuthnCredential is move-only)
-            bmqt::AuthnCredential credential(mechanism, data);
-            bsl::optional<bmqt::AuthnCredential> opt_credential(
-                    bslmf::MovableRefUtil::move(credential));
-            return opt_credential;
-        };
     }
 
     {
@@ -247,15 +263,22 @@ Session::Session(
     }
     Py_INCREF(d_error);
     Py_INCREF(d_broker_timeout_error);
+    Py_XINCREF(d_authn_credential_cb);
 }
 
 Session::~Session()
 {
+    BSLS_ASSERT(!d_started);
+    {
+        // Destroy the session first: it owns the copies of
+        // `AuthnCredentialCbFunctor`, which borrow `d_authn_credential_cb`.
+        pybmq::GilReleaseGuard gil_release_guard;
+        d_session_mp.reset();
+    }
+
+    Py_XDECREF(d_authn_credential_cb);
     Py_DECREF(d_broker_timeout_error);
     Py_DECREF(d_error);
-    BSLS_ASSERT(!d_started);
-    pybmq::GilReleaseGuard gil_release_guard;
-    d_session_mp.reset();
 }
 
 PyObject*

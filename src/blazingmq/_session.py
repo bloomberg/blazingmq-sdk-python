@@ -503,34 +503,23 @@ class Session:
         if message_compression_algorithm is None:
             message_compression_algorithm = CompressionAlgorithmType.NONE
 
-        if session_options.timeouts is None:
-            return cls(
-                on_session_event,
-                on_message,
-                broker,
-                message_compression_algorithm,
-                DEFAULT_TIMEOUT,
-                session_options.host_health_monitor,
-                session_options.num_processing_threads,
-                session_options.blob_buffer_size,
-                session_options.channel_high_watermark,
-                session_options.event_queue_watermarks,
-                session_options.stats_dump_interval,
-            )
-        else:
-            return cls(
-                on_session_event,
-                on_message,
-                broker,
-                message_compression_algorithm,
-                session_options.timeouts,
-                session_options.host_health_monitor,
-                session_options.num_processing_threads,
-                session_options.blob_buffer_size,
-                session_options.channel_high_watermark,
-                session_options.event_queue_watermarks,
-                session_options.stats_dump_interval,
-            )
+        timeout: Union[Timeouts, float] = DEFAULT_TIMEOUT
+        if session_options.timeouts is not None:
+            timeout = session_options.timeouts
+
+        return cls(
+            on_session_event,
+            on_message,
+            broker,
+            message_compression_algorithm,
+            timeout,
+            session_options.host_health_monitor,
+            session_options.num_processing_threads,
+            session_options.blob_buffer_size,
+            session_options.channel_high_watermark,
+            session_options.event_queue_watermarks,
+            session_options.stats_dump_interval,
+        )
 
     def open_queue(
         self,

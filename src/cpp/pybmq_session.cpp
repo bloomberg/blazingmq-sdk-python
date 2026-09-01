@@ -1,4 +1,4 @@
-// Copyright 2019-2023 Bloomberg Finance L.P.
+// Copyright 2019-2026 Bloomberg Finance L.P.
 // SPDX-License-Identifier: Apache-2.0
 //
 // Licensed under the Apache License, Version 2.0 (the "License");
@@ -182,12 +182,10 @@ Session::Session(
     d_message_compression_type = config.message_compression_type;
 
     bmqt::SessionOptions::AuthnCredentialCb cpp_callback;
-    bool has_auth_callback = false;
 
     if (authn_credential_cb != NULL && authn_credential_cb != Py_None) {
         d_authn_credential_cb = authn_credential_cb;
         cpp_callback = AuthnCredentialCbFunctor(d_authn_credential_cb);
-        has_auth_callback = true;
     }
 
     {
@@ -215,7 +213,7 @@ Session::Session(
                     config.event_queue_watermarks.value().second);
         }
 
-        if (has_auth_callback) {
+        if (cpp_callback) {
             options.setAuthnCredentialCb(cpp_callback);
         }
 

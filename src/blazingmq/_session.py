@@ -296,9 +296,13 @@ class SessionOptions:
             must be a multiple of 30s, in the range ``[0s - 60min]``.
         authn_credential_provider (Optional[`~blazingmq.AuthnCredentialProvider`]):
             An optional callable that returns authentication credentials as a
-            ``(mechanism, data)`` tuple of ``(str, bytes)``, or ``None`` if no
-            credentials are available.  If not provided, no authentication
-            credentials are sent to the broker.
+            ``(mechanism, data)`` tuple of ``(str, bytes)``.  It is called
+            each time the session authenticates with the broker, including on
+            reauthentication.  If it returns ``None`` or raises, the
+            connection is closed: starting a session fails, while an
+            already-started session sees `.ConnectionLost` and then
+            reconnects, calling this callable again.  If not provided, no
+            authentication credentials are sent to the broker.
     """
 
     def __init__(
@@ -418,9 +422,13 @@ class Session:
             ``[0s - 60min]``.
         authn_credential_provider (Optional[`~blazingmq.AuthnCredentialProvider`]):
             an optional callable that returns authentication credentials as a
-            ``(mechanism, data)`` tuple of ``(str, bytes)``, or ``None`` if no
-            credentials are available.  If not provided, no authentication
-            credentials are sent to the broker.
+            ``(mechanism, data)`` tuple of ``(str, bytes)``.  It is called
+            each time the session authenticates with the broker, including on
+            reauthentication.  If it returns ``None`` or raises, the
+            connection is closed: starting a session fails, while an
+            already-started session sees `.ConnectionLost` and then
+            reconnects, calling this callable again.  If not provided, no
+            authentication credentials are sent to the broker.
 
     Raises:
         `~blazingmq.Error`: If the session start request was not successful.

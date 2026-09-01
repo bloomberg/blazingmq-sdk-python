@@ -39,18 +39,6 @@ SessionEventHandler::SessionEventHandler(
 , d_py_message_event_callback(py_message_event_callback)
 , d_py_ack_event_callback(py_ack_event_callback)
 {
-    GilAcquireGuard guard;
-    Py_INCREF(d_py_session_event_callback);
-    Py_INCREF(d_py_message_event_callback);
-    Py_INCREF(d_py_ack_event_callback);
-}
-
-SessionEventHandler::~SessionEventHandler()
-{
-    GilAcquireGuard guard;
-    Py_DECREF(d_py_ack_event_callback);
-    Py_DECREF(d_py_message_event_callback);
-    Py_DECREF(d_py_session_event_callback);
 }
 
 void
@@ -67,7 +55,7 @@ SessionEventHandler::onSessionEvent(const bmqa::SessionEvent& event)
     }
 
     bslma::ManagedPtr<PyObject> rv = RefUtils::toManagedPtr(PyObject_CallFunction(
-            d_py_session_event_callback,
+            d_py_session_event_callback.get(),
             "(N (i N i N s#))",
             PyBytes_FromStringAndSize(
                     event.errorDescription().c_str(),
@@ -92,16 +80,16 @@ SessionEventHandler::onMessageEvent(const bmqa::MessageEvent& event)
     PyObject* py_event;
 
     if (event.type() == bmqt::MessageEventType::e_PUSH) {
-        callback = d_py_message_event_callback;
-        py_event = MessageUtils::get_messages(event, d_py_session_event_callback);
+        callback = d_py_message_event_callback.get();
+        py_event = MessageUtils::get_messages(event, d_py_session_event_callback.get());
     } else if (event.type() == bmqt::MessageEventType::e_ACK) {
-        callback = d_py_ack_event_callback;
+        callback = d_py_ack_event_callback.get();
         py_event = MessageUtils::get_acks(event);
     } else {
         bsl::ostringstream oss;
         oss << "Received an unexpected message event of type " << (int)event.type()
             << " (" << event.type() << ")";
-        callback = d_py_session_event_callback;
+        callback = d_py_session_event_callback.get();
         py_event = PyBytes_FromString(oss.str().c_str());
     }
     bslma::ManagedPtr<PyObject> rv =

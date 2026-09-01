@@ -22,6 +22,8 @@
 #include <bmqa_session.h>
 #include <bmqa_sessionevent.h>
 
+#include <pybmq_pyref.h>
+
 #include <bsls_keyword.h>
 
 namespace BloombergLP {
@@ -30,17 +32,15 @@ namespace pybmq {
 class SessionEventHandler : public bmqa::SessionEventHandler
 {
   private:
-    PyObject* d_py_session_event_callback;
-    PyObject* d_py_message_event_callback;
-    PyObject* d_py_ack_event_callback;
+    PyRef d_py_session_event_callback;
+    PyRef d_py_message_event_callback;
+    PyRef d_py_ack_event_callback;
 
   public:
     SessionEventHandler(
             PyObject* py_session_event_callback,
             PyObject* py_message_event_callback,
             PyObject* py_ack_event_callback);
-
-    ~SessionEventHandler();
 
     void onSessionEvent(const bmqa::SessionEvent& event) BSLS_KEYWORD_OVERRIDE;
     void onMessageEvent(const bmqa::MessageEvent& event) BSLS_KEYWORD_OVERRIDE;

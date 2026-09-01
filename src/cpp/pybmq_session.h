@@ -23,7 +23,6 @@
 
 #include <bmqa_abstractsession.h>
 #include <bmqa_manualhosthealthmonitor.h>
-#include <bmqt_authncredential.h>
 #include <bmqt_compressionalgorithmtype.h>
 
 #include <bsl_memory.h>

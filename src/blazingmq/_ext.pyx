@@ -21,15 +21,12 @@ import weakref
 from bsl cimport optional
 from bsl cimport pair
 from bsl cimport shared_ptr
-from bsl cimport string
-from bsl cimport vector
 from bsl.bsls cimport TimeInterval
 from cpython.ceval cimport PyEval_InitThreads
 from libcpp cimport bool as cppbool
 
 from bmq.bmqa cimport ManualHostHealthMonitor
 from bmq.bmqt cimport AckResult
-from bmq.bmqt cimport AuthnCredential
 from bmq.bmqt cimport CompressionAlgorithmType
 from bmq.bmqt cimport HostHealthState
 from bmq.bmqt cimport PropertyType
@@ -158,31 +155,32 @@ cdef class FakeHostHealthMonitor:
 
 
 cdef class AuthnCredentialCbAdapter:
-    cdef object _callback  # Store the Python callable
+    cdef object _callback
 
     def __cinit__(self, callback):
         self._callback = callback
 
-    # This method will be called by C++ code via PyObject_CallMethod
-    # Returns None for no credential, or (mechanism, data) tuple
     def get_credential_data(self):
+        """Call the provider and marshal its result for the C++ session.
+
+        Called by ``pybmq::AuthnCredentialCbFunctor``.  Returns the mechanism
+        and data as a tuple of ``bytes``, or `None` if credentials could not
+        be obtained, in which case authentication fails.
+        """
         try:
             result = self._callback()
             if result is None:
                 return None
 
-            if not isinstance(result, tuple) or len(result) != 2:
-                raise ValueError("callback must return (str, bytes) or None")
-
             mechanism, data = result
             if not isinstance(mechanism, str) or not isinstance(data, bytes):
-                raise ValueError("callback must return (str, bytes) or None")
+                raise TypeError(
+                    "authn_credential_provider must return (str, bytes) or None"
+                )
 
-            # Return as-is, let C++ side handle conversion
-            return result
+            return mechanism.encode('utf-8'), data
 
         except Exception:
-            # Log error or handle as needed
             LOGGER.exception("Error in authentication credential callback")
             return None
 

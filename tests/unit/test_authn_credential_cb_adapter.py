@@ -27,7 +27,49 @@ def test_valid_return():
     result = adapter.get_credential_data()
 
     # THEN
-    assert result == ("mechanism", b"data")
+    assert result == (b"mechanism", b"data")
+
+
+def test_mechanism_is_encoded_as_utf8():
+    # GIVEN
+    def provider():
+        return ("mécanisme", b"data")
+
+    adapter = AuthnCredentialCbAdapter(provider)
+
+    # WHEN
+    result = adapter.get_credential_data()
+
+    # THEN
+    assert result == ("mécanisme".encode("utf-8"), b"data")
+
+
+def test_mechanism_not_encodable():
+    # GIVEN a mechanism holding a lone surrogate, which has no UTF-8 encoding
+    def provider():
+        return ("\ud800", b"data")
+
+    adapter = AuthnCredentialCbAdapter(provider)
+
+    # WHEN
+    result = adapter.get_credential_data()
+
+    # THEN
+    assert result is None
+
+
+def test_mechanism_with_embedded_nul_is_not_truncated():
+    # GIVEN
+    def provider():
+        return ("PLAIN\x00extra", b"data")
+
+    adapter = AuthnCredentialCbAdapter(provider)
+
+    # WHEN
+    result = adapter.get_credential_data()
+
+    # THEN
+    assert result == (b"PLAIN\x00extra", b"data")
 
 
 def test_none_return():

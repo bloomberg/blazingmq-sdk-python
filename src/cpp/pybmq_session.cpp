@@ -22,17 +22,20 @@
 #include <pybmq_refutils.h>
 #include <pybmq_sessioneventhandler.h>
 
-#include <ball_log.h>
 #include <bsl_memory.h>
 #include <bsl_sstream.h>
 #include <bsl_stdexcept.h>
 #include <bsl_string.h>
+#include <bsl_string_view.h>
+#include <bsl_vector.h>
 #include <bslma_default.h>
 #include <bslma_managedptr.h>
+#include <bslmf_movableref.h>
 #include <bslmt_readerwriterlockassert.h>
 #include <bslmt_readlockguard.h>
 #include <bslmt_writelockguard.h>
 
+#include <bmqt_authncredential.h>
 #include <bmqt_queueflags.h>
 #include <bmqt_queueoptions.h>
 #include <bmqt_resultcode.h>
@@ -99,19 +102,16 @@ AuthnCredentialCbFunctor::AuthnCredentialCbFunctor(PyObject* callback)
 bsl::optional<bmqt::AuthnCredential>
 AuthnCredentialCbFunctor::operator()() const
 {
-    BALL_LOG_SET_CATEGORY("pybmq_session");
-
     pybmq::GilAcquireGuard guard;
 
-    // Call get_credential_data() method on the Python object
+    // The adapter validates the provider's result and reports any problem to
+    // the Python logger, so a failure here is just an empty credential.  It
+    // hands back the mechanism and data already marshalled to `bytes`.
     bslma::ManagedPtr<PyObject> result = RefUtils::toManagedPtr(
             PyObject_CallMethod(d_callback_p, "get_credential_data", NULL));
 
     if (!result) {
-        // Python exception occurred.  Clear it before logging, so we
-        // don't re-enter Python via the BALL observer with it set.
-        PyErr_Print();
-        BALL_LOG_ERROR << "Error calling get_credential_data()";
+        PyErr_WriteUnraisable(d_callback_p);
         return bsl::optional<bmqt::AuthnCredential>();
     }
 
@@ -119,31 +119,26 @@ AuthnCredentialCbFunctor::operator()() const
         return bsl::optional<bmqt::AuthnCredential>();
     }
 
-    // Extract tuple (mechanism, data)
-    if (!PyTuple_Check(result.get()) || PyTuple_Size(result.get()) != 2) {
-        BALL_LOG_ERROR << "get_credential_data() must return (str, bytes) or None";
-        return bsl::optional<bmqt::AuthnCredential>();
-    }
-
-    PyObject* mechanism_obj = PyTuple_GetItem(result.get(), 0);
-    PyObject* data_obj = PyTuple_GetItem(result.get(), 1);
-
-    if (!PyUnicode_Check(mechanism_obj) || !PyBytes_Check(data_obj)) {
-        BALL_LOG_ERROR << "get_credential_data() must return (str, bytes) or None";
-        return bsl::optional<bmqt::AuthnCredential>();
-    }
-
-    // Convert Python str to C++ string
-    const char* mechanism_cstr = PyUnicode_AsUTF8(mechanism_obj);
-    bsl::string mechanism(mechanism_cstr);
-
-    // Convert Python bytes to vector<char>
-    char* data_ptr;
+    const char* mechanism_p;
+    Py_ssize_t mechanism_len;
+    const char* data_p;
     Py_ssize_t data_len;
-    PyBytes_AsStringAndSize(data_obj, &data_ptr, &data_len);
-    bsl::vector<char> data(data_ptr, data_ptr + data_len);
+    if (!PyArg_ParseTuple(
+                result.get(),
+                "y#y#",
+                &mechanism_p,
+                &mechanism_len,
+                &data_p,
+                &data_len))
+    {
+        // The adapter broke its contract with us.
+        PyErr_WriteUnraisable(d_callback_p);
+        return bsl::optional<bmqt::AuthnCredential>();
+    }
 
-    bmqt::AuthnCredential credential(mechanism, data);
+    bmqt::AuthnCredential credential(
+            bsl::string_view(mechanism_p, mechanism_len),
+            bsl::vector<char>(data_p, data_p + data_len));
     return bsl::optional<bmqt::AuthnCredential>(
             bslmf::MovableRefUtil::move(credential));
 }

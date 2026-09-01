@@ -27,7 +27,8 @@ PropertyValueDict = Mapping[str, PropertyValueType]
 PropertyTypeDict = Mapping[str, PropertyType]
 
 AuthnCredentialProvider = Callable[[], Optional[tuple[str, bytes]]]
-"""A callable that returns authentication credentials as a tuple of
-``(mechanism, data)`` tuple of ``(str, bytes)``, or ``None`` if an
-error occurs while obtaining credentials.
+"""A callable that returns authentication credentials as a ``(mechanism,
+data)`` tuple of ``(str, bytes)``, or ``None`` if an error occurs while
+obtaining them, in which case authentication fails and the connection is
+closed.
 """

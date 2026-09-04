@@ -37,6 +37,7 @@ from bmq.bmqt cimport k_DEFAULT_MAX_UNCONFIRMED_MESSAGES
 from bmq.bmqt cimport k_DEFAULT_SUSPENDS_ON_BAD_HOST_HEALTH
 from pybmq cimport BallUtil
 from pybmq cimport Session as NativeSession
+from pybmq cimport SessionConfig
 
 from typing import Optional
 
@@ -221,24 +222,29 @@ cdef class Session:
         cdef char *c_broker_uri = broker
         script_name = _script_name.get_script_name()
         cdef char *c_script_name = script_name
+
+        cdef SessionConfig config
+        config.broker_uri = c_broker_uri
+        config.script_name = c_script_name
+        config.message_compression_type = (
+            COMPRESSION_ALGO_FROM_PY_MAPPING[message_compression_algorithm])
+        config.num_processing_threads = c_num_processing_threads
+        config.blob_buffer_size = c_blob_buffer_size
+        config.channel_high_watermark = c_channel_high_watermark
+        config.event_queue_watermarks = c_event_queue_watermarks
+        config.stats_dump_interval = c_stats_dump_interval
+        config.connect_timeout = c_connect_timeout
+        config.disconnect_timeout = c_disconnect_timeout
+        config.open_queue_timeout = c_open_queue_timeout
+        config.configure_queue_timeout = c_configure_queue_timeout
+        config.close_queue_timeout = c_close_queue_timeout
+        config.monitor_host_health = monitor_host_health
+
         self._session = new NativeSession(
             session_cb,
             message_cb,
             ack_cb,
-            c_broker_uri,
-            c_script_name,
-            COMPRESSION_ALGO_FROM_PY_MAPPING[message_compression_algorithm],
-            c_num_processing_threads,
-            c_blob_buffer_size,
-            c_channel_high_watermark,
-            c_event_queue_watermarks,
-            c_stats_dump_interval,
-            c_connect_timeout,
-            c_disconnect_timeout,
-            c_open_queue_timeout,
-            c_configure_queue_timeout,
-            c_close_queue_timeout,
-            monitor_host_health,
+            config,
             fake_host_health_monitor_sp,
             Error,
             BrokerTimeoutError,

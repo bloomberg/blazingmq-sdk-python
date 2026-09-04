@@ -19,6 +19,8 @@
 #define PY_SSIZE_T_CLEAN
 #include <Python.h>
 
+#include <pybmq_sessionconfig.h>
+
 #include <bmqa_abstractsession.h>
 #include <bmqa_manualhosthealthmonitor.h>
 #include <bmqt_compressionalgorithmtype.h>
@@ -51,20 +53,7 @@ class Session
     Session(PyObject* py_session_event_callback,
             PyObject* py_message_event_callback,
             PyObject* py_ack_event_callback,
-            const char* broker_uri,
-            const char* script_name,
-            bmqt::CompressionAlgorithmType::Enum message_compression_type,
-            bsl::optional<int> num_processing_threads,
-            bsl::optional<int> blob_buffer_size,
-            bsl::optional<int> channel_high_watermark,
-            bsl::optional<bsl::pair<int, int> > event_queue_watermarks,
-            const bsls::TimeInterval& stats_dump_interval,
-            const bsls::TimeInterval& connect_timeout,
-            const bsls::TimeInterval& disconnect_timeout,
-            const bsls::TimeInterval& open_queue_timeout,
-            const bsls::TimeInterval& configure_queue_timeout,
-            const bsls::TimeInterval& close_queue_timeout,
-            bool monitor_host_health,
+            const SessionConfig& config,
             bsl::shared_ptr<bmqa::ManualHostHealthMonitor> fake_host_health_monitor,
             PyObject* d_error,
             PyObject* d_broker_timeout_error,

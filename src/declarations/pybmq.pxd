@@ -1,4 +1,4 @@
-# Copyright 2019-2023 Bloomberg Finance L.P.
+# Copyright 2019-2026 Bloomberg Finance L.P.
 # SPDX-License-Identifier: Apache-2.0
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
@@ -34,25 +34,32 @@ cdef extern from 'pybmq_ballutil.h' namespace 'BloombergLP::pybmq':
         @staticmethod
         object shutDownBallSingleton() except +
 
+cdef extern from "pybmq_sessionconfig.h" namespace "BloombergLP::pybmq" nogil:
+    cdef cppclass SessionConfig:
+        SessionConfig() except+
+
+        const char* broker_uri
+        const char* script_name
+        CompressionAlgorithmType message_compression_type
+        optional[int] num_processing_threads
+        optional[int] blob_buffer_size
+        optional[int] channel_high_watermark
+        optional[pair[int, int]] event_queue_watermarks
+        TimeInterval stats_dump_interval
+        TimeInterval connect_timeout
+        TimeInterval disconnect_timeout
+        TimeInterval open_queue_timeout
+        TimeInterval configure_queue_timeout
+        TimeInterval close_queue_timeout
+        bint monitor_host_health
+
 cdef extern from "pybmq_session.h" namespace "BloombergLP::pybmq" nogil:
     cdef cppclass Session:
         Session(object on_session_event,
                 object on_message_event,
                 object on_ack_event,
-                const char* broker_uri,
-                const char* script_name,
-                CompressionAlgorithmType message_compression_algorithm,
-                optional[int] num_processing_threads,
-                optional[int] blob_buffer_size,
-                optional[int] channel_high_watermark,
-                optional[pair[int, int]] event_queue_watermarks,
-                TimeInterval stats_dump_interval,
-                TimeInterval connect_timeout,
-                TimeInterval disconnect_timeout,
-                TimeInterval open_queue_timeout,
-                TimeInterval configure_queue_timeout,
-                TimeInterval close_queue_timeout,
-                bint monitor_host_health,
+                object authn_credential_cb,
+                const SessionConfig& config,
                 shared_ptr[ManualHostHealthMonitor] fake_host_health_monitor_sp,
                 object error,
                 object broker_timeout_error,

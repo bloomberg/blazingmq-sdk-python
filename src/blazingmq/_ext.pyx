@@ -1,4 +1,4 @@
-# Copyright 2019-2023 Bloomberg Finance L.P.
+# Copyright 2019-2026 Bloomberg Finance L.P.
 # SPDX-License-Identifier: Apache-2.0
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
@@ -37,6 +37,7 @@ from bmq.bmqt cimport k_DEFAULT_MAX_UNCONFIRMED_MESSAGES
 from bmq.bmqt cimport k_DEFAULT_SUSPENDS_ON_BAD_HOST_HEALTH
 from pybmq cimport BallUtil
 from pybmq cimport Session as NativeSession
+from pybmq cimport SessionConfig
 
 from typing import Optional
 
@@ -153,6 +154,37 @@ cdef class FakeHostHealthMonitor:
             self._monitor.get().setState(HostHealthState.e_UNHEALTHY)
 
 
+cdef class AuthnCredentialCbAdapter:
+    cdef object _callback
+
+    def __cinit__(self, callback):
+        self._callback = callback
+
+    def get_credential_data(self):
+        """Call the provider and marshal its result for the C++ session.
+
+        Called by ``pybmq::AuthnCredentialCbFunctor``.  Returns the mechanism
+        and data as a tuple of ``bytes``, or `None` if credentials could not
+        be obtained, in which case authentication fails.
+        """
+        try:
+            result = self._callback()
+            if result is None:
+                return None
+
+            mechanism, data = result
+            if not isinstance(mechanism, str) or not isinstance(data, bytes):
+                raise TypeError(
+                    "authn_credential_provider must return (str, bytes) or None"
+                )
+
+            return mechanism.encode('utf-8'), data
+
+        except Exception:
+            LOGGER.exception("Error in authentication credential callback")
+            return None
+
+
 cdef class Session:
     cdef object __weakref__
     cdef NativeSession* _session
@@ -174,6 +206,7 @@ cdef class Session:
         timeouts: _timeouts.Timeouts = _timeouts.Timeouts(),
         monitor_host_health: bool = False,
         fake_host_health_monitor: FakeHostHealthMonitor = None,
+        authn_credential_cb: AuthnCredentialCbAdapter = None,
         _mock: Optional[object] = None,
     ) -> None:
         cdef shared_ptr[ManualHostHealthMonitor] fake_host_health_monitor_sp
@@ -224,24 +257,30 @@ cdef class Session:
         cdef char *c_broker_uri = broker
         script_name = _script_name.get_script_name()
         cdef char *c_script_name = script_name
+
+        cdef SessionConfig config
+        config.broker_uri = c_broker_uri
+        config.script_name = c_script_name
+        config.message_compression_type = (
+            COMPRESSION_ALGO_FROM_PY_MAPPING[message_compression_algorithm])
+        config.num_processing_threads = c_num_processing_threads
+        config.blob_buffer_size = c_blob_buffer_size
+        config.channel_high_watermark = c_channel_high_watermark
+        config.event_queue_watermarks = c_event_queue_watermarks
+        config.stats_dump_interval = c_stats_dump_interval
+        config.connect_timeout = c_connect_timeout
+        config.disconnect_timeout = c_disconnect_timeout
+        config.open_queue_timeout = c_open_queue_timeout
+        config.configure_queue_timeout = c_configure_queue_timeout
+        config.close_queue_timeout = c_close_queue_timeout
+        config.monitor_host_health = monitor_host_health
+
         self._session = new NativeSession(
             session_cb,
             message_cb,
             ack_cb,
-            c_broker_uri,
-            c_script_name,
-            COMPRESSION_ALGO_FROM_PY_MAPPING[message_compression_algorithm],
-            c_num_processing_threads,
-            c_blob_buffer_size,
-            c_channel_high_watermark,
-            c_event_queue_watermarks,
-            c_stats_dump_interval,
-            c_connect_timeout,
-            c_disconnect_timeout,
-            c_open_queue_timeout,
-            c_configure_queue_timeout,
-            c_close_queue_timeout,
-            monitor_host_health,
+            authn_credential_cb,
+            config,
             fake_host_health_monitor_sp,
             Error,
             BrokerTimeoutError,

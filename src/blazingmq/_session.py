@@ -1,4 +1,4 @@
-# Copyright 2019-2023 Bloomberg Finance L.P.
+# Copyright 2019-2026 Bloomberg Finance L.P.
 # SPDX-License-Identifier: Apache-2.0
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
@@ -25,6 +25,7 @@ from typing import Union
 from . import _six as six
 from ._enums import CompressionAlgorithmType
 from ._enums import PropertyType
+from ._ext import AuthnCredentialCbAdapter
 from ._ext import DEFAULT_CONSUMER_PRIORITY
 from ._ext import DEFAULT_MAX_UNCONFIRMED_BYTES
 from ._ext import DEFAULT_MAX_UNCONFIRMED_MESSAGES
@@ -36,6 +37,7 @@ from ._messages import Message
 from ._messages import MessageHandle
 from ._monitors import BasicHealthMonitor
 from ._timeouts import Timeouts
+from ._typing import AuthnCredentialProvider
 from ._typing import PropertyTypeDict
 from ._typing import PropertyValueDict
 from ._typing import PropertyValueType
@@ -49,6 +51,10 @@ class DefaultTimeoutType(float):
 
 
 def DefaultMonitor() -> Union[BasicHealthMonitor, None]:
+    return None
+
+
+def DefaultAuthnCredentialProvider() -> Optional[AuthnCredentialProvider]:
     return None
 
 
@@ -288,6 +294,15 @@ class SessionOptions:
             0, disable the recurring dump of stats (final stats are always
             dumped at the end of the session).  The default is 5min; the value
             must be a multiple of 30s, in the range ``[0s - 60min]``.
+        authn_credential_provider (Optional[`~blazingmq.AuthnCredentialProvider`]):
+            An optional callable that returns authentication credentials as a
+            ``(mechanism, data)`` tuple of ``(str, bytes)``.  It is called
+            each time the session authenticates with the broker, including on
+            reauthentication.  If it returns ``None`` or raises, the
+            connection is closed: starting a session fails, while an
+            already-started session sees `.ConnectionLost` and then
+            reconnects, calling this callable again.  If not provided, no
+            authentication credentials are sent to the broker.
     """
 
     def __init__(
@@ -300,6 +315,9 @@ class SessionOptions:
         channel_high_watermark: Optional[int] = None,
         event_queue_watermarks: Optional[tuple[int, int]] = None,
         stats_dump_interval: Optional[float] = None,
+        authn_credential_provider: Optional[AuthnCredentialProvider] = (
+            DefaultAuthnCredentialProvider()
+        ),
     ) -> None:
         self.message_compression_algorithm = message_compression_algorithm
         self.timeouts = timeouts
@@ -309,6 +327,7 @@ class SessionOptions:
         self.channel_high_watermark = channel_high_watermark
         self.event_queue_watermarks = event_queue_watermarks
         self.stats_dump_interval = stats_dump_interval
+        self.authn_credential_provider = authn_credential_provider
 
     def __eq__(self, other: object) -> bool:
         if not isinstance(other, SessionOptions):
@@ -322,6 +341,7 @@ class SessionOptions:
             and self.channel_high_watermark == other.channel_high_watermark
             and self.event_queue_watermarks == other.event_queue_watermarks
             and self.stats_dump_interval == other.stats_dump_interval
+            and self.authn_credential_provider == other.authn_credential_provider
         )
 
     def __ne__(self, other: object) -> bool:
@@ -337,6 +357,7 @@ class SessionOptions:
             "channel_high_watermark",
             "event_queue_watermarks",
             "stats_dump_interval",
+            "authn_credential_provider",
         )
 
         params = []
@@ -399,6 +420,15 @@ class Session:
             stats are always dumped at the end of the session).  The default is
             5min; the value must be a multiple of 30s, in the range
             ``[0s - 60min]``.
+        authn_credential_provider (Optional[`~blazingmq.AuthnCredentialProvider`]):
+            an optional callable that returns authentication credentials as a
+            ``(mechanism, data)`` tuple of ``(str, bytes)``.  It is called
+            each time the session authenticates with the broker, including on
+            reauthentication.  If it returns ``None`` or raises, the
+            connection is closed: starting a session fails, while an
+            already-started session sees `.ConnectionLost` and then
+            reconnects, calling this callable again.  If not provided, no
+            authentication credentials are sent to the broker.
 
     Raises:
         `~blazingmq.Error`: If the session start request was not successful.
@@ -423,6 +453,9 @@ class Session:
         channel_high_watermark: Optional[int] = None,
         event_queue_watermarks: Optional[tuple[int, int]] = None,
         stats_dump_interval: Optional[float] = None,
+        authn_credential_provider: Optional[AuthnCredentialProvider] = (
+            DefaultAuthnCredentialProvider()
+        ),
     ) -> None:
         if host_health_monitor is not None:
             if not isinstance(host_health_monitor, BasicHealthMonitor):
@@ -433,6 +466,11 @@ class Session:
 
         monitor_host_health = host_health_monitor is not None
         fake_host_health_monitor = getattr(host_health_monitor, "_monitor", None)
+        authn_credential_cb = (
+            AuthnCredentialCbAdapter(authn_credential_provider)
+            if authn_credential_provider is not None
+            else None
+        )
 
         self._has_no_on_message = on_message is None
 
@@ -462,6 +500,7 @@ class Session:
             timeouts=_validate_timeouts(timeout),
             monitor_host_health=monitor_host_health,
             fake_host_health_monitor=fake_host_health_monitor,
+            authn_credential_cb=authn_credential_cb,
         )
         self._ext.set_owned_by_session()
 
@@ -506,34 +545,24 @@ class Session:
         if message_compression_algorithm is None:
             message_compression_algorithm = CompressionAlgorithmType.NONE
 
-        if session_options.timeouts is None:
-            return cls(
-                on_session_event,
-                on_message,
-                broker,
-                message_compression_algorithm,
-                DEFAULT_TIMEOUT,
-                session_options.host_health_monitor,
-                session_options.num_processing_threads,
-                session_options.blob_buffer_size,
-                session_options.channel_high_watermark,
-                session_options.event_queue_watermarks,
-                session_options.stats_dump_interval,
-            )
-        else:
-            return cls(
-                on_session_event,
-                on_message,
-                broker,
-                message_compression_algorithm,
-                session_options.timeouts,
-                session_options.host_health_monitor,
-                session_options.num_processing_threads,
-                session_options.blob_buffer_size,
-                session_options.channel_high_watermark,
-                session_options.event_queue_watermarks,
-                session_options.stats_dump_interval,
-            )
+        timeout: Union[Timeouts, float] = DEFAULT_TIMEOUT
+        if session_options.timeouts is not None:
+            timeout = session_options.timeouts
+
+        return cls(
+            on_session_event,
+            on_message=on_message,
+            broker=broker,
+            message_compression_algorithm=message_compression_algorithm,
+            timeout=timeout,
+            host_health_monitor=session_options.host_health_monitor,
+            num_processing_threads=session_options.num_processing_threads,
+            blob_buffer_size=session_options.blob_buffer_size,
+            channel_high_watermark=session_options.channel_high_watermark,
+            event_queue_watermarks=session_options.event_queue_watermarks,
+            stats_dump_interval=session_options.stats_dump_interval,
+            authn_credential_provider=session_options.authn_credential_provider,
+        )
 
     def open_queue(
         self,

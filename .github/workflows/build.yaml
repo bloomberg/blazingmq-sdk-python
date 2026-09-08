@@ -201,10 +201,10 @@ jobs:
           key: ${{ needs.blazingmq-dependency.outputs.deps_cache_key }}
       - name: Restore cached BlazingMQ build artifacts
         run: tar xzf blazingmq_artifacts.tar.gz
-      - name: Set up Python 3.14
+      - name: Set up Python 3.15
         uses: actions/setup-python@v7
         with:
-          python-version: "3.14"
+          python-version: "3.15"
       - name: Create virtual environment
         run: |
           python3 -m venv venv
@@ -254,7 +254,7 @@ jobs:
       - name: Set up Python
         uses: actions/setup-python@v7
         with:
-          python-version: "3.14"
+          python-version: "3.15"
       - name: Create virtual environment
         run: |
           python3 -m venv venv

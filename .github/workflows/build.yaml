@@ -17,7 +17,7 @@ permissions:
 jobs:
   blazingmq-dependency:
     name: Build BlazingMQ as a dependency
-    runs-on: ubuntu-24.04
+    runs-on: ubuntu-26.04
     outputs:
       deps_cache_key: ${{ steps.cache-key.outputs.deps_cache_key }}
     steps:
@@ -88,7 +88,7 @@ jobs:
   linux-check:
     name: Test on Linux
     needs: blazingmq-dependency
-    runs-on: ubuntu-24.04
+    runs-on: ubuntu-26.04
     strategy:
       matrix:
         python-version:
@@ -188,7 +188,7 @@ jobs:
   lint-docs:
     name: Lint and Docs
     needs: blazingmq-dependency
-    runs-on: ubuntu-24.04
+    runs-on: ubuntu-26.04
     steps:
       - uses: actions/checkout@v7
         with:
@@ -238,7 +238,7 @@ jobs:
   coverage:
     name: Coverage
     needs: blazingmq-dependency
-    runs-on: ubuntu-24.04
+    runs-on: ubuntu-26.04
     steps:
       - uses: actions/checkout@v7
         with:

@@ -8,8 +8,13 @@ on:
       - "labeled"
       - "unlabeled"
 
+permissions:
+  contents: read
+
 jobs:
   commits_check_job:
+    permissions:
+      pull-requests: read  # for tim-actions/get-pr-commits to get list of commits from the PR
     runs-on: ubuntu-slim
     name: Commits Check
     steps:

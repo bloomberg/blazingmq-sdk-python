@@ -8,3 +8,29 @@ Changelog
 =========
 
 <!-- towncrier release notes start -->
+
+# blazingmq 1.2.3 (2025-12-10)
+
+## Misc
+
+- [#62](https://github.com/bloomberg/blazingmq-sdk-python/issues/62)
+
+
+# blazingmq 1.2.2 (2025-01-14)
+
+## Improved Documentation
+
+- Add example of correlating a message’s post with its ack/nack ([#42](https://github.com/bloomberg/blazingmq-sdk-python/issues/42))
+
+## Misc
+
+- [#51](https://github.com/bloomberg/blazingmq-sdk-python/issues/51)
+
+
+# blazingmq 1.2.1 (2024-12-03)
+
+## Features
+
+- Enabled source code typechecking in the GitHub CI ([#6](https://github.com/bloomberg/blazingmq-sdk-python/issues/6))
+- Exposed more `SessionOptions` from libbmq ([#8](https://github.com/bloomberg/blazingmq-sdk-python/issues/8))
+- Support building with Cython 3 ([#18](https://github.com/bloomberg/blazingmq-sdk-python/issues/18))

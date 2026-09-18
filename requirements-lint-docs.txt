@@ -1,9 +1,0 @@
-black
-flake8
-isort
-mypy
-recommonmark
-Sphinx
-sphinx_rtd_theme
-towncrier
-types-enum34

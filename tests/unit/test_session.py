@@ -1,4 +1,4 @@
-# Copyright 2019-2023 Bloomberg Finance L.P.
+# Copyright 2019-2026 Bloomberg Finance L.P.
 # SPDX-License-Identifier: Apache-2.0
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
@@ -78,8 +78,59 @@ def test_session_constructed(ext_cls):
         ),
         monitor_host_health=False,
         fake_host_health_monitor=None,
+        authn_credential_cb=None,
         user_agent_prefix=mock.ANY,  # varies by version; see dedicated tests
     )
+
+
+@mock.patch("blazingmq._session.ExtSession")
+def test_session_constructed_with_authn_credential_provider(ext_cls):
+    # GIVEN
+    ext_cls.mock_add_spec([])
+
+    def dummy1():
+        pass
+
+    def dummy2():
+        pass
+
+    def my_provider():
+        return ("mechanism", b"data")
+
+    # WHEN
+    Session(
+        dummy1,
+        on_message=dummy2,
+        broker="some_uri",
+        timeout=60.0,
+        host_health_monitor=None,
+        authn_credential_provider=my_provider,
+    )
+
+    # THEN
+    ext_cls.assert_called_once_with(
+        dummy1,
+        on_message=dummy2,
+        broker=b"some_uri",
+        message_compression_algorithm=CompressionAlgorithmType.NONE,
+        num_processing_threads=None,
+        blob_buffer_size=None,
+        channel_high_watermark=None,
+        event_queue_watermarks=None,
+        stats_dump_interval=None,
+        timeouts=Timeouts(
+            connect_timeout=None,
+            disconnect_timeout=None,
+            open_queue_timeout=60.0,
+            configure_queue_timeout=60.0,
+            close_queue_timeout=60.0,
+        ),
+        monitor_host_health=False,
+        fake_host_health_monitor=None,
+        authn_credential_cb=mock.ANY,
+    )
+    call_kwargs = ext_cls.call_args[1]
+    assert call_kwargs["authn_credential_cb"] is not None
 
 
 @mock.patch("blazingmq._session.ExtSession")
@@ -129,6 +180,7 @@ def test_session_constructed_with_timeouts(ext_cls):
         timeouts=timeouts,
         monitor_host_health=False,
         fake_host_health_monitor=None,
+        authn_credential_cb=None,
         user_agent_prefix=mock.ANY,  # varies by version; see dedicated tests
     )
 
@@ -174,6 +226,7 @@ def test_session_constructed_with_default_timeouts(ext_cls):
         timeouts=timeouts,
         monitor_host_health=False,
         fake_host_health_monitor=None,
+        authn_credential_cb=None,
         user_agent_prefix=mock.ANY,  # varies by version; see dedicated tests
     )
 
@@ -210,6 +263,7 @@ def test_session_default_with_options(ext_cls):
         timeouts=Timeouts(),
         monitor_host_health=False,
         fake_host_health_monitor=None,
+        authn_credential_cb=None,
         user_agent_prefix=mock.ANY,  # varies by version; see dedicated tests
     )
 
@@ -263,6 +317,7 @@ def test_session_with_options(ext_cls):
         timeouts=timeouts,
         monitor_host_health=False,
         fake_host_health_monitor=None,
+        authn_credential_cb=None,
         user_agent_prefix=mock.ANY,  # varies by version; see dedicated tests
     )
 
@@ -293,6 +348,99 @@ def test_session_with_options_user_agent_prefix(ext_cls):
         rb"mylib:1\.0 blazingmq\(python[^)]+\):\S+",
         kwargs["user_agent_prefix"],
     )
+
+
+@mock.patch("blazingmq._session.ExtSession")
+def test_session_default_with_options_authn_credential_provider(ext_cls):
+    # GIVEN
+    ext_cls.mock_add_spec([])
+
+    def dummy1():
+        pass
+
+    def dummy2():
+        pass
+
+    def my_provider():
+        return ("mechanism", b"data")
+
+    session_options = SessionOptions(authn_credential_provider=my_provider)
+
+    # WHEN
+    Session.with_options(
+        dummy1, on_message=dummy2, broker="some_uri", session_options=session_options
+    )
+
+    # THEN
+    ext_cls.assert_called_once_with(
+        dummy1,
+        on_message=dummy2,
+        broker=b"some_uri",
+        message_compression_algorithm=CompressionAlgorithmType.NONE,
+        num_processing_threads=None,
+        blob_buffer_size=None,
+        channel_high_watermark=None,
+        event_queue_watermarks=None,
+        stats_dump_interval=None,
+        timeouts=Timeouts(),
+        monitor_host_health=False,
+        fake_host_health_monitor=None,
+        authn_credential_cb=mock.ANY,
+    )
+    call_kwargs = ext_cls.call_args[1]
+    assert call_kwargs["authn_credential_cb"] is not None
+
+
+@mock.patch("blazingmq._session.ExtSession")
+def test_session_with_options_authn_credential_provider(ext_cls):
+    # GIVEN
+    ext_cls.mock_add_spec([])
+
+    def dummy1():
+        pass
+
+    def dummy2():
+        pass
+
+    def my_provider():
+        return ("mechanism", b"data")
+
+    timeouts = Timeouts(
+        connect_timeout=60.0,
+        disconnect_timeout=70.0,
+        open_queue_timeout=80.0,
+        configure_queue_timeout=90.0,
+        close_queue_timeout=100.0,
+    )
+
+    session_options = SessionOptions(
+        timeouts=timeouts,
+        authn_credential_provider=my_provider,
+    )
+
+    # WHEN
+    Session.with_options(
+        dummy1, on_message=dummy2, broker="some_uri", session_options=session_options
+    )
+
+    # THEN
+    ext_cls.assert_called_once_with(
+        dummy1,
+        on_message=dummy2,
+        broker=b"some_uri",
+        message_compression_algorithm=CompressionAlgorithmType.NONE,
+        num_processing_threads=None,
+        blob_buffer_size=None,
+        channel_high_watermark=None,
+        event_queue_watermarks=None,
+        stats_dump_interval=None,
+        timeouts=timeouts,
+        monitor_host_health=False,
+        fake_host_health_monitor=None,
+        authn_credential_cb=mock.ANY,
+    )
+    call_kwargs = ext_cls.call_args[1]
+    assert call_kwargs["authn_credential_cb"] is not None
 
 
 @mock.patch("blazingmq._session.ExtSession")
@@ -337,6 +485,7 @@ def test_session_basic_monitor(ext_cls):
         ),
         monitor_host_health=True,
         fake_host_health_monitor=monitor._monitor,
+        authn_credential_cb=None,
         user_agent_prefix=mock.ANY,  # varies by version; see dedicated tests
     )
 
@@ -369,6 +518,7 @@ def test_session_default_constructed(ext_cls):
         timeouts=Timeouts(),
         monitor_host_health=False,
         fake_host_health_monitor=None,
+        authn_credential_cb=None,
         user_agent_prefix=mock.ANY,  # varies by version; see dedicated tests
     )
 

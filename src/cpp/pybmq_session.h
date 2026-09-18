@@ -1,4 +1,4 @@
-// Copyright 2019-2023 Bloomberg Finance L.P.
+// Copyright 2019-2026 Bloomberg Finance L.P.
 // SPDX-License-Identifier: Apache-2.0
 //
 // Licensed under the Apache License, Version 2.0 (the "License");
@@ -43,6 +43,7 @@ class Session
     bmqt::CompressionAlgorithmType::Enum d_message_compression_type;
     PyObject* d_error;
     PyObject* d_broker_timeout_error;
+    PyObject* d_authn_credential_cb;
     bslma::ManagedPtr<bmqa::AbstractSession> d_session_mp;
 
     // NOT IMPLEMENTED
@@ -53,6 +54,7 @@ class Session
     Session(PyObject* py_session_event_callback,
             PyObject* py_message_event_callback,
             PyObject* py_ack_event_callback,
+            PyObject* authn_credential_cb,
             const SessionConfig& config,
             bsl::shared_ptr<bmqa::ManualHostHealthMonitor> fake_host_health_monitor,
             PyObject* d_error,

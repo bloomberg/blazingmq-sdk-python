@@ -9,6 +9,13 @@ Changelog
 
 <!-- towncrier release notes start -->
 
+# blazingmq 1.2.3 (2025-12-10)
+
+## Misc
+
+- [#62](https://github.com/bloomberg/blazingmq-sdk-python/issues/62)
+
+
 # blazingmq 1.2.2 (2025-01-14)
 
 ## Improved Documentation

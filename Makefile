@@ -38,13 +38,11 @@ install-sdist: dist
 
 .PHONY: coverage-install
 coverage-install:
-	$(ENV) CYTHON_TEST_MACROS=1 $(PIP_INSTALL) -r requirements-test-coverage.txt
-	$(ENV) CYTHON_TEST_MACROS=1 $(PIP_INSTALL) -e .
+	$(ENV) CYTHON_TEST_MACROS=1 $(PIP_INSTALL) -e ".[coverage]"
 
 .PHONY: test-install
 test-install:
-	$(ENV) CYTHON_TEST_MACROS=1 $(PIP_INSTALL) -r requirements-test.txt
-	$(ENV) CYTHON_TEST_MACROS=1 $(PIP_INSTALL) -e .
+	$(ENV) CYTHON_TEST_MACROS=1 $(PIP_INSTALL) -e ".[test]"
 
 .PHONY: build
 build:
@@ -64,7 +62,7 @@ dist:
 
 .PHONY: doc-deps
 doc-deps:
-	$(PIP_INSTALL) -r requirements-lint-docs.txt
+	$(PIP_INSTALL) -e ".[docs]"
 
 .PHONY: docs
 docs:

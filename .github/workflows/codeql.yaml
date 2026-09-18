@@ -1,0 +1,236 @@
+name: CodeQL
+
+on:
+  push:
+    branches:
+      - main
+  pull_request:
+    branches:
+      - main
+  schedule:
+    # Weekly, Wednesday 05:27 UTC.
+    - cron: '27 5 * * 3'
+
+concurrency:
+  group: ${{ github.workflow }}-${{ github.head_ref || github.run_id }}
+  cancel-in-progress: true
+
+permissions:
+  contents: read
+
+jobs:
+  # Interpreted languages and workflow definitions need no build, so they do
+  # not have to wait on the BlazingMQ C++ SDK.
+  analyze-light:
+    name: Analyze ${{ matrix.language }}
+    runs-on: ubuntu-24.04
+    permissions:
+      contents: read
+      security-events: write
+    strategy:
+      fail-fast: false
+      matrix:
+        language:
+          - actions
+          - python
+    steps:
+      - uses: actions/checkout@v7
+        with:
+          persist-credentials: false
+
+      - name: Initialize CodeQL
+        uses: github/codeql-action/init@v4
+        with:
+          languages: ${{ matrix.language }}
+          build-mode: none
+
+      - name: Perform CodeQL analysis
+        uses: github/codeql-action/analyze@v4
+        with:
+          category: /language:${{ matrix.language }}
+
+  # Identical to the job of the same name in build.yaml, including the cache
+  # key, so that both workflows share one set of cached artifacts.
+  blazingmq-dependency:
+    name: Build BlazingMQ as a dependency
+    runs-on: ubuntu-24.04
+    outputs:
+      deps_cache_key: ${{ steps.cache-key.outputs.deps_cache_key }}
+    steps:
+      - uses: actions/checkout@v7
+        with:
+          persist-credentials: false
+
+      - name: Compute dependency cache key
+        id: cache-key
+        run: echo "deps_cache_key=deps-${{ hashFiles('bin/clone-dependencies.sh') }}" >> $GITHUB_OUTPUT
+
+      - name: Try to get cached BlazingMQ build artifacts
+        id: cache-restore
+        uses: actions/cache/restore@v6
+        with:
+          path: blazingmq_artifacts.tar.gz
+          key: ${{ steps.cache-key.outputs.deps_cache_key }}
+
+      - name: Set up dependencies
+        if: steps.cache-restore.outputs.cache-hit != 'true'
+        run: |
+            sudo apt-get update
+            sudo apt-get install -qy build-essential \
+              gdb \
+              curl \
+              python3.10 \
+              cmake \
+              ninja-build \
+              pkg-config \
+              bison \
+              libfl-dev \
+              libbenchmark-dev \
+              libgtest-dev \
+              libgmock-dev \
+              libz-dev
+
+      - name: Create install directory for BlazingMQ and its dependencies
+        if: steps.cache-restore.outputs.cache-hit != 'true'
+        run: mkdir -p blazingmq_artifacts
+
+      - name: Skip building bison, google-benchmark, and googletest
+        if: steps.cache-restore.outputs.cache-hit != 'true'
+        run: |
+          mkdir -p thirdparty/{bison,google-benchmark,googletest}
+          mkdir -p build/{bison,google-benchmark,googletest}
+          touch thirdparty/bison/.complete
+          touch build/google-benchmark/.complete
+          touch build/googletest/.complete
+
+      - name: Build and install BlazingMQ and its dependencies
+        if: steps.cache-restore.outputs.cache-hit != 'true'
+        env:
+          DIR_INSTALL: 'blazingmq_artifacts'
+        run: /bin/bash bin/build-manylinux.sh
+
+      - name: Save built BlazingMQ build artifacts
+        if: steps.cache-restore.outputs.cache-hit != 'true'
+        run: tar czf blazingmq_artifacts.tar.gz blazingmq_artifacts
+
+      - name: Cache built BlazingMQ build artifacts
+        id: cache-save
+        if: steps.cache-restore.outputs.cache-hit != 'true'
+        uses: actions/cache/save@v6
+        with:
+          path: blazingmq_artifacts.tar.gz
+          key: ${{ steps.cache-key.outputs.deps_cache_key }}
+
+  analyze-cpp:
+    name: Analyze c-cpp
+    needs: blazingmq-dependency
+    runs-on: ubuntu-24.04
+    permissions:
+      contents: read
+      security-events: write
+    steps:
+      - uses: actions/checkout@v7
+        with:
+          persist-credentials: false
+
+      - name: Try to get cached BlazingMQ build artifacts
+        id: cache-restore
+        uses: actions/cache/restore@v6
+        with:
+          path: blazingmq_artifacts.tar.gz
+          key: ${{ needs.blazingmq-dependency.outputs.deps_cache_key }}
+
+      # Must be extracted here, in $GITHUB_WORKSPACE, matching build.yaml. The
+      # generated .pc files bake in an absolute prefix (build-manylinux.sh
+      # realpaths DIR_INSTALL), so the tree is not relocatable: moving it makes
+      # pkg-config emit -I paths to the original location.
+      - name: Restore cached BlazingMQ build artifacts
+        run: tar xzf blazingmq_artifacts.tar.gz
+
+      - name: Set up Python
+        uses: actions/setup-python@v7
+        with:
+          python-version: "3.14"
+
+      - name: Create virtual environment
+        run: |
+          python3 -m venv venv
+
+      - name: Install Python dependencies
+        run: |
+          ./venv/bin/python -m pip install --upgrade pip
+          ./venv/bin/python -m pip install -r requirements-dev.txt
+
+      - name: Install package manager dependencies
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y build-essential \
+            cmake \
+            ninja-build \
+            pkg-config \
+            bison \
+            libfl-dev \
+            libbenchmark-dev \
+            libgtest-dev \
+            libgmock-dev \
+            libz-dev
+
+      - name: Initialize CodeQL
+        uses: github/codeql-action/init@v4
+        with:
+          languages: c-cpp
+          build-mode: manual
+
+      - name: Build the extension module
+        env:
+          PYTHON: ./venv/bin/python
+          PKG_CONFIG_PATH: /usr/lib/x86_64-linux-gnu/pkgconfig:/opt/bb/lib64/pkgconfig:./blazingmq_artifacts/lib64/pkgconfig
+        run: |
+          make build
+
+      # The database necessarily contains the Cython-generated _ext.cpp:
+      # setup.py compiles every source in one build_ext invocation, and path
+      # filters do not apply to built languages. So analyze without uploading,
+      # drop the generated file's alerts, and upload the remainder.
+      - name: Perform CodeQL analysis
+        uses: github/codeql-action/analyze@v4
+        with:
+          category: /language:c-cpp
+          output: sarif-results
+          upload: never
+
+      # Two classes of unactionable alert are dropped here:
+      #
+      #   * src/blazingmq/_ext.cpp - Cython-generated. Any fix would be
+      #     overwritten by the next cythonize run; a real issue belongs in
+      #     _ext.pyx or upstream in Cython.
+      #   * blazingmq_artifacts/** - BDE/NTF/bmq headers pulled in by #include.
+      #     They sit under the source root only because the dependency tree is
+      #     not relocatable, so CodeQL attributes them to this repository.
+      - name: Drop alerts in generated and third-party code
+        run: |
+          shopt -s nullglob
+          sarifs=(sarif-results/*.sarif)
+          if [ ${#sarifs[@]} -eq 0 ]; then
+            echo "::error::No SARIF produced by the analyze step."
+            exit 1
+          fi
+          for f in "${sarifs[@]}"; do
+            before=$(jq '[.runs[].results[]] | length' "$f")
+            jq '(.runs[].results) |= map(
+                  select(
+                    (.locations[0].physicalLocation.artifactLocation.uri // "")
+                    | (endswith("_ext.cpp") or startswith("blazingmq_artifacts/"))
+                    | not
+                  )
+                )' "$f" > "$f.filtered"
+            mv "$f.filtered" "$f"
+            after=$(jq '[.runs[].results[]] | length' "$f")
+            echo "$f: kept $after of $before alerts (dropped $((before - after)))"
+          done
+
+      - name: Upload CodeQL results
+        uses: github/codeql-action/upload-sarif@v4
+        with:
+          sarif_file: sarif-results
+          category: /language:c-cpp

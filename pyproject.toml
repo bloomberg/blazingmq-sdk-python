@@ -46,10 +46,11 @@ version = {attr = "blazingmq._about.__version__"}
 blazingmq = ["py.typed", "_ext.pyi"]
 
 [tool.towncrier]
-package     = "blazingmq"
-package_dir = "src"
-filename    = "CHANGELOG.md"
-directory   = "news"
+package      = "blazingmq"
+package_dir  = "src"
+filename     = "CHANGELOG.md"
+directory    = "news"
+issue_format = "[#{issue}](https://github.com/bloomberg/blazingmq-sdk-python/issues/{issue})"
 
 [tool.cibuildwheel]
 build = ["cp39-*", "cp310-*", "cp311-*", "cp312-*", "cp313-*", "cp314-*"]

@@ -187,6 +187,8 @@ Testing Utilities
 Helper Types
 ============
 
+.. autoclass:: blazingmq.AuthnCredentialProvider
+
 .. autoclass:: blazingmq.PropertyTypeDict
 
 .. autoclass:: blazingmq.PropertyValueDict

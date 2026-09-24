@@ -1,4 +1,4 @@
-# Copyright 2019-2023 Bloomberg Finance L.P.
+# Copyright 2019-2026 Bloomberg Finance L.P.
 # SPDX-License-Identifier: Apache-2.0
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
@@ -154,6 +154,37 @@ cdef class FakeHostHealthMonitor:
             self._monitor.get().setState(HostHealthState.e_UNHEALTHY)
 
 
+cdef class AuthnCredentialCbAdapter:
+    cdef object _callback
+
+    def __cinit__(self, callback):
+        self._callback = callback
+
+    def get_credential_data(self):
+        """Call the provider and marshal its result for the C++ session.
+
+        Called by ``pybmq::AuthnCredentialCbFunctor``.  Returns the mechanism
+        and data as a tuple of ``bytes``, or `None` if credentials could not
+        be obtained, in which case authentication fails.
+        """
+        try:
+            result = self._callback()
+            if result is None:
+                return None
+
+            mechanism, data = result
+            if not isinstance(mechanism, str) or not isinstance(data, bytes):
+                raise TypeError(
+                    "authn_credential_provider must return (str, bytes) or None"
+                )
+
+            return mechanism.encode('utf-8'), data
+
+        except Exception:
+            LOGGER.exception("Error in authentication credential callback")
+            return None
+
+
 cdef class Session:
     cdef object __weakref__
     cdef NativeSession* _session
@@ -175,6 +206,7 @@ cdef class Session:
         timeouts: _timeouts.Timeouts = _timeouts.Timeouts(),
         monitor_host_health: bool = False,
         fake_host_health_monitor: FakeHostHealthMonitor = None,
+        authn_credential_cb: AuthnCredentialCbAdapter = None,
         _mock: Optional[object] = None,
         user_agent_prefix: bytes = b"",
     ) -> None:
@@ -249,6 +281,7 @@ cdef class Session:
             session_cb,
             message_cb,
             ack_cb,
+            authn_credential_cb,
             config,
             fake_host_health_monitor_sp,
             Error,

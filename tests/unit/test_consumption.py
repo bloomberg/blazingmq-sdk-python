@@ -21,6 +21,7 @@ from blazingmq._enums import PropertyType
 from blazingmq._ext import Session
 from blazingmq._messages import AckStatus
 from blazingmq._messages import pretty_hex
+from blazingmq.session_events import InterfaceError
 
 from .support import BINARY
 from .support import BOOL
@@ -491,3 +492,47 @@ def test_interface_error_on_non_utf8_string_property():
     # THEN
     expected_error = "STRING property 'prop' has non-UTF-8 data\n"
     assert repr(q.get()) == "<InterfaceError: %s>" % expected_error
+
+
+def test_non_utf8_property_name_does_not_drop_push_batch():
+    messages = [
+        [
+            (
+                b"good",
+                b"1000000000003039CD8101000000270F",
+                QUEUE_NAME,
+                {},
+            ),
+            (
+                b"bad",
+                b"2000000000003039CD8101000000270F",
+                QUEUE_NAME,
+                {b"a\xff": (b"value", STRING)},
+            ),
+        ]
+    ]
+    mock = sdk_mock(start=0, openQueueSync=0, enqueue_messages=messages, stop=None)
+    received = []
+    events = []
+    session = make_ext_session(
+        events.append,
+        on_message=lambda message, _: received.append(message),
+        _mock=mock,
+    )
+
+    session.open_queue_sync(
+        QUEUE_NAME,
+        read=True,
+        write=False,
+        consumer_priority=0,
+        max_unconfirmed_messages=0,
+        max_unconfirmed_bytes=0,
+    )
+    session.stop()
+
+    assert [message.data for message in received] == [b"good", b"bad"]
+    assert received[1].properties == {}
+    assert received[1].property_types == {}
+    assert len(events) == 1
+    assert isinstance(events[0], InterfaceError)
+    assert "Message property has non-UTF-8 name" in repr(events[0])

@@ -1,0 +1,1 @@
+Validate the stats dump interval before passing it to the native client, avoiding process termination for unsupported values such as 3600 or 31 seconds.

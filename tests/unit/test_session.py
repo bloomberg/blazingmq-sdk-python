@@ -854,15 +854,20 @@ def test_session_close_queue_bad_timeout(ext_cls, timeout):
     assert exc.match(expected_pat)
 
 
-@pytest.mark.parametrize("stats_dump_interval", [-1.0, 2.0**63, float("inf")])
-def test_session_bad_stats_dump_interval(stats_dump_interval):
+@pytest.mark.parametrize(
+    "stats_dump_interval, expected_error",
+    [
+        (-1.0, "stats_dump_interval must be in [0, 3600) seconds, was -1.0"),
+        (2.0**63, f"stats_dump_interval must be in [0, 3600) seconds, was {2.0**63}"),
+        (float("inf"), "stats_dump_interval must be in [0, 3600) seconds, was inf"),
+        (3600.0, "stats_dump_interval must be in [0, 3600) seconds, was 3600.0"),
+        (31.0, "stats_dump_interval must be a multiple of 30 seconds, was 31.0"),
+    ],
+)
+def test_session_bad_stats_dump_interval(stats_dump_interval, expected_error):
     # GIVEN
     def dummy():
         pass
-
-    expected_pat = re.escape(
-        f"stats_dump_interval must be nonnegative, was {stats_dump_interval}"
-    )
 
     # WHEN
     with pytest.raises(Exception) as exc:
@@ -875,7 +880,14 @@ def test_session_bad_stats_dump_interval(stats_dump_interval):
 
     # THEN
     assert exc.type is ValueError
-    assert exc.match(expected_pat)
+    assert exc.match(re.escape(expected_error))
+
+
+@mock.patch("blazingmq._session.ExtSession")
+def test_session_accepts_largest_stats_dump_interval(ext_cls):
+    Session(dummy_callback, stats_dump_interval=3570.0)
+
+    assert ext_cls.call_args.kwargs["stats_dump_interval"] == 3570.0
 
 
 def test_default_timeout_repr():

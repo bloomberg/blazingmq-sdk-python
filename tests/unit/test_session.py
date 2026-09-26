@@ -878,7 +878,10 @@ def test_session_bad_stats_dump_interval(stats_dump_interval):
     assert exc.match(expected_pat)
 
 
-@pytest.mark.parametrize("channel_high_watermark", [5 * 1024 * 1024, 8 * 1024 * 1024])
+@pytest.mark.parametrize(
+    "channel_high_watermark",
+    [-1, 0, 5 * 1024 * 1024, 8 * 1024 * 1024 - 1, 8 * 1024 * 1024],
+)
 @pytest.mark.parametrize("use_options", [False, True])
 @mock.patch("blazingmq._session.ExtSession")
 def test_session_bad_channel_high_watermark(
@@ -901,6 +904,29 @@ def test_session_bad_channel_high_watermark(
 
     # THEN
     ext_cls.assert_not_called()
+
+
+@pytest.mark.parametrize(
+    "channel_high_watermark", [None, 8 * 1024 * 1024 + 1, 128 * 1024 * 1024]
+)
+@pytest.mark.parametrize("use_options", [False, True])
+@mock.patch("blazingmq._session.ExtSession")
+def test_session_valid_channel_high_watermark(
+    ext_cls, channel_high_watermark, use_options
+):
+    # WHEN
+    if use_options:
+        Session.with_options(
+            dummy_callback,
+            session_options=SessionOptions(
+                channel_high_watermark=channel_high_watermark
+            ),
+        )
+    else:
+        Session(dummy_callback, channel_high_watermark=channel_high_watermark)
+
+    # THEN
+    assert ext_cls.call_args.kwargs["channel_high_watermark"] == channel_high_watermark
 
 
 def test_default_timeout_repr():

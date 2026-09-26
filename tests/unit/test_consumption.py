@@ -494,23 +494,22 @@ def test_interface_error_on_non_utf8_string_property():
     assert repr(q.get()) == "<InterfaceError: %s>" % expected_error
 
 
-def test_non_utf8_property_name_does_not_drop_push_batch():
-    messages = [
-        [
-            (
-                b"good",
-                b"1000000000003039CD8101000000270F",
-                QUEUE_NAME,
-                {},
-            ),
-            (
-                b"bad",
-                b"2000000000003039CD8101000000270F",
-                QUEUE_NAME,
-                {b"a\xff": (b"value", STRING)},
-            ),
-        ]
-    ]
+@pytest.mark.parametrize("invalid_first", [True, False])
+def test_non_utf8_property_name_does_not_drop_push_batch(invalid_first):
+    # GIVEN
+    good = (
+        b"good",
+        b"1000000000003039CD8101000000270F",
+        QUEUE_NAME,
+        {b"prop": (123, INT32)},
+    )
+    bad = (
+        b"bad",
+        b"2000000000003039CD8101000000270F",
+        QUEUE_NAME,
+        {b"a\xff": (b"value", STRING), b"a\xc3\xa9": (b"kept", STRING)},
+    )
+    messages = [[bad, good] if invalid_first else [good, bad]]
     mock = sdk_mock(start=0, openQueueSync=0, enqueue_messages=messages, stop=None)
     received = []
     events = []
@@ -520,6 +519,7 @@ def test_non_utf8_property_name_does_not_drop_push_batch():
         _mock=mock,
     )
 
+    # WHEN
     session.open_queue_sync(
         QUEUE_NAME,
         read=True,
@@ -530,9 +530,14 @@ def test_non_utf8_property_name_does_not_drop_push_batch():
     )
     session.stop()
 
-    assert [message.data for message in received] == [b"good", b"bad"]
-    assert received[1].properties == {}
-    assert received[1].property_types == {}
+    # THEN
+    expected_data = [b"bad", b"good"] if invalid_first else [b"good", b"bad"]
+    assert [message.data for message in received] == expected_data
+    by_data = {message.data: message for message in received}
+    assert by_data[b"good"].properties == {"prop": 123}
+    assert by_data[b"good"].property_types == {"prop": PropertyType.INT32}
+    assert by_data[b"bad"].properties == {"a\u00e9": "kept"}
+    assert by_data[b"bad"].property_types == {"a\u00e9": PropertyType.STRING}
     assert len(events) == 1
     assert isinstance(events[0], InterfaceError)
-    assert "Message property has non-UTF-8 name" in repr(events[0])
+    assert repr(events[0]) == "<InterfaceError: Message property has non-UTF-8 name\n>"

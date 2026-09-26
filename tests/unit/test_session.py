@@ -860,34 +860,46 @@ def test_session_close_queue_bad_timeout(ext_cls, timeout):
         (-1.0, "stats_dump_interval must be in [0, 3600) seconds, was -1.0"),
         (2.0**63, f"stats_dump_interval must be in [0, 3600) seconds, was {2.0**63}"),
         (float("inf"), "stats_dump_interval must be in [0, 3600) seconds, was inf"),
+        (float("nan"), "stats_dump_interval must be in [0, 3600) seconds, was nan"),
         (3600.0, "stats_dump_interval must be in [0, 3600) seconds, was 3600.0"),
         (31.0, "stats_dump_interval must be a multiple of 30 seconds, was 31.0"),
+        (0.5, "stats_dump_interval must be a multiple of 30 seconds, was 0.5"),
     ],
 )
-def test_session_bad_stats_dump_interval(stats_dump_interval, expected_error):
-    # GIVEN
-    def dummy():
-        pass
-
+@pytest.mark.parametrize("use_options", [False, True])
+@mock.patch("blazingmq._session.ExtSession")
+def test_session_bad_stats_dump_interval(
+    ext_cls, stats_dump_interval, expected_error, use_options
+):
     # WHEN
-    with pytest.raises(Exception) as exc:
-        Session(
-            dummy,
-            on_message=dummy,
-            broker="some_uri",
-            stats_dump_interval=stats_dump_interval,
-        )
+    with pytest.raises(ValueError, match=re.escape(expected_error)):
+        if use_options:
+            Session.with_options(
+                dummy_callback,
+                session_options=SessionOptions(stats_dump_interval=stats_dump_interval),
+            )
+        else:
+            Session(dummy_callback, stats_dump_interval=stats_dump_interval)
 
     # THEN
-    assert exc.type is ValueError
-    assert exc.match(re.escape(expected_error))
+    ext_cls.assert_not_called()
 
 
+@pytest.mark.parametrize("stats_dump_interval", [None, 0.0, 30.0, 300.0, 3570.0])
+@pytest.mark.parametrize("use_options", [False, True])
 @mock.patch("blazingmq._session.ExtSession")
-def test_session_accepts_largest_stats_dump_interval(ext_cls):
-    Session(dummy_callback, stats_dump_interval=3570.0)
+def test_session_valid_stats_dump_interval(ext_cls, stats_dump_interval, use_options):
+    # WHEN
+    if use_options:
+        Session.with_options(
+            dummy_callback,
+            session_options=SessionOptions(stats_dump_interval=stats_dump_interval),
+        )
+    else:
+        Session(dummy_callback, stats_dump_interval=stats_dump_interval)
 
-    assert ext_cls.call_args.kwargs["stats_dump_interval"] == 3570.0
+    # THEN
+    assert ext_cls.call_args.kwargs["stats_dump_interval"] == stats_dump_interval
 
 
 def test_default_timeout_repr():

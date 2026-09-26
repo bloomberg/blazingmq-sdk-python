@@ -123,6 +123,13 @@ def _convert_timeout(timeout: Optional[float]) -> Optional[float]:
     raise ValueError(f"timeout must be greater than 0.0, was {timeout}")
 
 
+def _convert_channel_high_watermark(value: Optional[int]) -> Optional[int]:
+    """Validate the channel high watermark before passing it to the native layer."""
+    if value is None or value > 8 * 1024 * 1024:
+        return value
+    raise ValueError(f"channel_high_watermark must be greater than 8 MiB, was {value}")
+
+
 def _convert_stats_dump_interval(interval: Optional[float]) -> Optional[float]:
     """Convert the stats dump interval for use by the Cython layer.
 
@@ -310,7 +317,8 @@ class SessionOptions:
             4k.
         channel_high_watermark:
             The size (in bytes) to use for the write cache high watermark on
-            the channel.  The default value is 128MB.  Note that BlazingMQ
+            the channel.  The value must be greater than 8 MiB.  The default
+            value is 128MB.  Note that BlazingMQ
             reserves 4MB of this value for control messages, so the actual
             watermark for data published is ``channel_high_watermark - 4MB``.
         event_queue_watermarks:
@@ -431,7 +439,8 @@ class Session:
         blob_buffer_size: The size (in bytes) of the blob buffers to use.  This
             defaults to 4k.
         channel_high_watermark: The size (in bytes) to use for the write cache
-            high watermark on the channel.  The default value is 128MB.  Note
+            high watermark on the channel.  The value must be greater than
+            8 MiB.  The default value is 128MB.  Note
             that BlazingMQ reserves 4MB of this value for control messages, so
             the actual watermark for data published is
             ``channel_high_watermark - 4MB``.
@@ -457,7 +466,8 @@ class Session:
         `~blazingmq.exceptions.BrokerTimeoutError`: If the broker didn't respond
             to the request within a reasonable amount of time.
         `ValueError`: If any of the timeouts are provided and not > 0.0, or if
-            the ``stats_dump_interval`` is provided and is < 0.0.
+            the ``stats_dump_interval`` is provided and is < 0.0, or if
+            ``channel_high_watermark`` is at most 8 MiB.
     """
 
     def __init__(
@@ -509,7 +519,9 @@ class Session:
             message_compression_algorithm=message_compression_algorithm,
             num_processing_threads=num_processing_threads,
             blob_buffer_size=blob_buffer_size,
-            channel_high_watermark=channel_high_watermark,
+            channel_high_watermark=_convert_channel_high_watermark(
+                channel_high_watermark
+            ),
             event_queue_watermarks=event_queue_watermarks,
             stats_dump_interval=_convert_stats_dump_interval(stats_dump_interval),
             timeouts=_validate_timeouts(timeout),
@@ -554,7 +566,8 @@ class Session:
             `~blazingmq.exceptions.BrokerTimeoutError`: If the broker didn't respond
                 to the request within a reasonable amount of time.
             `ValueError`: If any of the timeouts are provided and not > 0.0, or if
-                the ``stats_dump_interval`` is provided and is < 0.0.
+                the ``stats_dump_interval`` is provided and is < 0.0, or if
+                ``channel_high_watermark`` is at most 8 MiB.
         """
         message_compression_algorithm = session_options.message_compression_algorithm
         if message_compression_algorithm is None:

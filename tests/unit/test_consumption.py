@@ -21,6 +21,7 @@ from blazingmq._enums import PropertyType
 from blazingmq._ext import Session
 from blazingmq._messages import AckStatus
 from blazingmq._messages import pretty_hex
+from blazingmq.session_events import InterfaceError
 
 from .support import BINARY
 from .support import BOOL
@@ -491,3 +492,52 @@ def test_interface_error_on_non_utf8_string_property():
     # THEN
     expected_error = "STRING property 'prop' has non-UTF-8 data\n"
     assert repr(q.get()) == "<InterfaceError: %s>" % expected_error
+
+
+@pytest.mark.parametrize("invalid_first", [True, False])
+def test_non_utf8_property_name_does_not_drop_push_batch(invalid_first):
+    # GIVEN
+    good = (
+        b"good",
+        b"1000000000003039CD8101000000270F",
+        QUEUE_NAME,
+        {b"prop": (123, INT32)},
+    )
+    bad = (
+        b"bad",
+        b"2000000000003039CD8101000000270F",
+        QUEUE_NAME,
+        {b"a\xff": (b"value", STRING), b"a\xc3\xa9": (b"kept", STRING)},
+    )
+    messages = [[bad, good] if invalid_first else [good, bad]]
+    mock = sdk_mock(start=0, openQueueSync=0, enqueue_messages=messages, stop=None)
+    received = []
+    events = []
+    session = make_ext_session(
+        events.append,
+        on_message=lambda message, _: received.append(message),
+        _mock=mock,
+    )
+
+    # WHEN
+    session.open_queue_sync(
+        QUEUE_NAME,
+        read=True,
+        write=False,
+        consumer_priority=0,
+        max_unconfirmed_messages=0,
+        max_unconfirmed_bytes=0,
+    )
+    session.stop()
+
+    # THEN
+    expected_data = [b"bad", b"good"] if invalid_first else [b"good", b"bad"]
+    assert [message.data for message in received] == expected_data
+    by_data = {message.data: message for message in received}
+    assert by_data[b"good"].properties == {"prop": 123}
+    assert by_data[b"good"].property_types == {"prop": PropertyType.INT32}
+    assert by_data[b"bad"].properties == {"a\u00e9": "kept"}
+    assert by_data[b"bad"].property_types == {"a\u00e9": PropertyType.STRING}
+    assert len(events) == 1
+    assert isinstance(events[0], InterfaceError)
+    assert repr(events[0]) == "<InterfaceError: Message property has non-UTF-8 name\n>"

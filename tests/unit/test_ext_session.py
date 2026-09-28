@@ -13,6 +13,7 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
+import gc
 import os
 import queue
 import sys
@@ -130,6 +131,67 @@ def test_stopped_session_not_stopped_on_dealloc():
     # THEN
     mock.start.assert_called_once_with(timeout=0.0)
     mock.stop.assert_called_once_with()
+
+
+def test_stop_twice():
+    # GIVEN
+    mock = sdk_mock(start=0, stop=None)
+    session = Session(dummy_callback, _mock=mock)
+
+    # WHEN
+    session.stop()
+    session.stop()
+
+    # THEN
+    mock.stop.assert_called_once_with()
+
+
+@pytest.mark.parametrize(
+    "call_method",
+    [
+        lambda session: session.post(QUEUE_NAME, b"payload"),
+        lambda session: session.get_queue_options(QUEUE_NAME),
+        lambda session: session.close_queue_sync(QUEUE_NAME),
+        lambda session: session.open_queue_sync(QUEUE_NAME, read=True, write=False),
+        lambda session: session.configure_queue_sync(QUEUE_NAME),
+    ],
+    ids=[
+        "post",
+        "get_queue_options",
+        "close_queue_sync",
+        "open_queue_sync",
+        "configure_queue_sync",
+    ],
+)
+def test_method_after_stop_raises(call_method):
+    # GIVEN
+    mock = sdk_mock(start=0, stop=None)
+    session = Session(dummy_callback, _mock=mock)
+    session.stop()
+
+    # WHEN
+    with pytest.raises(Exception) as exc:
+        call_method(session)
+
+    # THEN
+    assert exc.type is exceptions.Error
+    assert exc.match("stopped")
+
+
+def test_stop_releases_native_session():
+    # GIVEN
+    mock = sdk_mock(start=0, stop=None)
+    mock_ref = weakref.ref(mock)
+    session = Session(dummy_callback, _mock=mock)
+    del mock
+
+    # WHEN
+    session.stop()
+    gc.collect()
+
+    # THEN
+    assert mock_ref() is None
+    del session
 
 
 def test_start_connect_timeout():

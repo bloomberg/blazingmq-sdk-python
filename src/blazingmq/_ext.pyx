@@ -127,9 +127,12 @@ cdef TimeInterval create_time_interval(timeout: Optional[int|float]=None):
 
 
 cdef ensure_stop_session_impl(weakref_ext_session):
-    session = weakref_ext_session()
-    if session is not None:
-        (<Session?>session)._session.stop(True)
+    cdef shared_ptr[NativeSession] session
+    ext_session = weakref_ext_session()
+    if ext_session is not None:
+        session = (<Session?>ext_session)._session
+        if session.get() is not NULL:
+            session.get().stop(True)
 
 
 def ensure_stop_session(weakref_ext_session):
@@ -156,7 +159,7 @@ cdef class FakeHostHealthMonitor:
 
 cdef class Session:
     cdef object __weakref__
-    cdef NativeSession* _session
+    cdef shared_ptr[NativeSession] _session
     cdef readonly object monitor_host_health
     cdef readonly bint owned_by_session
 
@@ -245,7 +248,7 @@ cdef class Session:
         config.close_queue_timeout = c_close_queue_timeout
         config.monitor_host_health = monitor_host_health
 
-        self._session = new NativeSession(
+        self._session = shared_ptr[NativeSession](new NativeSession(
             session_cb,
             message_cb,
             ack_cb,
@@ -254,12 +257,24 @@ cdef class Session:
             Error,
             BrokerTimeoutError,
             _mock,
-            c_user_agent_prefix)
-        self._session.start(c_connect_timeout)
+            c_user_agent_prefix))
+        self._session.get().start(c_connect_timeout)
         atexit.register(ensure_stop_session_impl, weakref.ref(self))
 
+    cdef shared_ptr[NativeSession] _get_session(self) except *:
+        # Return a copy, so the session outlives a concurrent stop().
+        cdef shared_ptr[NativeSession] session = self._session
+        if session.get() is NULL:
+            raise Error("Method called after session was stopped")
+        return session
+
     def stop(self) -> None:
-        self._session.stop(False)
+        cdef shared_ptr[NativeSession] session = self._session
+        if session.get() is not NULL:
+            try:
+                session.get().stop(False)
+            finally:
+                self._session.reset()
 
     def set_owned_by_session(self):
         """Mark that a Session holds a strong reference to this object.
@@ -306,6 +321,7 @@ cdef class Session:
         cdef optional[int] c_max_unconfirmed_bytes
         cdef optional[cppbool] c_suspends_on_bad_host_health
         cdef TimeInterval c_timeout = create_time_interval(timeout)
+        cdef shared_ptr[NativeSession] session = self._get_session()
 
         if b'\x00' in queue_uri:
             raise ValueError('queue_uri must not contain an embedded NUL byte')
@@ -322,7 +338,7 @@ cdef class Session:
         if suspends_on_bad_host_health is not None:
             c_suspends_on_bad_host_health = optional[cppbool](suspends_on_bad_host_health)
 
-        self._session.open_queue_sync(queue_uri,
+        session.get().open_queue_sync(queue_uri,
                                       read,
                                       write,
                                       c_consumer_priority,
@@ -344,6 +360,7 @@ cdef class Session:
         cdef optional[int] c_max_unconfirmed_bytes
         cdef optional[cppbool] c_suspends_on_bad_host_health
         cdef TimeInterval c_timeout = create_time_interval(timeout)
+        cdef shared_ptr[NativeSession] session = self._get_session()
 
         if b'\x00' in queue_uri:
             raise ValueError('queue_uri must not contain an embedded NUL byte')
@@ -360,7 +377,7 @@ cdef class Session:
         if suspends_on_bad_host_health is not None:
             c_suspends_on_bad_host_health = optional[cppbool](suspends_on_bad_host_health)
 
-        self._session.configure_queue_sync(queue_uri,
+        session.get().configure_queue_sync(queue_uri,
                                            c_consumer_priority,
                                            c_max_unconfirmed_messages,
                                            c_max_unconfirmed_bytes,
@@ -371,35 +388,38 @@ cdef class Session:
                          queue_uri not None: bytes,
                          timeout: Optional[int|float] = None) -> None:
         cdef TimeInterval c_timeout = create_time_interval(timeout)
+        cdef shared_ptr[NativeSession] session = self._get_session()
 
         if b'\x00' in queue_uri:
             raise ValueError('queue_uri must not contain an embedded NUL byte')
 
-        self._session.close_queue_sync(queue_uri, c_timeout)
+        session.get().close_queue_sync(queue_uri, c_timeout)
 
     def get_queue_options(self,
                           queue_uri not None: bytes) -> object:
+        cdef shared_ptr[NativeSession] session = self._get_session()
+
         if b'\x00' in queue_uri:
             raise ValueError('queue_uri must not contain an embedded NUL byte')
 
-        return self._session.get_queue_options(queue_uri)
+        return session.get().get_queue_options(queue_uri)
 
     def post(self,
              queue_uri not None: bytes,
              payload not None: bytes,
              properties=None,
              on_ack=None) -> None:
+        cdef shared_ptr[NativeSession] session = self._get_session()
+
         if b'\x00' in queue_uri:
             raise ValueError('queue_uri must not contain an embedded NUL byte')
 
-        self._session.post(queue_uri, payload, len(payload), properties, on_ack)
+        session.get().post(queue_uri, payload, len(payload), properties, on_ack)
 
     def confirm(self, message not None) -> None:
-        self._session.confirm(message.queue_uri, message.guid, len(message.guid))
+        cdef shared_ptr[NativeSession] session = self._get_session()
+        session.get().confirm(message.queue_uri, message.guid, len(message.guid))
 
     def __dealloc__(self) -> None:
-        if self._session:
-            try:
-                self._session.stop(True)
-            finally:
-                del self._session
+        if self._session.get() is not NULL:
+            self._session.get().stop(True)

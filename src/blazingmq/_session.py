@@ -126,14 +126,20 @@ def _convert_timeout(timeout: Optional[float]) -> Optional[float]:
 def _convert_stats_dump_interval(interval: Optional[float]) -> Optional[float]:
     """Convert the stats dump interval for use by the Cython layer.
 
-    If is None, return None.  Otherwise, validate that it is within the range
-    accepted by bsls::TimeInterval and return it.
+    If it is None, return None. Otherwise, validate that it is a multiple of
+    30 seconds below 60 minutes, as required by libbmq.
     """
     if interval is None:
         return interval
-    if 0.0 <= interval < 2**63:
-        return interval
-    raise ValueError(f"stats_dump_interval must be nonnegative, was {interval}")
+    if not 0.0 <= interval < 3600.0:
+        raise ValueError(
+            f"stats_dump_interval must be in [0, 3600) seconds, was {interval}"
+        )
+    if interval % 30 != 0:
+        raise ValueError(
+            f"stats_dump_interval must be a multiple of 30 seconds, was {interval}"
+        )
+    return interval
 
 
 def _collect_properties_and_types(
@@ -324,7 +330,7 @@ class SessionOptions:
             The interval (in seconds) at which to dump stats into the logs.  If
             0, disable the recurring dump of stats (final stats are always
             dumped at the end of the session).  The default is 5min; the value
-            must be a multiple of 30s, in the range ``[0s - 60min]``.
+            must be a multiple of 30s, in the range ``[0s, 60min)``.
         user_agent_prefix:
             Bytestring to include in the user agent for broker telemetry. This
             string must only contain printable characters and must be at most
@@ -445,7 +451,7 @@ class Session:
             into the logs.  If 0, disable the recurring dump of stats (final
             stats are always dumped at the end of the session).  The default is
             5min; the value must be a multiple of 30s, in the range
-            ``[0s - 60min]``.
+            ``[0s, 60min)``.
         user_agent_prefix: Bytestring to include in the user agent for broker
             telemetry. This string must only contain printable characters and
             must be at most 96 bytes long.  This is provided for libraries
@@ -457,7 +463,8 @@ class Session:
         `~blazingmq.exceptions.BrokerTimeoutError`: If the broker didn't respond
             to the request within a reasonable amount of time.
         `ValueError`: If any of the timeouts are provided and not > 0.0, or if
-            the ``stats_dump_interval`` is provided and is < 0.0.
+            ``stats_dump_interval`` is not a multiple of 30 seconds in
+            ``[0s, 60min)``.
     """
 
     def __init__(
@@ -554,7 +561,8 @@ class Session:
             `~blazingmq.exceptions.BrokerTimeoutError`: If the broker didn't respond
                 to the request within a reasonable amount of time.
             `ValueError`: If any of the timeouts are provided and not > 0.0, or if
-                the ``stats_dump_interval`` is provided and is < 0.0.
+                ``stats_dump_interval`` is not a multiple of 30 seconds in
+                ``[0s, 60min)``.
         """
         message_compression_algorithm = session_options.message_compression_algorithm
         if message_compression_algorithm is None:

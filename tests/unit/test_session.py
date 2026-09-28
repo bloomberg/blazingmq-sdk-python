@@ -52,7 +52,7 @@ def test_session_constructed(ext_cls):
         timeout=60.0,
         num_processing_threads=1,
         blob_buffer_size=5000,
-        channel_high_watermark=8000000,
+        channel_high_watermark=8 * 1024 * 1024 + 1,
         event_queue_watermarks=(6000000, 7000000),
         stats_dump_interval=30.0,
         host_health_monitor=None,
@@ -66,7 +66,7 @@ def test_session_constructed(ext_cls):
         message_compression_algorithm=CompressionAlgorithmType.NONE,
         num_processing_threads=1,
         blob_buffer_size=5000,
-        channel_high_watermark=8000000,
+        channel_high_watermark=8 * 1024 * 1024 + 1,
         event_queue_watermarks=(6000000, 7000000),
         stats_dump_interval=30.0,
         timeouts=Timeouts(
@@ -109,7 +109,7 @@ def test_session_constructed_with_timeouts(ext_cls):
         timeout=timeouts,
         num_processing_threads=1,
         blob_buffer_size=5000,
-        channel_high_watermark=8000000,
+        channel_high_watermark=8 * 1024 * 1024 + 1,
         event_queue_watermarks=(6000000, 7000000),
         stats_dump_interval=30.0,
         host_health_monitor=None,
@@ -123,7 +123,7 @@ def test_session_constructed_with_timeouts(ext_cls):
         message_compression_algorithm=CompressionAlgorithmType.NONE,
         num_processing_threads=1,
         blob_buffer_size=5000,
-        channel_high_watermark=8000000,
+        channel_high_watermark=8 * 1024 * 1024 + 1,
         event_queue_watermarks=(6000000, 7000000),
         stats_dump_interval=30.0,
         timeouts=timeouts,
@@ -154,7 +154,7 @@ def test_session_constructed_with_default_timeouts(ext_cls):
         timeout=timeouts,
         num_processing_threads=1,
         blob_buffer_size=5000,
-        channel_high_watermark=8000000,
+        channel_high_watermark=8 * 1024 * 1024 + 1,
         event_queue_watermarks=(6000000, 7000000),
         stats_dump_interval=30.0,
         host_health_monitor=None,
@@ -168,7 +168,7 @@ def test_session_constructed_with_default_timeouts(ext_cls):
         message_compression_algorithm=CompressionAlgorithmType.NONE,
         num_processing_threads=1,
         blob_buffer_size=5000,
-        channel_high_watermark=8000000,
+        channel_high_watermark=8 * 1024 * 1024 + 1,
         event_queue_watermarks=(6000000, 7000000),
         stats_dump_interval=30.0,
         timeouts=timeouts,
@@ -239,7 +239,7 @@ def test_session_with_options(ext_cls):
         host_health_monitor=None,
         num_processing_threads=1,
         blob_buffer_size=5000,
-        channel_high_watermark=8000000,
+        channel_high_watermark=8 * 1024 * 1024 + 1,
         event_queue_watermarks=(6000000, 7000000),
         stats_dump_interval=30.0,
     )
@@ -257,7 +257,7 @@ def test_session_with_options(ext_cls):
         message_compression_algorithm=CompressionAlgorithmType.NONE,
         num_processing_threads=1,
         blob_buffer_size=5000,
-        channel_high_watermark=8000000,
+        channel_high_watermark=8 * 1024 * 1024 + 1,
         event_queue_watermarks=(6000000, 7000000),
         stats_dump_interval=30.0,
         timeouts=timeouts,
@@ -876,6 +876,57 @@ def test_session_bad_stats_dump_interval(stats_dump_interval):
     # THEN
     assert exc.type is ValueError
     assert exc.match(expected_pat)
+
+
+@pytest.mark.parametrize(
+    "channel_high_watermark",
+    [-1, 0, 5 * 1024 * 1024, 8 * 1024 * 1024 - 1, 8 * 1024 * 1024],
+)
+@pytest.mark.parametrize("use_options", [False, True])
+@mock.patch("blazingmq._session.ExtSession")
+def test_session_bad_channel_high_watermark(
+    ext_cls, channel_high_watermark, use_options
+):
+    # WHEN
+    with pytest.raises(
+        ValueError,
+        match=f"channel_high_watermark must be greater than 8 MiB, was {channel_high_watermark}",
+    ):
+        if use_options:
+            Session.with_options(
+                dummy_callback,
+                session_options=SessionOptions(
+                    channel_high_watermark=channel_high_watermark
+                ),
+            )
+        else:
+            Session(dummy_callback, channel_high_watermark=channel_high_watermark)
+
+    # THEN
+    ext_cls.assert_not_called()
+
+
+@pytest.mark.parametrize(
+    "channel_high_watermark", [None, 8 * 1024 * 1024 + 1, 128 * 1024 * 1024]
+)
+@pytest.mark.parametrize("use_options", [False, True])
+@mock.patch("blazingmq._session.ExtSession")
+def test_session_valid_channel_high_watermark(
+    ext_cls, channel_high_watermark, use_options
+):
+    # WHEN
+    if use_options:
+        Session.with_options(
+            dummy_callback,
+            session_options=SessionOptions(
+                channel_high_watermark=channel_high_watermark
+            ),
+        )
+    else:
+        Session(dummy_callback, channel_high_watermark=channel_high_watermark)
+
+    # THEN
+    assert ext_cls.call_args.kwargs["channel_high_watermark"] == channel_high_watermark
 
 
 def test_default_timeout_repr():

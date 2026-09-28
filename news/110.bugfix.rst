@@ -1,0 +1,1 @@
+Reject channel high watermark values at or below 8 MiB with ``ValueError`` instead of aborting the Python process.

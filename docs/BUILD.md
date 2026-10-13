@@ -67,7 +67,7 @@ Additional `make` targets are provided, such as for test coverage.
 Dependencies for these can be installed as follows:
 
 ```shell
-python3.9 -m pip install -r requirements-dev.txt
+python3.9 -m pip install -e ".[dev]"
 ```
 
 And now you should be able to run `make coverage`.

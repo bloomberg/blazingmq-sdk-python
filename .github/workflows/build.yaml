@@ -110,17 +110,15 @@ jobs:
           key: ${{ needs.blazingmq-dependency.outputs.deps_cache_key }}
       - name: Restore cached BlazingMQ build artifacts
         run: tar xzf blazingmq_artifacts.tar.gz
-      - name: Set up Python ${{ matrix.python-version }}
-        uses: actions/setup-python@v7
+      - name: Set up uv with Python ${{ matrix.python-version }}
+        uses: astral-sh/setup-uv@1c37ad07a6a961277cf70c0d37d6f313000f5884 # v10.3.0
         with:
           python-version: ${{ matrix.python-version }}
-      - name: Create virtual environment
-        run: |
-          python3 -m venv venv
+          activate-environment: true
+          venv-path: venv
       - name: Install Python dependencies
         run: |
-          ./venv/bin/python -m pip install --upgrade pip
-          ./venv/bin/python -m pip install -r requirements-dev.txt
+          uv pip install -r requirements-dev.txt
       - name: Install package manager dependencies
         run: |
           sudo apt-get update
@@ -165,7 +163,9 @@ jobs:
           PKG_CONFIG_PATH: /usr/lib/x86_64-linux-gnu/pkgconfig:/opt/bb/lib64/pkgconfig:./blazingmq_artifacts/lib64/pkgconfig
         run: |
           ulimit -c unlimited
-          make test-build && make test-install && make check
+          make test-build \
+            && make test-install PIP_INSTALL="uv pip install" \
+            && make check
       - name: Print backtrace from core dump
         if: failure()
         run: |
@@ -200,23 +200,21 @@ jobs:
           key: ${{ needs.blazingmq-dependency.outputs.deps_cache_key }}
       - name: Restore cached BlazingMQ build artifacts
         run: tar xzf blazingmq_artifacts.tar.gz
-      - name: Set up Python 3.14
-        uses: actions/setup-python@v7
+      - name: Set up uv with Python 3.14
+        uses: astral-sh/setup-uv@1c37ad07a6a961277cf70c0d37d6f313000f5884 # v10.3.0
         with:
           python-version: "3.14"
-      - name: Create virtual environment
-        run: |
-          python3 -m venv venv
+          activate-environment: true
+          venv-path: venv
       - name: Install Python dependencies
         run: |
-          ./venv/bin/python -m pip install --upgrade pip
-          ./venv/bin/python -m pip install -r requirements-dev.txt
+          uv pip install -r requirements-dev.txt
       - name: Set up dependencies
         run:
           sudo apt-get install clang-format
       - name: Install Package
         run: |
-          ./venv/bin/python -m pip install -e .
+          uv pip install -e .
         env:
           PREFIX: blazingmq_artifacts
           PYTHON: ./venv/bin/python
@@ -250,17 +248,15 @@ jobs:
           key: ${{ needs.blazingmq-dependency.outputs.deps_cache_key }}
       - name: Restore cached BlazingMQ build artifacts
         run: tar xzf blazingmq_artifacts.tar.gz
-      - name: Set up Python
-        uses: actions/setup-python@v7
+      - name: Set up uv with Python 3.14
+        uses: astral-sh/setup-uv@1c37ad07a6a961277cf70c0d37d6f313000f5884 # v10.3.0
         with:
           python-version: "3.14"
-      - name: Create virtual environment
-        run: |
-          python3 -m venv venv
+          activate-environment: true
+          venv-path: venv
       - name: Install Python dependencies
         run: |
-          ./venv/bin/python3 -m pip install --upgrade pip
-          ./venv/bin/python3 -m pip install -r requirements-dev.txt
+          uv pip install -r requirements-dev.txt
       - name: Setup Core Dumps config
         run: |
           sudo mkdir /cores
@@ -290,7 +286,8 @@ jobs:
         run: |
           # Allow core dumps
           ulimit -c unlimited
-          make coverage-install && make coverage
+          make coverage-install PIP_INSTALL="uv pip install" \
+            && make coverage
       - name: Stop BlazingMQ broker
         if: always()
         run: docker rm -f bmqbrkr

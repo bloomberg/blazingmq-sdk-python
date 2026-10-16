@@ -3,7 +3,6 @@
 requires = ['setuptools>=77',
             'Cython>=0.28.4, <3; python_version < "3.8"',
             'Cython >= 3, <4; python_version >= "3.8"',
-            'wheel>=0.31.0',
             'packaging>=24.2',
             'pkgconfig>1.5.0']
 

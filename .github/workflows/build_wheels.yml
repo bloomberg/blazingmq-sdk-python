@@ -27,7 +27,7 @@ jobs:
     name: Build source distribution
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v7
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
         with:
           persist-credentials: false
 
@@ -39,17 +39,17 @@ jobs:
           BLAZINGMQ_PYTHON_NO_PKGCONFIG: '1'
         run: uv build --sdist
 
-      - uses: actions/upload-artifact@v7
+      - uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9 # v7.0.2
         with:
           name: dist-sdist
           path: dist
 
-      - uses: actions/upload-artifact@v7
+      - uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9 # v7.0.2
         with:
           name: tests-sdist
           path: tests
 
-      - uses: actions/upload-artifact@v7
+      - uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9 # v7.0.2
         with:
           name: bin-sdist
           path: bin
@@ -76,15 +76,15 @@ jobs:
         cibw_arch: ${{ fromJSON(needs.choose_architectures.outputs.cibw_arches) }}
 
     steps:
-      - uses: actions/download-artifact@v8
+      - uses: actions/download-artifact@9000827ccba6bdab643e8b6fd33ac0654aef8333 # v8.0.2
         with:
           name: dist-sdist
           path: dist
-      - uses: actions/download-artifact@v8
+      - uses: actions/download-artifact@9000827ccba6bdab643e8b6fd33ac0654aef8333 # v8.0.2
         with:
           name: tests-sdist
           path: tests
-      - uses: actions/download-artifact@v8
+      - uses: actions/download-artifact@9000827ccba6bdab643e8b6fd33ac0654aef8333 # v8.0.2
         with:
           name: bin-sdist
           path: bin
@@ -95,13 +95,13 @@ jobs:
         run: |
           echo 0 | sudo tee /proc/sys/kernel/yama/ptrace_scope
       - name: Build wheels
-        uses: pypa/cibuildwheel@v4.2.1
+        uses: pypa/cibuildwheel@e090b81e30c4d855ea63bf4b6e59204c09a101ae # v4.2.1
         env:
           CIBW_ARCHS_LINUX: ${{ matrix.cibw_arch }}
           CIBW_BUILD: ${{ matrix.cibw_python }}-*
           CIBW_TEST_COMMAND: python3 -m pytest {project}/tests/unit
           CIBW_TEST_REQUIRES: pytest mock pkgconfig
-      - uses: actions/upload-artifact@v7
+      - uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9 # v7.0.2
         with:
           name: dist-Linux-${{ matrix.cibw_python }}-${{ matrix.cibw_arch }}
           path: ./wheelhouse/*.whl
@@ -119,15 +119,15 @@ jobs:
         cibw_arch: ["arm64"]
 
     steps:
-      - uses: actions/download-artifact@v8
+      - uses: actions/download-artifact@9000827ccba6bdab643e8b6fd33ac0654aef8333 # v8.0.2
         with:
           name: dist-sdist
           path: dist
-      - uses: actions/download-artifact@v8
+      - uses: actions/download-artifact@9000827ccba6bdab643e8b6fd33ac0654aef8333 # v8.0.2
         with:
           name: tests-sdist
           path: tests
-      - uses: actions/download-artifact@v8
+      - uses: actions/download-artifact@9000827ccba6bdab643e8b6fd33ac0654aef8333 # v8.0.2
         with:
           name: bin-sdist
           path: bin
@@ -139,7 +139,7 @@ jobs:
         run: |
           echo "CFLAGS=-target arm64-apple-macos14" >> $GITHUB_ENV
       - name: Build wheels
-        uses: pypa/cibuildwheel@v4.2.1
+        uses: pypa/cibuildwheel@e090b81e30c4d855ea63bf4b6e59204c09a101ae # v4.2.1
         env:
           CIBW_ARCHS_MACOS: ${{ matrix.cibw_arch }}
           CIBW_BUILD: ${{ matrix.cibw_python }}-*
@@ -149,7 +149,7 @@ jobs:
           MACOSX_DEPLOYMENT_TARGET: "14.0"
           SYSTEM_VERSION_COMPAT: 0
 
-      - uses: actions/upload-artifact@v7
+      - uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9 # v7.0.2
         with:
           name: dist-MacOS-${{ matrix.cibw_python }}-${{ matrix.cibw_arch }}
           path: ./wheelhouse/*.whl
@@ -158,7 +158,7 @@ jobs:
     needs: [build_wheels, build_wheels_macos, build_sdist]
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/upload-artifact/merge@v7
+      - uses: actions/upload-artifact/merge@cf430e030ddbb5b0abf93d22962f4752f3646cd9 # v7.0.2
         with:
           name: dist
           pattern: dist-*
@@ -170,11 +170,11 @@ jobs:
       github.event_name == 'release' && github.event.action == 'published'
         || github.event_name == 'workflow_dispatch'
     steps:
-      - uses: actions/download-artifact@v8
+      - uses: actions/download-artifact@9000827ccba6bdab643e8b6fd33ac0654aef8333 # v8.0.2
         with:
           name: dist
           path: dist
-      - uses: pypa/gh-action-pypi-publish@release/v1
+      - uses: pypa/gh-action-pypi-publish@dc37677b2e1c63e2034f94d8a5b11f265b73ba33 # v1.14.2
         with:
           skip_existing: true
           password: ${{ secrets.PYPI_PASSWORD }}

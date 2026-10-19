@@ -10,6 +10,10 @@ on:
       - "labeled"
       - "unlabeled"
 
+permissions:
+  contents: read
+  pull-requests: read
+
 jobs:
   news_entry_check:
     runs-on: ubuntu-slim

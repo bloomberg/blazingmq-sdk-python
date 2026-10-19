@@ -15,6 +15,9 @@ on:
     # At 12:00 on every day-of-month
     - cron: "0 12 */1 * *"
 
+permissions:
+  contents: read
+
 concurrency:
   group: ${{ github.workflow }}-${{ github.head_ref || github.run_id }}
   cancel-in-progress: true

@@ -103,7 +103,11 @@ def _construct_user_agent_prefix(user_agent_prefix: bytes) -> bytes:
     """Construct the user agent prefix for use by the Cython layer."""
     python_version = platform.python_version().encode("ascii", errors="strict")
     blazingmq_version = __version__.encode("ascii", errors="strict")
-    sdk_identifier = b"blazingmq(python" + python_version + b"):" + blazingmq_version
+    sdk_identifier = b"blazingmq(py" + python_version + b"):" + blazingmq_version
+    # libbmq requires the user agent to be shorter than 128 bytes.  The prefix
+    # is at most 96 bytes, plus one byte for the separating space, which leaves
+    # 30 bytes for the SDK identifier.
+    sdk_identifier = sdk_identifier[:30]
     if user_agent_prefix:
         return user_agent_prefix + b" " + sdk_identifier
     return sdk_identifier

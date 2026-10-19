@@ -1,0 +1,1 @@
+Handle non-UTF-8 incoming property names without dropping the PUSH event.

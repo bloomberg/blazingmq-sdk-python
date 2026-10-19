@@ -161,6 +161,18 @@ MessageUtils::get_message_property_and_type(
         bsl::vector<bsl::string>* collated_errors,
         const bmqa::MessagePropertiesIterator& iterator)
 {
+    const bsl::string& name = iterator.name();
+    bslma::ManagedPtr<PyObject> py_name = RefUtils::toManagedPtr(
+            PyUnicode_DecodeUTF8(name.data(), name.length(), NULL));
+    if (!py_name) {
+        if (PyErr_ExceptionMatches(PyExc_UnicodeDecodeError)) {
+            PyErr_Clear();
+            collated_errors->push_back("Message property has non-UTF-8 name");
+            return true;  // Skip this property; we've enqueued an InterfaceError
+        }
+        return false;
+    }
+
     bmqt::PropertyType::Enum ptype = iterator.type();
     bslma::ManagedPtr<PyObject> value;
     switch (ptype) {
@@ -218,15 +230,13 @@ MessageUtils::get_message_property_and_type(
         return false;
     }
 
-    if (PyDict_SetItemString(properties, iterator.name().c_str(), value.get())) {
+    if (PyDict_SetItem(properties, py_name.get(), value.get())) {
         return false;
     }
 
-    if (PyDict_SetItemString(
-                property_types,
-                iterator.name().c_str(),
-                PyLong_FromLong(ptype)))
-    {
+    bslma::ManagedPtr<PyObject> py_type =
+            RefUtils::toManagedPtr(PyLong_FromLong(ptype));
+    if (!py_type || PyDict_SetItem(property_types, py_name.get(), py_type.get())) {
         return false;
     }
 

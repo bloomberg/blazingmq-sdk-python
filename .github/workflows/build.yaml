@@ -21,7 +21,7 @@ jobs:
     outputs:
       deps_cache_key: ${{ steps.cache-key.outputs.deps_cache_key }}
     steps:
-      - uses: actions/checkout@v7
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
         with:
           persist-credentials: false
 
@@ -31,7 +31,7 @@ jobs:
 
       - name: Try to get cached BlazingMQ build artifacts
         id: cache-restore
-        uses: actions/cache/restore@v6
+        uses: actions/cache/restore@55cc8345863c7cc4c66a329aec7e433d2d1c52a9 # v6.1.0
         with:
           path: blazingmq_artifacts.tar.gz
           key: ${{ steps.cache-key.outputs.deps_cache_key }}
@@ -80,7 +80,7 @@ jobs:
       - name: Cache built BlazingMQ build artifacts
         id: cache-save
         if: steps.cache-restore.outputs.cache-hit != 'true'
-        uses: actions/cache/save@v6
+        uses: actions/cache/save@55cc8345863c7cc4c66a329aec7e433d2d1c52a9 # v6.1.0
         with:
           path: blazingmq_artifacts.tar.gz
           key: ${{ steps.cache-key.outputs.deps_cache_key }}
@@ -99,12 +99,12 @@ jobs:
           - "3.13"
           - "3.14"
     steps:
-      - uses: actions/checkout@v7
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
         with:
           persist-credentials: false
       - name: Try to get cached BlazingMQ build artifacts
         id: cache-restore
-        uses: actions/cache/restore@v6
+        uses: actions/cache/restore@55cc8345863c7cc4c66a329aec7e433d2d1c52a9 # v6.1.0
         with:
           path: blazingmq_artifacts.tar.gz
           key: ${{ needs.blazingmq-dependency.outputs.deps_cache_key }}
@@ -136,7 +136,7 @@ jobs:
             libgmock-dev \
             libz-dev
       - name: Log in to GHCR
-        uses: docker/login-action@v4
+        uses: docker/login-action@dbcb813823bdd20940b903addbd779551569679f # v4.6.0
         with:
           registry: ghcr.io
           username: ${{ github.actor }}
@@ -189,12 +189,12 @@ jobs:
     needs: blazingmq-dependency
     runs-on: ubuntu-24.04
     steps:
-      - uses: actions/checkout@v7
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
         with:
           persist-credentials: false
       - name: Try to get cached BlazingMQ build artifacts
         id: cache-restore
-        uses: actions/cache/restore@v6
+        uses: actions/cache/restore@55cc8345863c7cc4c66a329aec7e433d2d1c52a9 # v6.1.0
         with:
           path: blazingmq_artifacts.tar.gz
           key: ${{ needs.blazingmq-dependency.outputs.deps_cache_key }}
@@ -237,12 +237,12 @@ jobs:
     needs: blazingmq-dependency
     runs-on: ubuntu-24.04
     steps:
-      - uses: actions/checkout@v7
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
         with:
           persist-credentials: false
       - name: Try to get cached BlazingMQ build artifacts
         id: cache-restore
-        uses: actions/cache/restore@v6
+        uses: actions/cache/restore@55cc8345863c7cc4c66a329aec7e433d2d1c52a9 # v6.1.0
         with:
           path: blazingmq_artifacts.tar.gz
           key: ${{ needs.blazingmq-dependency.outputs.deps_cache_key }}
@@ -263,7 +263,7 @@ jobs:
           sudo chmod 777 /cores
           echo "/cores/%e.%p.%s.%t" | sudo tee /proc/sys/kernel/core_pattern
       - name: Log in to GHCR
-        uses: docker/login-action@v4
+        uses: docker/login-action@dbcb813823bdd20940b903addbd779551569679f # v4.6.0
         with:
           registry: ghcr.io
           username: ${{ github.actor }}
@@ -292,7 +292,7 @@ jobs:
         if: always()
         run: docker rm -f bmqbrkr
       - name: Output code coverage summary
-        uses: irongut/CodeCoverageSummary@v1.3.0
+        uses: irongut/CodeCoverageSummary@51cc3a756ddcd398d447c044c02cb6aa83fdae95 # v1.3.0
         with:
           filename: coverage*.xml
       - name: Upload broker logs as artifacts
@@ -301,7 +301,7 @@ jobs:
           mkdir -p bmq/logs
           docker logs bmqbrkr > bmq/logs/broker_stdout.log 2> bmq/logs/broker_stderr.log || true
           docker cp bmqbrkr:/var/local/bmq/logs/. bmq/logs/ || true
-      - uses: actions/upload-artifact@v7
+      - uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9 # v7.0.2
         if: failure()
         with:
           name: broker_logs
@@ -310,7 +310,7 @@ jobs:
           compression-level: 9
       - name: Upload broker core dump as artifacts
         if: failure()
-        uses: actions/upload-artifact@v7
+        uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9 # v7.0.2
         with:
           name: core_dumps
           path: /cores

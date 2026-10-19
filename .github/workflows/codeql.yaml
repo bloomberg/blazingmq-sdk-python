@@ -34,18 +34,18 @@ jobs:
           - actions
           - python
     steps:
-      - uses: actions/checkout@v7
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
         with:
           persist-credentials: false
 
       - name: Initialize CodeQL
-        uses: github/codeql-action/init@v4
+        uses: github/codeql-action/init@6f2ac81f5cd81fe351a197ba0b00d91d03cd2aee # v4.39.0
         with:
           languages: ${{ matrix.language }}
           build-mode: none
 
       - name: Perform CodeQL analysis
-        uses: github/codeql-action/analyze@v4
+        uses: github/codeql-action/analyze@6f2ac81f5cd81fe351a197ba0b00d91d03cd2aee # v4.39.0
         with:
           category: /language:${{ matrix.language }}
 
@@ -57,7 +57,7 @@ jobs:
     outputs:
       deps_cache_key: ${{ steps.cache-key.outputs.deps_cache_key }}
     steps:
-      - uses: actions/checkout@v7
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
         with:
           persist-credentials: false
 
@@ -67,7 +67,7 @@ jobs:
 
       - name: Try to get cached BlazingMQ build artifacts
         id: cache-restore
-        uses: actions/cache/restore@v6
+        uses: actions/cache/restore@55cc8345863c7cc4c66a329aec7e433d2d1c52a9 # v6.1.0
         with:
           path: blazingmq_artifacts.tar.gz
           key: ${{ steps.cache-key.outputs.deps_cache_key }}
@@ -116,7 +116,7 @@ jobs:
       - name: Cache built BlazingMQ build artifacts
         id: cache-save
         if: steps.cache-restore.outputs.cache-hit != 'true'
-        uses: actions/cache/save@v6
+        uses: actions/cache/save@55cc8345863c7cc4c66a329aec7e433d2d1c52a9 # v6.1.0
         with:
           path: blazingmq_artifacts.tar.gz
           key: ${{ steps.cache-key.outputs.deps_cache_key }}
@@ -129,13 +129,13 @@ jobs:
       contents: read
       security-events: write
     steps:
-      - uses: actions/checkout@v7
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
         with:
           persist-credentials: false
 
       - name: Try to get cached BlazingMQ build artifacts
         id: cache-restore
-        uses: actions/cache/restore@v6
+        uses: actions/cache/restore@55cc8345863c7cc4c66a329aec7e433d2d1c52a9 # v6.1.0
         with:
           path: blazingmq_artifacts.tar.gz
           key: ${{ needs.blazingmq-dependency.outputs.deps_cache_key }}
@@ -173,7 +173,7 @@ jobs:
             libz-dev
 
       - name: Initialize CodeQL
-        uses: github/codeql-action/init@v4
+        uses: github/codeql-action/init@6f2ac81f5cd81fe351a197ba0b00d91d03cd2aee # v4.39.0
         with:
           languages: c-cpp
           build-mode: manual
@@ -190,7 +190,7 @@ jobs:
       # filters do not apply to built languages. So analyze without uploading,
       # drop the generated file's alerts, and upload the remainder.
       - name: Perform CodeQL analysis
-        uses: github/codeql-action/analyze@v4
+        uses: github/codeql-action/analyze@6f2ac81f5cd81fe351a197ba0b00d91d03cd2aee # v4.39.0
         with:
           category: /language:c-cpp
           output: sarif-results
@@ -227,7 +227,7 @@ jobs:
           done
 
       - name: Upload CodeQL results
-        uses: github/codeql-action/upload-sarif@v4
+        uses: github/codeql-action/upload-sarif@6f2ac81f5cd81fe351a197ba0b00d91d03cd2aee # v4.39.0
         with:
           sarif_file: sarif-results
           category: /language:c-cpp

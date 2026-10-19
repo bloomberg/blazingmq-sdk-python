@@ -290,7 +290,7 @@ def test_session_with_options_user_agent_prefix(ext_cls):
     # THEN
     _, kwargs = ext_cls.call_args
     assert re.fullmatch(
-        rb"mylib:1\.0 blazingmq\(python[^)]+\):\S+",
+        rb"mylib:1\.0 blazingmq\(py[^)]+\):\S+",
         kwargs["user_agent_prefix"],
     )
 
@@ -964,7 +964,7 @@ def test_session_constructed_with_user_agent_prefix(ext_cls):
     # THEN
     _, kwargs = ext_cls.call_args
     assert re.fullmatch(
-        rb"mylib:1\.0 blazingmq\(python[^)]+\):\S+",
+        rb"mylib:1\.0 blazingmq\(py[^)]+\):\S+",
         kwargs["user_agent_prefix"],
     )
 
@@ -987,7 +987,7 @@ def test_session_constructed_without_user_agent_prefix(ext_cls):
     # THEN
     _, kwargs = ext_cls.call_args
     assert re.fullmatch(
-        rb"blazingmq\(python[^)]+\):\S+",
+        rb"blazingmq\(py[^)]+\):\S+",
         kwargs["user_agent_prefix"],
     )
 
@@ -1011,7 +1011,7 @@ def test_session_constructed_with_empty_user_agent_prefix(ext_cls):
     # THEN
     _, kwargs = ext_cls.call_args
     assert re.fullmatch(
-        rb"blazingmq\(python[^)]+\):\S+",
+        rb"blazingmq\(py[^)]+\):\S+",
         kwargs["user_agent_prefix"],
     )
 
@@ -1035,6 +1035,50 @@ def test_session_user_agent_prefix_satisfies_bmq_length_precondition(ext_cls):
     # THEN
     _, kwargs = ext_cls.call_args
     assert len(kwargs["user_agent_prefix"]) < 128
+
+
+@mock.patch("blazingmq._session.platform.python_version", return_value="3.15.0rc2")
+@mock.patch("blazingmq._session.__version__", "1.2.3.dev456")
+@mock.patch("blazingmq._session.ExtSession")
+def test_session_user_agent_prefix_with_long_versions_satisfies_bmq_length(
+    ext_cls, _python_version
+):
+    # GIVEN
+    ext_cls.mock_add_spec([])
+    user_agent_prefix = b"x" * 96
+
+    def dummy():
+        pass
+
+    # WHEN
+    Session(
+        dummy,
+        on_message=dummy,
+        broker="some_uri",
+        user_agent_prefix=user_agent_prefix,
+    )
+
+    # THEN
+    _, kwargs = ext_cls.call_args
+    assert len(kwargs["user_agent_prefix"]) < 128
+    assert kwargs["user_agent_prefix"].startswith(user_agent_prefix + b" ")
+
+
+@mock.patch("blazingmq._session.platform.python_version", return_value="3.15.0rc2")
+@mock.patch("blazingmq._session.__version__", "1.2.3.dev456")
+def test_user_agent_sdk_identifier_does_not_depend_on_prefix(_python_version):
+    # GIVEN
+    from blazingmq._session import _construct_user_agent_prefix
+
+    # WHEN
+    without_prefix = _construct_user_agent_prefix(b"")
+    with_short_prefix = _construct_user_agent_prefix(b"mylib:1.0")
+    with_long_prefix = _construct_user_agent_prefix(b"x" * 96)
+
+    # THEN
+    assert with_short_prefix == b"mylib:1.0 " + without_prefix
+    assert with_long_prefix == b"x" * 96 + b" " + without_prefix
+    assert len(with_long_prefix) < 128
 
 
 @mock.patch("blazingmq._session.ExtSession")
@@ -1165,7 +1209,7 @@ def test_session_user_agent_prefix_with_spaces(ext_cls):
     # THEN
     _, kwargs = ext_cls.call_args
     assert re.fullmatch(
-        rb"my lib:1\.0 blazingmq\(python[^)]+\):\S+",
+        rb"my lib:1\.0 blazingmq\(py[^)]+\):\S+",
         kwargs["user_agent_prefix"],
     )
 

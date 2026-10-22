@@ -1,4 +1,4 @@
-# Copyright 2019-2023 Bloomberg Finance L.P.
+# Copyright 2019-2026 Bloomberg Finance L.P.
 # SPDX-License-Identifier: Apache-2.0
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
@@ -27,6 +27,7 @@ from ._session import QueueOptions
 from ._session import Session
 from ._session import SessionOptions
 from ._timeouts import Timeouts
+from ._typing import AuthnCredentialProvider
 from ._typing import PropertyTypeDict
 from ._typing import PropertyValueDict
 from .exceptions import Error
@@ -34,6 +35,7 @@ from .exceptions import Error
 __all__ = [
     "Ack",
     "AckStatus",
+    "AuthnCredentialProvider",
     "BasicHealthMonitor",
     "CompressionAlgorithmType",
     "Error",

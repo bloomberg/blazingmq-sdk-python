@@ -112,7 +112,7 @@ jobs:
       - name: Restore cached BlazingMQ build artifacts
         run: tar xzf blazingmq_artifacts.tar.gz
       - name: Set up uv with Python ${{ matrix.python-version }}
-        uses: astral-sh/setup-uv@1c37ad07a6a961277cf70c0d37d6f313000f5884 # v10.3.0
+        uses: astral-sh/setup-uv@07a047e608db84b3d8c06cd9a7c7dcc9c355c18e # v10.3.2
         with:
           python-version: ${{ matrix.python-version }}
           activate-environment: true
@@ -137,7 +137,7 @@ jobs:
             libgmock-dev \
             libz-dev
       - name: Log in to GHCR
-        uses: docker/login-action@dbcb813823bdd20940b903addbd779551569679f # v4.6.0
+        uses: docker/login-action@81c6f93d4bc991e510b342a00b419b3bb4efc5c6 # v4.7.0
         with:
           registry: ghcr.io
           username: ${{ github.actor }}
@@ -202,7 +202,7 @@ jobs:
       - name: Restore cached BlazingMQ build artifacts
         run: tar xzf blazingmq_artifacts.tar.gz
       - name: Set up uv with Python 3.15
-        uses: astral-sh/setup-uv@1c37ad07a6a961277cf70c0d37d6f313000f5884 # v10.3.0
+        uses: astral-sh/setup-uv@07a047e608db84b3d8c06cd9a7c7dcc9c355c18e # v10.3.2
         with:
           python-version: "3.15"
           activate-environment: true
@@ -250,7 +250,7 @@ jobs:
       - name: Restore cached BlazingMQ build artifacts
         run: tar xzf blazingmq_artifacts.tar.gz
       - name: Set up uv with Python 3.14
-        uses: astral-sh/setup-uv@1c37ad07a6a961277cf70c0d37d6f313000f5884 # v10.3.0
+        uses: astral-sh/setup-uv@07a047e608db84b3d8c06cd9a7c7dcc9c355c18e # v10.3.2
         with:
           python-version: "3.15"
           activate-environment: true
@@ -264,7 +264,7 @@ jobs:
           sudo chmod 777 /cores
           echo "/cores/%e.%p.%s.%t" | sudo tee /proc/sys/kernel/core_pattern
       - name: Log in to GHCR
-        uses: docker/login-action@dbcb813823bdd20940b903addbd779551569679f # v4.6.0
+        uses: docker/login-action@81c6f93d4bc991e510b342a00b419b3bb4efc5c6 # v4.7.0
         with:
           registry: ghcr.io
           username: ${{ github.actor }}

@@ -1,0 +1,54 @@
+name: Prepare release
+
+on:
+  workflow_dispatch:
+    inputs:
+      version:
+        description: New version (for example, 1.2.4)
+        type: string
+        required: true
+
+permissions:
+  contents: read
+
+jobs:
+  prepare:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          ref: main
+          persist-credentials: false
+
+      - uses: astral-sh/setup-uv@1c37ad07a6a961277cf70c0d37d6f313000f5884 # v10.3.0
+        with:
+          python-version: '3.14'
+
+      - name: Update version
+        env:
+          VERSION: ${{ inputs.version }}
+        run: |
+          uv run --no-project --with packaging python - <<'PY'
+          import os
+          import re
+          from pathlib import Path
+          from packaging.version import Version
+
+          path = Path("src/blazingmq/_about.py")
+          contents = path.read_text()
+          current = re.search(r'^__version__ = "([^"]+)"$', contents, re.MULTILINE).group(1)
+          version = os.environ["VERSION"]
+          if str(Version(version)) != version or Version(version) <= Version(current):
+              raise SystemExit(f"Use a canonical Python version greater than {current}")
+          path.write_text(contents.replace(
+              f'__version__ = "{current}"', f'__version__ = "{version}"'
+          ))
+          PY
+
+      - name: Build release notes
+        env:
+          VERSION: ${{ inputs.version }}
+        run: uvx towncrier build --name blazingmq --version "$VERSION" --yes
+
+      - name: Show release changes
+        run: git --no-pager diff HEAD

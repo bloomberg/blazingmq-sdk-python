@@ -113,7 +113,7 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
-        os: [macos-14]
+        os: [macos-15]
         cibw_python:
           ["cp39", "cp310", "cp311", "cp312", "cp313", "cp314", "cp315"]
         cibw_arch: ["arm64"]
@@ -137,7 +137,7 @@ jobs:
       - name: Sets env vars for compilation
         if: matrix.cibw_arch == 'arm64'
         run: |
-          echo "CFLAGS=-target arm64-apple-macos14" >> $GITHUB_ENV
+          echo "CFLAGS=-target arm64-apple-macos15" >> $GITHUB_ENV
       - name: Build wheels
         uses: pypa/cibuildwheel@f9b966cfadf4109556cadc5bb39ddb72d0ce664e # v4.3.5
         env:
@@ -146,7 +146,7 @@ jobs:
           CIBW_BUILD_VERBOSITY: 1
           CIBW_TEST_COMMAND: python3 -m pytest {project}/tests/unit
           CIBW_TEST_REQUIRES: pytest mock pkgconfig
-          MACOSX_DEPLOYMENT_TARGET: "14.0"
+          MACOSX_DEPLOYMENT_TARGET: "15.0"
           SYSTEM_VERSION_COMPAT: 0
 
       - uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9 # v7.0.2

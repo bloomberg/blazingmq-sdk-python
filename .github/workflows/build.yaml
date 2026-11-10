@@ -164,8 +164,7 @@ jobs:
           PKG_CONFIG_PATH: /usr/lib/x86_64-linux-gnu/pkgconfig:/opt/bb/lib64/pkgconfig:./blazingmq_artifacts/lib64/pkgconfig
         run: |
           ulimit -c unlimited
-          make test-build \
-            && make test-install PIP_INSTALL="uv pip install" \
+          make test-install PIP_INSTALL="uv pip install" \
             && make check
       - name: Print backtrace from core dump
         if: failure()

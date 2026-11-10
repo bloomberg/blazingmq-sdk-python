@@ -117,9 +117,6 @@ jobs:
           python-version: ${{ matrix.python-version }}
           activate-environment: true
           venv-path: venv
-      - name: Install Python dependencies
-        run: |
-          uv pip install -r requirements-dev.txt
       - name: Install package manager dependencies
         run: |
           sudo apt-get update
@@ -164,8 +161,8 @@ jobs:
           PKG_CONFIG_PATH: /usr/lib/x86_64-linux-gnu/pkgconfig:/opt/bb/lib64/pkgconfig:./blazingmq_artifacts/lib64/pkgconfig
         run: |
           ulimit -c unlimited
-          make test-build \
-            && make test-install PIP_INSTALL="uv pip install" \
+          make test-install PIP_INSTALL="uv pip install" \
+            && make test-build \
             && make check
       - name: Print backtrace from core dump
         if: failure()
@@ -207,15 +204,12 @@ jobs:
           python-version: "3.15"
           activate-environment: true
           venv-path: venv
-      - name: Install Python dependencies
-        run: |
-          uv pip install -r requirements-dev.txt
       - name: Set up dependencies
         run:
           sudo apt-get install clang-format
       - name: Install Package
         run: |
-          uv pip install -e .
+          uv pip install -e ".[dev]"
         env:
           PREFIX: blazingmq_artifacts
           PYTHON: ./venv/bin/python
@@ -255,9 +249,6 @@ jobs:
           python-version: "3.15"
           activate-environment: true
           venv-path: venv
-      - name: Install Python dependencies
-        run: |
-          uv pip install -r requirements-dev.txt
       - name: Setup Core Dumps config
         run: |
           sudo mkdir /cores

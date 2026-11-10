@@ -34,6 +34,37 @@ classifiers = [
     "Typing :: Typed",
 ]
 
+[project.optional-dependencies]
+test = [
+    "mock",
+    "pytest",
+    "pkgconfig",
+    "Cython>=3,<4",
+    "setuptools",
+]
+coverage = [
+    "blazingmq[test]",
+    "pytest-cov",
+]
+lint = [
+    "black",
+    "flake8",
+    "isort",
+    "mypy",
+    "types-enum34",
+]
+docs = [
+    "myst-parser",
+    "Sphinx",
+    "sphinx_rtd_theme",
+    "towncrier",
+]
+dev = [
+    "blazingmq[test,coverage,lint,docs]",
+    "tox",
+    "setuptools",
+]
+
 [tool.setuptools]
 packages = ["blazingmq"]
 package-dir = {"" = "src"}

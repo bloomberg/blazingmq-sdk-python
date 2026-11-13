@@ -9,7 +9,8 @@ on:
         required: true
 
 permissions:
-  contents: read
+  contents: write
+  pull-requests: write
 
 jobs:
   prepare:
@@ -50,5 +51,20 @@ jobs:
           VERSION: ${{ inputs.version }}
         run: uvx towncrier build --name blazingmq --version "$VERSION" --yes
 
-      - name: Show release changes
-        run: git --no-pager diff HEAD
+      - name: Create release PR
+        uses: peter-evans/create-pull-request@15733dbdfeedb4f7fdb73d13c6f5ac83b710fab8 # v8.1.2
+        with:
+          base: main
+          branch: automation/prepare-release-v${{ inputs.version }}
+          add-paths: |
+            src/blazingmq/_about.py
+            CHANGELOG.md
+            news/
+          author: github-actions[bot] <41898282+github-actions[bot]@users.noreply.github.com>
+          signoff: true
+          commit-message: 'Chore: Prepare release v${{ inputs.version }}'
+          title: 'Chore: Prepare release v${{ inputs.version }}'
+          body: |
+            This patch prepares release v${{ inputs.version }} by updating the
+            package version and generating the changelog with Towncrier.
+          labels: skip news

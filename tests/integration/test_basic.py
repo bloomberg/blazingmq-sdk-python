@@ -98,8 +98,7 @@ def test_session_stopped_atexit():
     # THEN
     msg = b"<Connected>\nlast atexit handler\n<Disconnected>\nfirst atexit handler\n"
     assert msg == stdout
-    if sys.version_info[:2] >= (3, 7):
-        assert stderr == b""
+    assert stderr == b""
 
 
 def test_session_ref_cycle():

@@ -82,6 +82,7 @@ format:
 lint:
 	$(PYTHON) -m black --check --verbose src tests examples setup.py
 	$(PYTHON) -m flake8 --config=$(CURDIR)/.flake8.cython src
+	$(PYTHON) -m cython_lint.cython_lint src
 	$(PYTHON) -m flake8 --config=$(CURDIR)/.flake8 src
 	$(PYTHON) -m flake8 --config=$(CURDIR)/tests/.flake8 tests
 	$(PYTHON) -m flake8 --config=$(CURDIR)/tests/.flake8 examples

@@ -61,7 +61,8 @@ def on_session_event(
     if sdk_event is None:
         # This is a synthetically generated InterfaceError being produced in
         # response to input from the SDK that we can't handle.
-        return user_callback(InterfaceError(error_description.decode()))
+        user_callback(InterfaceError(error_description.decode()))
+        return
 
     # Otherwise, we're passing a bmqa::SessionEvent we've received to our user
     event_type, event_name, status_code, status_name, queue_uri = sdk_event

@@ -227,7 +227,8 @@ cdef class Session:
         cdef TimeInterval c_connect_timeout = create_time_interval(timeouts.connect_timeout)
         cdef TimeInterval c_disconnect_timeout = create_time_interval(timeouts.disconnect_timeout)
         cdef TimeInterval c_open_queue_timeout = create_time_interval(timeouts.open_queue_timeout)
-        cdef TimeInterval c_configure_queue_timeout = create_time_interval(timeouts.configure_queue_timeout)
+        cdef TimeInterval c_configure_queue_timeout = create_time_interval(
+            timeouts.configure_queue_timeout)
         cdef TimeInterval c_close_queue_timeout = create_time_interval(timeouts.close_queue_timeout)
 
         if b'\x00' in broker:

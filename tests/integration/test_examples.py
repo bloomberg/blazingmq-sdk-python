@@ -65,8 +65,7 @@ def test_example_producer(unique_queue):
     stdout, stderr = process.communicate()
 
     # WHEN
-    if sys.version_info[:2] >= (3, 7):
-        assert stderr == b""
+    assert stderr == b""
 
     q = queue.Queue()
 
@@ -93,8 +92,7 @@ def test_example_producer_with_correlation(unique_queue):
     stdout, stderr = process.communicate()
 
     # WHEN
-    if sys.version_info[:2] >= (3, 7):
-        assert stderr == b""
+    assert stderr == b""
 
     q = queue.Queue()
 
@@ -152,8 +150,7 @@ def test_example_consumer(unique_queue, script):
 
     # THEN
     assert ack.status == AckStatus.SUCCESS
-    if sys.version_info[:2] >= (3, 7):
-        assert stderr == b""
+    assert stderr == b""
     assert (
         "Confirming:  <Message[{}] for {}>".format(ack.guid.hex().upper(), unique_queue)
         in stdout.decode()

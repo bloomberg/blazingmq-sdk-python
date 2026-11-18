@@ -16,7 +16,6 @@
 import gc
 import os
 import queue
-import sys
 import weakref
 
 import pytest
@@ -251,7 +250,7 @@ def test_start_fails_with_generic_error(start_rc, start_error):
 )
 def test_process_name_override_called_correctly(monkeypatch, input, expected):
     # GIVEN
-    if sys.version_info >= (3, 2) and input is not None:
+    if input is not None:
         monkeypatch.setattr("__main__.__file__", os.fsdecode(input))
     else:
         monkeypatch.setattr("__main__.__file__", input)
@@ -267,10 +266,7 @@ def test_process_name_override_called_correctly(monkeypatch, input, expected):
 def test_process_name_override_non_unicode(monkeypatch):
     # GIVEN
     filename = b"/path/to/some\xfffile.py"
-    if sys.version_info[0] > 2:
-        monkeypatch.setattr("__main__.__file__", os.fsdecode(filename))
-    else:
-        monkeypatch.setattr("__main__.__file__", filename)
+    monkeypatch.setattr("__main__.__file__", os.fsdecode(filename))
 
     # WHEN
     mock = sdk_mock(start=0, stop=None)

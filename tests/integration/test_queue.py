@@ -439,7 +439,7 @@ def test_bad_uri_for_queue_options(default_session):
         default_session.get_queue_options("nonexistent queue")
 
     # THEN
-    exc.type is exceptions.Error
+    assert exc.type is exceptions.Error
     exc.match("Queue not opened")
 
 

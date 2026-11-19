@@ -1,4 +1,5 @@
 black
+cython-lint
 flake8
 isort
 mypy

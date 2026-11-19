@@ -209,7 +209,7 @@ cdef class Session:
         num_processing_threads: Optional[int] = None,
         blob_buffer_size: Optional[int] = None,
         channel_high_watermark: Optional[int] = None,
-        event_queue_watermarks: Optional[tuple[int,int]] = None,
+        event_queue_watermarks: Optional[tuple[int, int]] = None,
         stats_dump_interval: Optional[int|float] = None,
         timeouts: _timeouts.Timeouts = _timeouts.Timeouts(),
         monitor_host_health: bool = False,
@@ -222,12 +222,13 @@ cdef class Session:
         cdef optional[int] c_num_processing_threads
         cdef optional[int] c_blob_buffer_size
         cdef optional[int] c_channel_high_watermark
-        cdef optional[pair[int,int]] c_event_queue_watermarks
+        cdef optional[pair[int, int]] c_event_queue_watermarks
         cdef TimeInterval c_stats_dump_interval = create_time_interval(stats_dump_interval)
         cdef TimeInterval c_connect_timeout = create_time_interval(timeouts.connect_timeout)
         cdef TimeInterval c_disconnect_timeout = create_time_interval(timeouts.disconnect_timeout)
         cdef TimeInterval c_open_queue_timeout = create_time_interval(timeouts.open_queue_timeout)
-        cdef TimeInterval c_configure_queue_timeout = create_time_interval(timeouts.configure_queue_timeout)
+        cdef TimeInterval c_configure_queue_timeout = create_time_interval(
+            timeouts.configure_queue_timeout)
         cdef TimeInterval c_close_queue_timeout = create_time_interval(timeouts.close_queue_timeout)
 
         if b'\x00' in broker:
@@ -242,8 +243,8 @@ cdef class Session:
         if channel_high_watermark is not None:
             c_channel_high_watermark = optional[int](channel_high_watermark)
         if event_queue_watermarks is not None:
-            c_event_queue_watermarks = optional[pair[int,int]](
-                pair[int,int](event_queue_watermarks[0], event_queue_watermarks[1]))
+            c_event_queue_watermarks = optional[pair[int, int]](
+                pair[int, int](event_queue_watermarks[0], event_queue_watermarks[1]))
 
         self.monitor_host_health = monitor_host_health
 
